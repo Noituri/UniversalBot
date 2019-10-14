@@ -8,6 +8,8 @@ lazy_static! {
     pub static ref BOT_CONFIG: Settings = Settings::new().unwrap();
 }
 
+pub const PREFIX: &str = ".";
+
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     pub token: String

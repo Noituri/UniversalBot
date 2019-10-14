@@ -1,0 +1,26 @@
+mod about_command;
+
+use super::bot_modules::BotModule;
+use crate::command::Command;
+
+pub struct MainModule;
+
+impl BotModule for MainModule {
+    fn name(&self) -> String {
+        String::from("main")
+    }
+
+    fn desc(&self) -> String {
+        String::from("main module that provides basic commands for this bot.")
+    }
+
+    fn enabled(&self) -> bool {
+        true
+    }
+
+    fn commands(&self) -> Vec<Box<dyn Command>> {
+        vec! [
+            Box::new(about_command::AboutCommand{})
+        ]
+    }
+}
