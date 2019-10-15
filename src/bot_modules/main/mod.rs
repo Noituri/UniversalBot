@@ -1,4 +1,5 @@
 mod about_command;
+mod modules_command;
 
 use super::bot_modules::BotModule;
 use crate::command::Command;
@@ -20,7 +21,8 @@ impl BotModule for MainModule {
 
     fn commands(&self) -> Vec<Box<dyn Command>> {
         vec! [
-            Box::new(about_command::AboutCommand{})
+            Box::new(about_command::AboutCommand{}),
+            Box::new(modules_command::ModulesCommand{})
         ]
     }
 }

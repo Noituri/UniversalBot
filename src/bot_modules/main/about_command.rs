@@ -1,7 +1,7 @@
-use crate::command::{Command, CommandPerms, CommandConfig};
+use crate::command::{Command, CommandPerms, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, get_args, parse_args};
 use serenity::model::channel::Message;
-use std::error::Error;
 use serenity::prelude::Context;
+use serenity::Error;
 
 pub struct AboutCommand;
 
@@ -18,7 +18,7 @@ impl Command for AboutCommand {
         true
     }
 
-    fn args(&self) -> Option<Vec<String>> {
+    fn args(&self) -> Option<Vec<CommandArg>> {
         None
     }
 
@@ -30,15 +30,25 @@ impl Command for AboutCommand {
         None
     }
 
-    fn exe(&self, ctx: Context, msg: Message) -> Result<Message, Box<dyn Error>> {
+    fn exe(&self, ctx: &Context, msg: &Message) -> Result<Message, Error> {
         msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
-                e.title("BO2T");
-                e.description("pong");
+                e.title("About");
+                e.description(r#"
+                    **Created by:**
+                    Mikołaj '[Noituri](https://github.com/noituri)' Radkowski
+
+                    **Source code:**
+                    Link -> [click](https://github.com/noituri/universalbot)
+                    Discord Library -> [serenity](https://github.com/serenity-rs/serenity)
+
+                    **Version:**
+                    0.0.1 alpha
+                "#);
+                e.color(EMBED_REGULAR_COLOR);
                 e
             });
             m
-        });
-        Ok(msg)
+        })
     }
 }

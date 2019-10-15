@@ -3,17 +3,9 @@ use serenity::{
     model::{channel::Message, gateway::Ready},
     prelude::*,
 };
-use serenity::model::channel::Embed;
+use std::error::Error;
 
 pub struct Handler;
-
-impl Handler {
-    fn handle_result<T>(&self, result: Result<(), T>) {
-        if let Err(why) = result {
-
-        }
-    }
-}
 
 impl EventHandler for Handler {
     fn message(&self, ctx: Context, msg: Message) {
@@ -22,10 +14,31 @@ impl EventHandler for Handler {
             return;
         }
 
-        for c in super::get_modules()[0].commands() {
-            if msg.content.starts_with(&format!("{}{}", super::config::PREFIX, c.name())) {
-                c.exe(ctx, msg);
-                break;
+        for m in super::get_modules().iter() {
+            if !m.enabled() {
+                continue;
+            }
+
+            for c in m.commands().iter() {
+                if !c.enabled() {
+                    continue;
+                }
+
+                if msg.content.starts_with(&format!("{}{}", super::config::PREFIX, c.name())) {
+                    if let Err(why) = c.exe(&ctx, &msg) {
+                        error!("Command '{}' failed", c.name());
+                        msg.channel_id.send_message(ctx.clone().http, |m| {
+                            m.embed(|e| {
+                                e.title("Error");
+                                e.color(super::command::EMBED_ERROR_COLOR);
+                                e.description(why.description());
+                                e
+                            });
+                            m
+                        });
+                    }
+                    break;
+                }
             }
         }
     }
