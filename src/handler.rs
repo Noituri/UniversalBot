@@ -31,7 +31,7 @@ impl EventHandler for Handler {
                             m.embed(|e| {
                                 e.title("Error");
                                 e.color(super::command::EMBED_ERROR_COLOR);
-                                e.description(why.description());
+                                e.description(why);
                                 e
                             });
                             m

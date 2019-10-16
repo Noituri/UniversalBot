@@ -30,7 +30,7 @@ pub trait Command {
     fn args(&self) -> Option<Vec<CommandArg>>;
     fn perms(&self) -> Option<Vec<CommandPerms>>;
     fn config(&self) -> Option<Vec<CommandConfig>>;
-    fn exe(&self, ctx: &Context,  msg: &Message) -> Result<Message, Error>;
+    fn exe(&self, ctx: &Context,  msg: &Message) -> Result<(), String>;
 }
 
 
@@ -41,7 +41,7 @@ pub fn get_args(msg: Message) -> Vec<String> {
 }
 
 
-pub fn parse_args(args: Vec<CommandArg>, message_args: Vec<String>) -> Result<Option<Vec<CommandArg>>, ()> {
+pub fn parse_args(args: Vec<CommandArg>, message_args: &Vec<String>) -> Result<Option<Vec<CommandArg>>, String> {
     let mut qualified_arg_routes: Vec<Vec<CommandArg>> = Vec::new();
     'main: for a in args.iter() {
         let mut depth = 0;
@@ -51,6 +51,7 @@ pub fn parse_args(args: Vec<CommandArg>, message_args: Vec<String>) -> Result<Op
             return Ok(None);
         }
 
+        // TODO: if arg name looks like that: <true/false> check for condition
         if !a.name.starts_with("<") && !a.name.ends_with(">") {
             if message_args.len() == 0 {
                 continue
@@ -96,5 +97,5 @@ pub fn parse_args(args: Vec<CommandArg>, message_args: Vec<String>) -> Result<Op
         }
     }
 
-    Err(())
+    Err(String::from("Invalid arguments!"))
 }

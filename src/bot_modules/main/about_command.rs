@@ -30,7 +30,7 @@ impl Command for AboutCommand {
         None
     }
 
-    fn exe(&self, ctx: &Context, msg: &Message) -> Result<Message, Error> {
+    fn exe(&self, ctx: &Context, msg: &Message) -> Result<(), String> {
         msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("About");
@@ -49,6 +49,8 @@ impl Command for AboutCommand {
                 e
             });
             m
-        })
+        });
+
+        Ok(())
     }
 }

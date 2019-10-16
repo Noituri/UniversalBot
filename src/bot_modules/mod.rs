@@ -16,4 +16,14 @@ pub mod bot_modules {
             Box::new(super::main::MainModule{})
         ]
     }
+
+    pub fn find_module(name: &str) -> Result<Box<dyn BotModule>, String> {
+        for m in get_modules() {
+            if m.name() == name.to_lowercase() {
+                return Ok(m);
+            }
+        }
+
+        Err(String::from("Module does not exist!"))
+    }
 }

@@ -8,7 +8,7 @@ use serenity::Error;
 pub struct ModulesCommand;
 
 impl ModulesCommand {
-    fn show_modules(&self, ctx: &Context, msg: &Message) -> Result<Message, Error> {
+    fn show_modules(&self, ctx: &Context, msg: &Message) -> Result<(), String> {
         let mut modules_str = String::new();
         for m in bot_modules::get_modules().iter() {
             modules_str += &format!("**{}** - {}\n", m.name(), m.desc());
@@ -22,12 +22,33 @@ impl ModulesCommand {
                 e
             });
             m
-        })
+        });
+        Ok(())
     }
 
-    fn module_commands(&self, ctx: &Context, msg: &Message) -> Result<Message, Error> {
+    fn show_module_details(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
+        let module = bot_modules::find_module(&args[0])?;
+        msg.channel_id.send_message(&ctx.http, |m| {
+            m.embed(|e| {
+                e.title(format!("Module - {}", module.name()));
+                e.description(format!(r#"
+                    **Description:**
+                    {}
+
+                    **Enabled:** {}
+                "#, module.desc(), module.enabled()));
+                e.color(EMBED_REGULAR_COLOR);
+                e
+            });
+            m
+        });
+        Ok(())
+    }
+
+    fn module_commands(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
+        let module = bot_modules::find_module(&args[0])?;
         let mut commands_str = String::new();
-        for m in super::MainModule.commands().iter() {
+        for m in module.commands().iter() {
             commands_str += &format!("**{}** - {}\n", m.name(), m.desc());
         }
 
@@ -39,11 +60,12 @@ impl ModulesCommand {
                 e
             });
             m
-        })
+        });
+        Ok(())
     }
 
-    fn enable_module(&self, ctx: &Context, msg: &Message) -> Result<Message, Error> {
-        Ok(msg.clone())
+    fn enable_module(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
+        Ok(())
     }
 }
 
@@ -118,22 +140,26 @@ impl Command for ModulesCommand {
         None
     }
 
-    fn exe(&self, ctx: &Context, msg: &Message) -> Result<Message, Error> {
-        let a = parse_args(self.args().unwrap(), get_args(msg.clone()));
+    fn exe(&self, ctx: &Context, msg: &Message) -> Result<(), String> {
+        let args = get_args(msg.clone());
 
-        match a {
-            Ok(route) => {
-                match route {
-                    Some(r) => {
-                        r.iter().for_each(|x| println!("ROUTE: {}", x.name));
+        match parse_args(self.args().unwrap(), &args) {
+            Ok(routes) => {
+                match routes {
+                    Some(path) => {
+                        match path.len() {
+                            1 => return self.show_module_details(&ctx, &msg, &args),
+                            2 => return self.module_commands(&ctx, &msg, &args),
+                            3 => return self.enable_module(&ctx, &msg, &args),
+                            _ => return Err(String::from("Too many args!"))
+                        }
+                        path.iter().for_each(|x| println!("ROUTE: {}", x.name));
                     }
-                    None => println!("NO ROUTE")
+                    None => return self.show_modules(&ctx, &msg)
                 }
             }
-            Err(_) => {
-                println!("NO MATCHING ROUTE");
-            }
+            Err(why) => return Err(why)
         }
-        Ok(msg.clone())
+        Ok(())
     }
 }
