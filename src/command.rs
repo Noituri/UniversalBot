@@ -40,6 +40,19 @@ pub fn get_args(msg: Message) -> Vec<String> {
     args
 }
 
+fn check_option(arg: &CommandArg, message: &str) -> Result<(), String> {
+    if arg.name.contains("/") {
+        let mut name = arg.name.to_owned();
+        name.remove(0);
+        name.remove(name.len() - 1);
+        let options: Vec<&str> = name.split("/").collect();
+        if !options.contains(&message) {
+            return Err(format!("Invalid argument `{}`", message));
+        }
+    }
+
+    Ok(())
+}
 
 pub fn parse_args(args: Vec<CommandArg>, message_args: &Vec<String>) -> Result<Option<Vec<CommandArg>>, String> {
     let mut qualified_arg_routes: Vec<Vec<CommandArg>> = Vec::new();
@@ -59,6 +72,8 @@ pub fn parse_args(args: Vec<CommandArg>, message_args: &Vec<String>) -> Result<O
             if a.name != message_args[0] {
                 continue;
             }
+        } else {
+            check_option(&a, message_args[depth].as_str())?;
         }
 
         route.push(CommandArg{
@@ -79,6 +94,8 @@ pub fn parse_args(args: Vec<CommandArg>, message_args: &Vec<String>) -> Result<O
                 if na.name != message_args[depth + 1] {
                     continue 'main;
                 }
+            } else {
+                check_option(&na, message_args[depth + 1].as_str())?;
             }
 
             route.push(CommandArg{
