@@ -10,7 +10,7 @@ mod database;
 use log::{info, error};
 use serenity::Client;
 use handler::*;
-use bot_modules::bot_modules::*;
+use bot_modules::*;
 
 fn main() {
     fern::Dispatch::new()

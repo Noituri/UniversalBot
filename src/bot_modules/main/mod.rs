@@ -1,7 +1,7 @@
 mod about_command;
 mod modules_command;
 
-use super::bot_modules::BotModule;
+use super::BotModule;
 use crate::command::Command;
 
 pub struct MainModule;

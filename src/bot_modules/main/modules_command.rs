@@ -1,7 +1,6 @@
 use crate::command::{Command, CommandPerms, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, parse_args, get_args};
-use crate::bot_modules::bot_modules::BotModule;
 use crate::database::schema::*;
-use super::super::bot_modules;
+use super::super::*;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use serenity::Error;
@@ -17,7 +16,7 @@ pub struct ModulesCommand;
 impl ModulesCommand {
     fn show_modules(&self, ctx: &Context, msg: &Message) -> Result<(), String> {
         let mut modules_str = String::new();
-        for m in bot_modules::get_modules().iter() {
+        for m in get_modules().iter() {
             modules_str += &format!("**{}** - {}\n", m.name(), m.desc());
         }
 
@@ -34,7 +33,7 @@ impl ModulesCommand {
     }
 
     fn show_module_details(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
-        let module = bot_modules::find_module(&args[0])?;
+        let module = find_module(&args[0])?;
         msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title(format!("Module - {}", module.name()));
@@ -53,7 +52,7 @@ impl ModulesCommand {
     }
 
     fn module_commands(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
-        let module = bot_modules::find_module(&args[0])?;
+        let module = find_module(&args[0])?;
         let mut commands_str = String::new();
         for m in module.commands().iter() {
             commands_str += &format!("**{}** - {}\n", m.name(), m.desc());
