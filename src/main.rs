@@ -6,6 +6,7 @@ mod handler;
 mod bot_modules;
 mod command;
 mod database;
+mod utils;
 
 use log::{info, error};
 use serenity::Client;

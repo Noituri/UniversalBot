@@ -5,11 +5,13 @@ use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use serenity::Error;
 use diesel::{PgExpressionMethods, TextExpressionMethods};
-use crate::database::schema::servers::columns::guildid;
+use crate::database::schema::servers::columns::{guildid, enabledmodules};
 use crate::database::models::*;
 use diesel::prelude::*;
 use std::ops::Deref;
 use crate::database::get_db_con;
+use crate::utils::create_server;
+use crate::config::PREFIX;
 
 pub struct ModulesCommand;
 
@@ -55,7 +57,7 @@ impl ModulesCommand {
         let module = find_module(&args[0])?;
         let mut commands_str = String::new();
         for m in module.commands().iter() {
-            commands_str += &format!("**{}** - {}\n", m.name(), m.desc());
+            commands_str += &format!("**{}{}** - {}\n", PREFIX, m.name(), m.desc());
         }
 
         msg.channel_id.send_message(&ctx.http, |m| {
@@ -71,10 +73,52 @@ impl ModulesCommand {
     }
 
     fn enable_module(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
-        let db = get_db_con();
-        let results = servers::dsl::servers.filter(guildid.like(msg.guild_id.unwrap().to_string()))
+        let _ = find_module(&args[0])?;
+        if PROTECTED_MODULES.contains(&args[0].as_str()) {
+            return Err(String::from("This module is protected. It means that it can't be enabled or disabled."));
+        }
+
+        let db = get_db_con().get().expect("Could not get db pool!");
+        let mut results: Vec<Server> = servers::dsl::servers.filter(guildid.like(msg.guild_id.unwrap().to_string()))
             .limit(1)
-            .load::<Server>(&db.get().expect("Could not get db pool!"));
+            .load::<Server>(&db)
+            .expect("Could not load servers!");
+
+        if results.len() == 0 {
+            let mut enabled_module = Vec::new();
+            if args[1] == "enable" {
+                enabled_module = vec![args[0].to_owned()];
+            }
+
+            create_server(msg.guild_id.unwrap().to_string(), enabled_module, Vec::new());
+        } else {
+            if args[1] == "enable" && !results[0].enabledmodules.contains(&args[0]) {
+                results[0].enabledmodules.push(args[0].to_owned())
+            } else if args[1] == "disable" {
+                for (i, m) in results[0].enabledmodules.iter().enumerate() {
+                   if m == &args[0] {
+                       results[0].enabledmodules.remove(i);
+                       break;
+                   }
+                }
+            }
+
+            diesel::update(servers::dsl::servers.find(results[0].id))
+                .set(enabledmodules.eq(&results[0].enabledmodules))
+                .get_result::<Server>(&db)
+                .expect("Could not update the server!");
+        }
+
+
+        msg.channel_id.send_message(&ctx.http, |m| {
+            m.embed(|e| {
+                e.title("Module management");
+                e.description(format!("Module {} has been {}d", &args[0], args[1]));
+                e.color(EMBED_REGULAR_COLOR);
+                e
+            });
+            m
+        });
         Ok(())
     }
 }
@@ -117,17 +161,10 @@ impl Command for ModulesCommand {
                 optional: false,
                 next: Some(
                     Box::new(CommandArg{
-                        name: String::from("set"),
+                        name: String::from("<enable/disable>"),
                         desc: None,
-                        optional: true,
-                        next: Some(
-                            Box::new(CommandArg{
-                                name: String::from("<enable/disable>"),
-                                desc: None,
-                                optional: false,
-                                next: None
-                            })
-                        )
+                        optional: false,
+                        next: None
                     })
                 )
             },
@@ -163,8 +200,12 @@ impl Command for ModulesCommand {
                     Some(path) => {
                         match path.len() {
                             1 => return self.show_module_details(&ctx, &msg, &args),
-                            2 => return self.module_commands(&ctx, &msg, &args),
-                            3 => return self.enable_module(&ctx, &msg, &args),
+                            2 => {
+                                if args[1] == "commands" {
+                                    return self.module_commands(&ctx, &msg, &args);
+                                }
+                                return self.enable_module(&ctx, &msg, &args);
+                            },
                             _ => return Err(String::from("Too many args!"))
                         }
                         path.iter().for_each(|x| println!("ROUTE: {}", x.name));

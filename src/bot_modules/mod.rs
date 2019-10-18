@@ -3,6 +3,8 @@ mod moderation;
 
 use crate::command::Command;
 
+pub const PROTECTED_MODULES: [&str; 1] = ["main"];
+
 pub trait BotModule {
     fn name(&self) -> String;
     fn desc(&self) -> String;
