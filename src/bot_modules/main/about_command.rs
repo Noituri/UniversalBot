@@ -18,6 +18,10 @@ impl Command for AboutCommand {
         true
     }
 
+    fn use_in_dm(&self) -> bool {
+        true
+    }
+
     fn args(&self) -> Option<Vec<CommandArg>> {
         None
     }

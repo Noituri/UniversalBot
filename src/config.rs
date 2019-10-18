@@ -1,8 +1,10 @@
 use serde::Deserialize;
 use config::{ConfigError, Config};
+use diesel::PgConnection;
 use std::path::Path;
 use lazy_static::lazy_static;
 use log::error;
+use std::sync::Mutex;
 
 lazy_static! {
     pub static ref BOT_CONFIG: Settings = Settings::new().unwrap();

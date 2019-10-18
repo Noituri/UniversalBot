@@ -1,7 +1,11 @@
+#[macro_use]
+extern crate diesel;
+
 mod config;
 mod handler;
 mod bot_modules;
 mod command;
+mod database;
 
 use log::{info, error};
 use serenity::Client;
@@ -25,8 +29,10 @@ fn main() {
         .apply()
         .expect("Could not configure the fern logger");
 
-    info!("Starting...");
-    println!("MODULE: {:#?}", get_modules()[0].name());
+    info!("Initializing database...");
+    { let _ = database::get_db_con(); }
+
+    info!("Starting bot...");
     let mut client = Client::new(&config::BOT_CONFIG.token, Handler).expect("Err creating client");
 
     if let Err(why) = client.start() {

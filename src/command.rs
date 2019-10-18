@@ -27,6 +27,7 @@ pub trait Command {
     fn name(&self) -> String;
     fn desc(&self) -> String;
     fn enabled(&self) -> bool;
+    fn use_in_dm(&self) -> bool;
     fn args(&self) -> Option<Vec<CommandArg>>;
     fn perms(&self) -> Option<Vec<CommandPerms>>;
     fn config(&self) -> Option<Vec<CommandConfig>>;

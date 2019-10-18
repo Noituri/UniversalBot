@@ -1,9 +1,16 @@
 use crate::command::{Command, CommandPerms, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, parse_args, get_args};
+use crate::bot_modules::bot_modules::BotModule;
+use crate::database::schema::*;
 use super::super::bot_modules;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::bot_modules::bot_modules::BotModule;
 use serenity::Error;
+use diesel::{PgExpressionMethods, TextExpressionMethods};
+use crate::database::schema::servers::columns::guildid;
+use crate::database::models::*;
+use diesel::prelude::*;
+use std::ops::Deref;
+use crate::database::get_db_con;
 
 pub struct ModulesCommand;
 
@@ -65,6 +72,10 @@ impl ModulesCommand {
     }
 
     fn enable_module(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
+        let db = get_db_con();
+        let results = servers::dsl::servers.filter(guildid.like(msg.guild_id.unwrap().to_string()))
+            .limit(1)
+            .load::<Server>(&db.get().expect("Could not get db pool!"));
         Ok(())
     }
 }
@@ -80,6 +91,10 @@ impl Command for ModulesCommand {
 
     fn enabled(&self) -> bool {
         true
+    }
+
+    fn use_in_dm(&self) -> bool {
+        false
     }
 
     fn args(&self) -> Option<Vec<CommandArg>> {
