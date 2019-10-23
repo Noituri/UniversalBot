@@ -194,7 +194,7 @@ impl Command for ModulesCommand {
     fn exe(&self, ctx: &Context, msg: &Message) -> Result<(), String> {
         let args = get_args(msg.clone());
 
-        match parse_args(self.args().unwrap(), &args) {
+        match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
                 match routes {
                     Some(path) => {

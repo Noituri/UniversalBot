@@ -55,7 +55,7 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub fn parse_args(args: Vec<CommandArg>, message_args: &Vec<String>) -> Result<Option<Vec<CommandArg>>, String> {
+pub fn parse_args(args: &Vec<CommandArg>, message_args: &Vec<String>) -> Result<Option<Vec<CommandArg>>, String> {
     let mut qualified_arg_routes: Vec<Vec<CommandArg>> = Vec::new();
     'main: for a in args.iter() {
         let mut depth = 0;

@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate diesel;
 
+#[cfg(test)]
+mod tests;
 mod config;
 mod handler;
 mod bot_modules;
