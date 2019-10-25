@@ -54,7 +54,15 @@ impl EventHandler for Handler {
                     if !c.use_in_dm() && msg.is_private() {
                         self.send_error(ctx.clone(), msg.clone(), "This command is disabled in DM chat!");
                         return;
+                    } else {
+                        let g =  msg.guild(ctx.cache.clone());
+                        if msg.author.id != g.clone().unwrap().read().owner_id {
+                            if !g.unwrap().read().member_permissions(msg.author.id).administrator() {
+                                // TODO: check if user has perms (i.e MODULES perm etc)
+                            }
+                        }
                     }
+
                     if let Err(why) = c.exe(&ctx, &msg, guild.to_owned()) {
                         error!("Command '{}' failed. Reason: {}", c.name(), why.to_owned());
                         self.send_error(ctx.clone(), msg.clone(), &why);
