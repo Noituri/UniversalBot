@@ -37,7 +37,6 @@ fn main() {
 
     info!("Starting bot...");
     let mut client = Client::new(&config::BOT_CONFIG.token, Handler).expect("Err creating client");
-
     if let Err(why) = client.start() {
         error!("Client error: {:?}", why);
     }

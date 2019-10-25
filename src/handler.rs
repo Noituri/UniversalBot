@@ -30,11 +30,15 @@ impl EventHandler for Handler {
         }
 
         let guild = get_server(msg.guild_id);
-        let prefix = if let Some(g) = guild.to_owned() {
-            g.prefix
-        } else {
-            super::config::DEFAULT_PREFIX.to_owned()
-        };
+        let prefix =
+            if msg.content.starts_with(&format!("<@{}> ", ctx.cache.read().user.id)) {
+                format!("<@{}> ", ctx.cache.read().user.id)
+            }
+            else if let Some(g) = guild.to_owned() {
+                g.prefix
+            } else {
+                super::config::DEFAULT_PREFIX.to_owned()
+            };
 
         for m in super::get_modules().iter() {
             if !m.enabled() {
