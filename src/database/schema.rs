@@ -2,7 +2,8 @@ table! {
     servers (id) {
         id -> Int4,
         guildid -> Varchar,
+        prefix -> Varchar,
         enabledmodules -> Array<Text>,
-        enabledcommands -> Array<Text>,
+        disabledcommands -> Array<Text>,
     }
 }

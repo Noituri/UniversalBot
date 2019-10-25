@@ -10,8 +10,8 @@ use crate::database::models::*;
 use diesel::prelude::*;
 use std::ops::Deref;
 use crate::database::get_db_con;
-use crate::utils::create_server;
-use crate::config::PREFIX;
+use crate::utils::{create_server};
+use crate::config::{DEFAULT_PREFIX as PREFIX, DEFAULT_PREFIX};
 
 pub struct ModulesCommand;
 
@@ -53,11 +53,11 @@ impl ModulesCommand {
         Ok(())
     }
 
-    fn module_commands(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
+    fn module_commands(&self, ctx: &Context, msg: &Message, args: &Vec<String>, prefix: &str) -> Result<(), String> {
         let module = find_module(&args[0])?;
         let mut commands_str = String::new();
         for m in module.commands().iter() {
-            commands_str += &format!("**{}{}** - {}\n", PREFIX, m.name(), m.desc());
+            commands_str += &format!("**{}{}** - {}\n", prefix, m.name(), m.desc());
         }
 
         msg.channel_id.send_message(&ctx.http, |m| {
@@ -72,43 +72,28 @@ impl ModulesCommand {
         Ok(())
     }
 
-    fn enable_module(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
+    fn enable_module(&self, ctx: &Context, msg: &Message, args: &Vec<String>, mut server: Server) -> Result<(), String> {
         let _ = find_module(&args[0])?;
         if PROTECTED_MODULES.contains(&args[0].as_str()) {
             return Err(String::from("This module is protected. It means that it can't be enabled or disabled."));
         }
 
         let db = get_db_con().get().expect("Could not get db pool!");
-        let mut results: Vec<Server> = servers::dsl::servers.filter(guildid.like(msg.guild_id.unwrap().to_string()))
-            .limit(1)
-            .load::<Server>(&db)
-            .expect("Could not load servers!");
-
-        if results.len() == 0 {
-            let mut enabled_module = Vec::new();
-            if args[1] == "enable" {
-                enabled_module = vec![args[0].to_owned()];
-            }
-
-            create_server(msg.guild_id.unwrap().to_string(), enabled_module, Vec::new());
-        } else {
-            if args[1] == "enable" && !results[0].enabledmodules.contains(&args[0]) {
-                results[0].enabledmodules.push(args[0].to_owned())
-            } else if args[1] == "disable" {
-                for (i, m) in results[0].enabledmodules.iter().enumerate() {
-                   if m == &args[0] {
-                       results[0].enabledmodules.remove(i);
-                       break;
-                   }
+        if args[1] == "enable" && !server.enabledmodules.contains(&args[0]) {
+            server.enabledmodules.push(args[0].to_owned())
+        } else if args[1] == "disable" {
+            for (i, m) in server.enabledmodules.iter().enumerate() {
+                if m == &args[0] {
+                    server.enabledmodules.remove(i);
+                    break;
                 }
             }
-
-            diesel::update(servers::dsl::servers.find(results[0].id))
-                .set(enabledmodules.eq(&results[0].enabledmodules))
-                .get_result::<Server>(&db)
-                .expect("Could not update the server!");
         }
 
+        diesel::update(servers::dsl::servers.find(server.id))
+            .set(enabledmodules.eq(&server.enabledmodules))
+            .get_result::<Server>(&db)
+            .expect("Could not update the server!");
 
         msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
@@ -191,20 +176,21 @@ impl Command for ModulesCommand {
         None
     }
 
-    fn exe(&self, ctx: &Context, msg: &Message) -> Result<(), String> {
+    fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String> {
         let args = get_args(msg.clone());
 
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
                 match routes {
                     Some(path) => {
+                        let s = server.unwrap();
                         match path.len() {
                             1 => return self.show_module_details(&ctx, &msg, &args),
                             2 => {
                                 if args[1] == "commands" {
-                                    return self.module_commands(&ctx, &msg, &args);
+                                    return self.module_commands(&ctx, &msg, &args, &s.prefix);
                                 }
-                                return self.enable_module(&ctx, &msg, &args);
+                                return self.enable_module(&ctx, &msg, &args, s);
                             },
                             _ => return Err(String::from("Too many args!"))
                         }

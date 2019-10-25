@@ -1,6 +1,7 @@
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use serenity::Error;
+use crate::database::models::Server;
 
 pub const EMBED_REGULAR_COLOR: i32 = 714968;
 pub const EMBED_ERROR_COLOR: i32 = 13632773;
@@ -31,7 +32,7 @@ pub trait Command {
     fn args(&self) -> Option<Vec<CommandArg>>;
     fn perms(&self) -> Option<Vec<CommandPerms>>;
     fn config(&self) -> Option<Vec<CommandConfig>>;
-    fn exe(&self, ctx: &Context,  msg: &Message) -> Result<(), String>;
+    fn exe(&self, ctx: &Context,  msg: &Message, serv: Option<Server>) -> Result<(), String>;
 }
 
 

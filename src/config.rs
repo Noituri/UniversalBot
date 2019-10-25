@@ -10,7 +10,7 @@ lazy_static! {
     pub static ref BOT_CONFIG: Settings = Settings::new().unwrap();
 }
 
-pub const PREFIX: &str = ".";
+pub const DEFAULT_PREFIX: &str = ".";
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {

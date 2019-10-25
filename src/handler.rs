@@ -4,6 +4,7 @@ use serenity::{
     prelude::*,
 };
 use std::error::Error;
+use crate::utils::get_server;
 
 pub struct Handler;
 
@@ -28,6 +29,13 @@ impl EventHandler for Handler {
             return;
         }
 
+        let guild = get_server(msg.guild_id);
+        let prefix = if let Some(g) = guild.to_owned() {
+            g.prefix
+        } else {
+            super::config::DEFAULT_PREFIX.to_owned()
+        };
+
         for m in super::get_modules().iter() {
             if !m.enabled() {
                 continue;
@@ -38,12 +46,12 @@ impl EventHandler for Handler {
                     continue;
                 }
 
-                if msg.content.starts_with(&format!("{}{}", super::config::PREFIX, c.name())) {
+                if msg.content.starts_with(&format!("{}{}", prefix, c.name())) {
                     if !c.use_in_dm() && msg.is_private() {
                         self.send_error(ctx.clone(), msg.clone(), "This command is disabled in DM chat!");
                         return;
                     }
-                    if let Err(why) = c.exe(&ctx, &msg) {
+                    if let Err(why) = c.exe(&ctx, &msg, guild.to_owned()) {
                         error!("Command '{}' failed. Reason: {}", c.name(), why.to_owned());
                         self.send_error(ctx.clone(), msg.clone(), &why);
                     }
