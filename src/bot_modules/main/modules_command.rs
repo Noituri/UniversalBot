@@ -1,4 +1,4 @@
-use crate::command::{Command, CommandPerms, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, parse_args, get_args};
+use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, parse_args, get_args};
 use crate::database::schema::*;
 use super::super::*;
 use serenity::model::channel::Message;
@@ -168,8 +168,8 @@ impl Command for ModulesCommand {
         ])
     }
 
-    fn perms(&self) -> Option<Vec<CommandPerms>> {
-        Some(vec![CommandPerms::Modules])
+    fn perms(&self) -> Option<Vec<String>> {
+        Some(vec!["modules".to_string()])
     }
 
     fn config(&self) -> Option<Vec<CommandConfig>> {
@@ -194,7 +194,6 @@ impl Command for ModulesCommand {
                             },
                             _ => return Err(String::from("Too many args!"))
                         }
-                        path.iter().for_each(|x| println!("ROUTE: {}", x.name));
                     }
                     None => return self.show_modules(&ctx, &msg)
                 }

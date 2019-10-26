@@ -4,7 +4,14 @@ use serenity::{
     prelude::*,
 };
 use std::error::Error;
-use crate::utils::get_server;
+use crate::utils::{get_server, has_perms};
+use crate::database::get_db_con;
+use crate::database::models::Role;
+use crate::database::schema::roles;
+use diesel::prelude::*;
+use diesel::dsl::*;
+use diesel::BelongingToDsl;
+use crate::database::schema::roles::id;
 
 pub struct Handler;
 
@@ -55,11 +62,23 @@ impl EventHandler for Handler {
                         self.send_error(ctx.clone(), msg.clone(), "This command is disabled in DM chat!");
                         return;
                     } else {
-                        let g =  msg.guild(ctx.cache.clone());
-                        if msg.author.id != g.clone().unwrap().read().owner_id {
-                            if !g.unwrap().read().member_permissions(msg.author.id).administrator() {
-                                // TODO: check if user has perms (i.e MODULES perm etc)
-                            }
+                        if !has_perms(&ctx, &msg,guild.clone().unwrap(), &c.perms()) {
+                            let mut needed_perms = String::new();
+                            let mut command_example = format!("{}perms add <@role/role_name/role_id>", prefix);
+                            c.perms().unwrap().iter().for_each(|p| {
+                                let perm_name = p.to_uppercase();
+                                needed_perms.push_str(&format!("**{}**, ", perm_name));
+                                command_example.push_str(&format!(" {}", perm_name));
+                            });
+
+                            self.send_error(ctx.clone(), msg.clone(),
+                                            &format!("**Missing permissions:**\n\
+                                            This command requires this permissions: {}\n\
+                                            Use this command to add needed permissions:\n\
+                                            ```{}```",
+                                                     needed_perms.trim_end_matches(", "),
+                                                     command_example));
+                            return;
                         }
                     }
 

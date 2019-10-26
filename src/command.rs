@@ -2,15 +2,11 @@ use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use serenity::Error;
 use crate::database::models::Server;
+use std::fmt;
+use serde::export::Formatter;
 
 pub const EMBED_REGULAR_COLOR: i32 = 714968;
 pub const EMBED_ERROR_COLOR: i32 = 13632773;
-
-pub enum CommandPerms {
-    ServerOwner,
-    Ban,
-    Modules,
-}
 
 pub struct CommandConfig {
     pub name: String,
@@ -30,7 +26,7 @@ pub trait Command {
     fn enabled(&self) -> bool;
     fn use_in_dm(&self) -> bool;
     fn args(&self) -> Option<Vec<CommandArg>>;
-    fn perms(&self) -> Option<Vec<CommandPerms>>;
+    fn perms(&self) -> Option<Vec<String>>;
     fn config(&self) -> Option<Vec<CommandConfig>>;
     fn exe(&self, ctx: &Context,  msg: &Message, serv: Option<Server>) -> Result<(), String>;
 }

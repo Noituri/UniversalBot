@@ -1,4 +1,4 @@
-use crate::command::{Command, CommandPerms, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, get_args, parse_args};
+use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, get_args, parse_args};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use serenity::Error;
@@ -27,7 +27,7 @@ impl Command for AboutCommand {
         None
     }
 
-    fn perms(&self) -> Option<Vec<CommandPerms>> {
+    fn perms(&self) -> Option<Vec<String>> {
         None
     }
 

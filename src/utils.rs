@@ -1,4 +1,4 @@
-use crate::database::models::{Server, NewServer};
+use crate::database::models::{Server, NewServer, Role};
 use crate::database::schema::servers;
 use diesel::associations::HasTable;
 use diesel::{RunQueryDsl, TextExpressionMethods};
@@ -6,7 +6,11 @@ use crate::database::get_db_con;
 use diesel::prelude::*;
 use crate::database::schema::servers::columns::guildid;
 use crate::config::DEFAULT_PREFIX;
-use serenity::model::id::GuildId;
+use serenity::model::id::{GuildId, UserId};
+use serenity::model::guild::Guild;
+use serenity::prelude::Context;
+use std::sync::RwLockReadGuard;
+use serenity::model::prelude::Message;
 
 pub fn create_server(guild_id: String, enabled_modules: Vec<String>, disabled_cmds: Vec<String>) -> Server {
     let new_server = NewServer {
@@ -38,4 +42,43 @@ pub fn get_server(guild_id: Option<GuildId>) -> Option<Server> {
     } else {
         return Some(results[0].clone())
     }
+}
+
+pub fn has_perms(ctx: &Context, msg: &Message, server: Server, perms: &Option<Vec<String>>) -> bool {
+    let guild = match msg.guild(ctx.clone().cache) {
+        Some(g) => g,
+        None => return true
+    };
+    let guild = guild.read();
+    let is_owner = msg.author.id == guild.owner_id;
+    let is_admin = guild.member_permissions(msg.author.id).administrator();
+
+    if perms.is_some() && !is_owner && !is_admin {
+        let db = get_db_con().get().expect("Could not get db pool!");
+        let server_roles: Vec<Role> = Role::belonging_to(&server)
+            .load::<Role>(&db)
+            .expect("Could not get roles from guild");
+        let mut has_perms = false;
+
+        if !server_roles.is_empty() {
+            let current_member = guild.member(ctx.http.clone(), msg.author.id).unwrap();
+            for v in current_member.roles.iter() {
+                let r_id = v.to_string();
+                'outer: for sr in server_roles.iter() {
+                    if r_id == sr.roleid {
+                        for cp in perms.clone().unwrap().iter() {
+                            if !sr.perms.contains(cp) {
+                                break 'outer;
+                            }
+                        }
+                        has_perms = true;
+                    }
+                }
+            }
+        }
+
+        return has_perms;
+    }
+
+    true
 }
