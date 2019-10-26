@@ -61,7 +61,7 @@ impl EventHandler for Handler {
                     if !c.use_in_dm() && msg.is_private() {
                         self.send_error(ctx.clone(), msg.clone(), "This command is disabled in DM chat!");
                         return;
-                    } else {
+                    } else if !msg.is_private() {
                         if !has_perms(&ctx, &msg,guild.clone().unwrap(), &c.perms()) {
                             let mut needed_perms = String::new();
                             let mut command_example = format!("{}perms add <@role/role_name/role_id>", prefix);
