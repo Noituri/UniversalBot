@@ -1,4 +1,4 @@
-use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, parse_args, get_args};
+use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, parse_args, get_args, ArgOption};
 use crate::database::schema::*;
 use super::super::*;
 use serenity::model::channel::Message;
@@ -130,12 +130,12 @@ impl Command for ModulesCommand {
             CommandArg{
                 name: String::from("<module name>"),
                 desc: Some(String::from("shows every command available in provided module.")),
-                optional: false,
+                option: Some(ArgOption::Any),
                 next: Some(
                     Box::new(CommandArg{
                         name: String::from("commands"),
                         desc: None,
-                        optional: true,
+                        option: None,
                         next: None
                     })
                 )
@@ -143,12 +143,12 @@ impl Command for ModulesCommand {
             CommandArg{
                 name: String::from("<module name>"),
                 desc: Some(String::from("allows you to enable/disable module.")),
-                optional: false,
+                option: Some(ArgOption::Any),
                 next: Some(
                     Box::new(CommandArg{
                         name: String::from("<enable/disable>"),
                         desc: None,
-                        optional: false,
+                        option: Some(ArgOption::Text),
                         next: None
                     })
                 )
@@ -156,13 +156,13 @@ impl Command for ModulesCommand {
             CommandArg{
                 name: String::from("<module name>"),
                 desc: Some(String::from("shows information about provided module")),
-                optional: false,
+                option: Some(ArgOption::Any),
                 next: None
             },
             CommandArg{
                 name: String::from(""),
                 desc: Some(String::from("shows information about every module")),
-                optional: false,
+                option: None,
                 next: None
             },
         ])
@@ -178,7 +178,6 @@ impl Command for ModulesCommand {
 
     fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String> {
         let args = get_args(msg.clone());
-
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
                 match routes {

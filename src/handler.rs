@@ -86,6 +86,7 @@ impl EventHandler for Handler {
                         error!("Command '{}' failed. Reason: {}", c.name(), why.to_owned());
                         self.send_error(ctx.clone(), msg.clone(), &why);
                     }
+
                     break;
                 }
             }

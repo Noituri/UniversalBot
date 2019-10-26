@@ -13,10 +13,18 @@ pub struct CommandConfig {
     pub values: Vec<String>
 }
 
+#[derive(Clone)]
+pub enum ArgOption {
+    Numeric,
+    Text,
+    Boolean,
+    Any
+}
+
 pub struct CommandArg {
     pub name: String,
     pub desc: Option<String>,
-    pub optional: bool,
+    pub option: Option<ArgOption>,
     pub next: Option<Box<CommandArg>>
 }
 
@@ -41,7 +49,30 @@ pub fn get_args(msg: Message) -> Vec<String> {
     args
 }
 
-fn check_option(arg: &CommandArg, message: &str) -> Result<(), String> {
+// if Ok(true) it will skip this route
+fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
+    if let Some(op) = &arg.option {
+        match op {
+            ArgOption::Numeric => {
+                if message.parse::<f64>().is_err() {
+                    return Ok(true)
+                }
+            }
+            ArgOption::Text => {
+                if message.parse::<f64>().is_ok() {
+                    return Ok(true)
+                }
+            }
+            ArgOption::Boolean => {
+                match message {
+                    "yes" | "no" | "true" | "false" => {},
+                    _ => return Ok(true)
+                }
+            }
+            ArgOption::Any => {}
+        }
+    }
+
     if arg.name.contains("/") {
         let mut name = arg.name.to_owned();
         name.remove(0);
@@ -52,7 +83,7 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<(), String> {
         }
     }
 
-    Ok(())
+    Ok(false)
 }
 
 pub fn parse_args(args: &Vec<CommandArg>, message_args: &Vec<String>) -> Result<Option<Vec<CommandArg>>, String> {
@@ -65,7 +96,6 @@ pub fn parse_args(args: &Vec<CommandArg>, message_args: &Vec<String>) -> Result<
             return Ok(None);
         }
 
-        // TODO: if arg name looks like that: <true/false> check for condition
         if !a.name.starts_with("<") && !a.name.ends_with(">") {
             if message_args.len() == 0 {
                 continue
@@ -74,13 +104,15 @@ pub fn parse_args(args: &Vec<CommandArg>, message_args: &Vec<String>) -> Result<
                 continue;
             }
         } else {
-            check_option(&a, message_args[depth].as_str())?;
+            if check_option(&a, message_args[depth].as_str())? {
+                continue;
+            }
         }
 
         route.push(CommandArg{
             name: a.name.to_owned(),
             desc: a.desc.to_owned(),
-            optional: a.optional,
+            option: a.option.clone(),
             next: None
         });
 
@@ -96,13 +128,15 @@ pub fn parse_args(args: &Vec<CommandArg>, message_args: &Vec<String>) -> Result<
                     continue 'main;
                 }
             } else {
-                check_option(&na, message_args[depth + 1].as_str())?;
+                if check_option(&na, message_args[depth + 1].as_str())? {
+                    continue 'main;
+                }
             }
 
             route.push(CommandArg{
                 name: na.name.to_owned(),
                 desc: na.desc.to_owned(),
-                optional: na.optional,
+                option: na.option.clone(),
                 next: None
             });
 
