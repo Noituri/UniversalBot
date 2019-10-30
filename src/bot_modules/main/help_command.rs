@@ -10,12 +10,12 @@ use crate::utils::has_perms;
 pub struct HelpCommand;
 
 impl HelpCommand {
-    fn show_help(&self, ctx: &Context, msg: &Message, server: Option<Server>, all: bool) -> Result<(), String> {
+    fn show_help(&self, ctx: &Context, msg: &Message, server: Option<Server>, all: bool, page: i32) -> Result<(), String> {
         let prefix =
-            if let Some(s) = server {
+            if let Some(s) = server.clone() {
                 s.prefix
             } else {
-                DEFAULT_PREFIX
+                DEFAULT_PREFIX.to_string()
             };
 
         let usage_message = format!(
@@ -29,28 +29,42 @@ impl HelpCommand {
             prefix
         );
 
-        let commands_message = String::new();
+        let mut commands_message = String::from("**Commands:**\n");
         let mut commands = Vec::new();
         for m in get_modules().iter() {
-            for c in m.commands().iter() {
-                if c.use_in_dm() && server.is_none() {
-                    commands.push(&c);
+
+            for c in m.commands() {
+                if all || (c.use_in_dm() && server.is_none()) {
+                    commands.push(c);
                     continue;
                 }
-
-                if let Some(s) = server {
-                    if has_perms(&ctx, &msg,s.clone(), &c.perms()) {
-                        commands.push(&c);
+                if let Some(s) = &server {
+                    if all || has_perms(&ctx, &msg,s.clone(), &c.perms()) {
+                        commands.push(c);
                         continue;
                     }
                 }
             }
         }
 
+        commands.sort_by(|a, b| a.name().to_lowercase().cmp(&b.name().to_lowercase()));
+        for c in commands.iter() {
+            commands_message.push_str(&format!("**{}{}** - {}\n", prefix, c.name(), c.desc()));
+        }
+
+        let mut pages_number = commands.len() / 10;
+        if commands.len() % 10 != 0 {
+            pages_number += 1;
+        }
+
         msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Help");
-                e.description();
+                e.description(format!("{}{}", usage_message, commands_message));
+                e.footer(|f| {
+                    f.text(format!("Page: {}/{}", page, pages_number));
+                    f
+                });
                 e.color(EMBED_REGULAR_COLOR);
                 e
             });
@@ -136,19 +150,23 @@ impl Command for HelpCommand {
             Ok(routes) => {
                 match routes {
                     Some(path) => {
-                        let s = server.unwrap();
                         match path.len() {
-                            1 => return self.show_module_details(&ctx, &msg, &args),
-                            2 => {
-                                if args[1] == "commands" {
-                                    return self.module_commands(&ctx, &msg, &args, &s.prefix);
+                            1 => if path[0].name == "all" {
+                                return self.show_help(&ctx, &msg, server.clone(), true, 1)
+                            }
+                            2 => if path[0].name == "all" {
+                                match args[1].parse::<i32>() {
+                                    Ok(p) => return self.show_help(&ctx, &msg, server.clone(), true, p),
+                                    Err(_) => return Err(String::from("Invalid page number!"))
                                 }
-                                return self.enable_module(&ctx, &msg, &args, s);
-                            },
+                            }
                             _ => return Err(String::from("Too many args!"))
                         }
+                        if path.len() == 1 && path[0].name == "all" {
+                            return self.show_help(&ctx, &msg, server.clone(), true, 1)
+                        }
                     }
-                    None => return self.show_modules(&ctx, &msg)
+                    None => return self.show_help(&ctx, &msg, server.clone(), false, 1)
                 }
             }
             Err(why) => return Err(why)
