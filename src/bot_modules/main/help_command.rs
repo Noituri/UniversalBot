@@ -10,7 +10,7 @@ use crate::utils::has_perms;
 pub struct HelpCommand;
 
 impl HelpCommand {
-    fn show_help(&self, ctx: &Context, msg: &Message, server: Option<Server>, all: bool, page: i32) -> Result<(), String> {
+    fn show_help(&self, ctx: &Context, msg: &Message, server: Option<Server>, all: bool, page: usize) -> Result<(), String> {
         let prefix =
             if let Some(s) = server.clone() {
                 s.prefix
@@ -18,16 +18,20 @@ impl HelpCommand {
                 DEFAULT_PREFIX.to_string()
             };
 
-        let usage_message = format!(
-            "**Usage:**\n\
-            {0}help - shows enabled commands from enabled modules\n\
-            {0}help <page> - shows 10 first commands of given page\n\
-            {0}help all - shows commands from enabled and disabled modules\n\
-            {0}help all <page> - shows commands from enabled and disabled modules for given page\n\
-            {0}help <command> - shows details about command\n\n\
-            ",
-            prefix
-        );
+        let usage_message = if page == 1 {
+            format!(
+                "**Usage:**\n\
+                **{0}help** - shows enabled commands from enabled modules\n\
+                **{0}help** <page> - shows 10 first commands of given page\n\
+                **{0}help** all - shows commands from enabled and disabled modules\n\
+                **{0}help** all <page> - shows commands from enabled and disabled modules for given page\n\
+                **{0}help** <command> - shows details about command\n\n\
+                ",
+                prefix
+            )
+        } else {
+            String::new()
+        };
 
         let mut commands_message = String::from("**Commands:**\n");
         let mut commands = Vec::new();
@@ -47,8 +51,20 @@ impl HelpCommand {
             }
         }
 
+        let start_page = if (page-1)*10 > commands.len() {
+            return Err(String::from("Page does not exist"));
+        } else {
+            (page-1)*10
+        };
+
+        let end_page = if (page-1)*10 + 10 > commands.len() {
+            commands.len()
+        } else {
+            (page-1)*10 + 10
+        };
+
         commands.sort_by(|a, b| a.name().to_lowercase().cmp(&b.name().to_lowercase()));
-        for c in commands.iter() {
+        for c in commands[start_page..end_page].iter() {
             commands_message.push_str(&format!("**{}{}** - {}\n", prefix, c.name(), c.desc()));
         }
 
@@ -153,9 +169,14 @@ impl Command for HelpCommand {
                         match path.len() {
                             1 => if path[0].name == "all" {
                                 return self.show_help(&ctx, &msg, server.clone(), true, 1)
+                            } else {
+                                match args[0].parse::<usize>() {
+                                    Ok(p) => return self.show_help(&ctx, &msg, server.clone(), false, p),
+                                    Err(_) => {} // TODO show commands detail
+                                }
                             }
                             2 => if path[0].name == "all" {
-                                match args[1].parse::<i32>() {
+                                match args[1].parse::<usize>() {
                                     Ok(p) => return self.show_help(&ctx, &msg, server.clone(), true, p),
                                     Err(_) => return Err(String::from("Invalid page number!"))
                                 }
