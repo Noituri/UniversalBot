@@ -88,6 +88,43 @@ impl HelpCommand {
         });
         Ok(())
     }
+
+    fn show_cmd_details(&self, ctx: &Context, msg: &Message, server: Option<Server>, cmd_name: String) -> Result<(), String> {
+        let prefix =
+            if let Some(s) = server.clone() {
+                s.prefix
+            } else {
+                DEFAULT_PREFIX.to_string()
+            };
+
+        for m in get_modules() {
+            for c in m.commands() {
+                if c.name() == cmd_name {
+                    let args_message = String::from("**Arguments:**");
+                    for a in c.args().iter() {
+                        args_message.push_str(&format!("**{}{} {}** - {}"))
+                    }
+                    msg.channel_id.send_message(&ctx.http, |m| {
+                        m.embed(|e| {
+                            e.title("Help - Command details");
+                            e.description(
+                                format!("**Name: ** {}\n\
+                                **Description:** {}\n\
+                                **Enabled:** {} \n\
+                                **Can be used in DM:** {}\n\
+                                ")
+                            );
+                            e.color(EMBED_REGULAR_COLOR);
+                            e
+                        });
+                        m
+                    });
+                    return Ok(())
+                }
+            }
+        }
+        Err(String::from("Command not found!"))
+    }
 }
 
 impl Command for HelpCommand {
