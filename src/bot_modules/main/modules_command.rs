@@ -114,7 +114,7 @@ impl Command for ModulesCommand {
     }
 
     fn desc(&self) -> String {
-        String::from("shows every module in this bot.")
+        String::from("managing tool for modules.")
     }
 
     fn enabled(&self) -> bool {

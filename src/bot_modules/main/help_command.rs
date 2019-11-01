@@ -11,6 +11,10 @@ pub struct HelpCommand;
 
 impl HelpCommand {
     fn show_help(&self, ctx: &Context, msg: &Message, server: Option<Server>, all: bool, page: usize) -> Result<(), String> {
+        if page == 0 {
+            return Err(String::from("Page does not exist!"));
+        }
+
         let prefix =
             if let Some(s) = server.clone() {
                 s.prefix
@@ -100,10 +104,28 @@ impl HelpCommand {
         for m in get_modules() {
             for c in m.commands() {
                 if c.name() == cmd_name {
-                    let args_message = String::from("**Arguments:**");
-                    for a in c.args().iter() {
-                        args_message.push_str(&format!("**{}{} {}** - {}"))
+                    let mut args_message = String::new();
+                    if let Some(args) = c.args() {
+                        args_message = String::from("**Arguments:**\n");
+                        for a in c.args().unwrap().iter() {
+                            let mut next_arg = a.next.as_ref();
+                            let mut options_message = a.name.to_owned();
+                            while next_arg.is_some() {
+                                let na = next_arg.unwrap();
+                                options_message.push_str(&format!(" {}", na.name));
+                                next_arg = na.next.as_ref();
+                            }
+                            args_message.push_str(&format!("**{}{} {}** - {}\n",
+                                                           prefix,
+                                                           c.name(),
+                                                           options_message,
+                                                           a.desc.as_ref().unwrap())
+                            );
+                        }
                     }
+
+                    // TODO Show permissions of the command
+
                     msg.channel_id.send_message(&ctx.http, |m| {
                         m.embed(|e| {
                             e.title("Help - Command details");
@@ -111,8 +133,9 @@ impl HelpCommand {
                                 format!("**Name: ** {}\n\
                                 **Description:** {}\n\
                                 **Enabled:** {} \n\
-                                **Can be used in DM:** {}\n\
-                                ")
+                                **Can be used in DM:** {}\n\n\
+                                {}
+                                ", c.name(), c.desc(), c.enabled(), c.use_in_dm(), args_message)
                             );
                             e.color(EMBED_REGULAR_COLOR);
                             e
@@ -209,7 +232,7 @@ impl Command for HelpCommand {
                             } else {
                                 match args[0].parse::<usize>() {
                                     Ok(p) => return self.show_help(&ctx, &msg, server.clone(), false, p),
-                                    Err(_) => {} // TODO show commands detail
+                                    Err(_) => return self.show_cmd_details(&ctx, &msg, server.clone(), args[0].to_owned())
                                 }
                             }
                             2 => if path[0].name == "all" {
