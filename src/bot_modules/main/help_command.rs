@@ -124,7 +124,16 @@ impl HelpCommand {
                         }
                     }
 
-                    // TODO Show permissions of the command
+                    let mut perms_message = String::from("**Permissions:**\n");
+                    if let Some(perms) = c.perms() {
+                        for p in perms.iter() {
+                            perms_message.push_str(&format!("- {}\n", p));
+                        }
+
+                        perms_message.push_str(&format!("\nUse `{}perms add <@role> <permission>` to add permissions to the role.", prefix))
+                    } else {
+                        perms_message.push_str("No extra permissions needed.\n");
+                    }
 
                     msg.channel_id.send_message(&ctx.http, |m| {
                         m.embed(|e| {
@@ -134,8 +143,9 @@ impl HelpCommand {
                                 **Description:** {}\n\
                                 **Enabled:** {} \n\
                                 **Can be used in DM:** {}\n\n\
-                                {}
-                                ", c.name(), c.desc(), c.enabled(), c.use_in_dm(), args_message)
+                                {}\n\
+                                {}\
+                                ", c.name(), c.desc(), c.enabled(), c.use_in_dm(), args_message, perms_message)
                             );
                             e.color(EMBED_REGULAR_COLOR);
                             e
