@@ -16,22 +16,7 @@ use handler::*;
 use bot_modules::*;
 
 fn main() {
-    fern::Dispatch::new()
-        .format(|out, message, record| {
-            out.finish(format_args!(
-                "{}[{}][{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-                record.target(),
-                record.level(),
-                message
-            ))
-        })
-        .level(log::LevelFilter::Debug)
-        .chain(std::io::stdout())
-        .chain(fern::log_file("output.log").unwrap())
-        .apply()
-        .expect("Could not configure the fern logger");
-
+    pretty_env_logger::init();
     info!("Initializing database...");
     { let _ = database::get_db_con(); }
 
