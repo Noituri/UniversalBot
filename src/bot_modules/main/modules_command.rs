@@ -7,6 +7,8 @@ use crate::database::schema::servers::columns::{enabledmodules};
 use crate::database::models::*;
 use diesel::prelude::*;
 use crate::database::get_db_con;
+use crate::config::DEV_MODULE;
+use crate::utils::check_if_dev;
 
 pub struct ModulesCommand;
 
@@ -14,7 +16,13 @@ impl ModulesCommand {
     fn show_modules(&self, ctx: &Context, msg: &Message) -> Result<(), String> {
         let mut modules_str = String::new();
         for m in get_modules().iter() {
-            modules_str += &format!("**{}** - {}\n", m.name(), m.desc());
+            if m.name() == DEV_MODULE {
+                if check_if_dev(msg) {
+                    modules_str += &format!("**{}** - {}\n", m.name(), m.desc());
+                }
+            } else {
+                modules_str += &format!("**{}** - {}\n", m.name(), m.desc());
+            }
         }
 
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
@@ -30,6 +38,9 @@ impl ModulesCommand {
     }
 
     fn show_module_details(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
+        if args[0] == DEV_MODULE && !check_if_dev(msg) {
+            return Err(String::from("This module is available only for developers!"))
+        }
         let module = find_module(&args[0])?;
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
@@ -49,6 +60,9 @@ impl ModulesCommand {
     }
 
     fn module_commands(&self, ctx: &Context, msg: &Message, args: &Vec<String>, prefix: &str) -> Result<(), String> {
+        if args[0] == DEV_MODULE && !check_if_dev(msg) {
+            return Err(String::from("This module is available only for developers!"))
+        }
         let module = find_module(&args[0])?;
         let mut commands_str = String::new();
         for m in module.commands().iter() {
@@ -68,6 +82,9 @@ impl ModulesCommand {
     }
 
     fn enable_module(&self, ctx: &Context, msg: &Message, args: &Vec<String>, mut server: Server) -> Result<(), String> {
+        if args[0] == DEV_MODULE && !check_if_dev(msg) {
+            return Err(String::from("This module is available only for developers!"))
+        }
         let _ = find_module(&args[0])?;
         if PROTECTED_MODULES.contains(&args[0].as_str()) {
             return Err(String::from("This module is protected. It means that it can't be enabled or disabled."));
@@ -86,14 +103,14 @@ impl ModulesCommand {
         }
 
         diesel::update(servers::dsl::servers.find(server.id))
-            .set(enabledmodules.eq(&server.enabledmodules))
+            .set(enabledmodules.eq(server.enabledmodules))
             .get_result::<Server>(&db)
             .expect("Could not update the server!");
 
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Module management");
-                e.description(format!("Module {} has been {}d", &args[0], args[1]));
+                e.description(format!("Module {} has been {}d", args[0], args[1]));
                 e.color(EMBED_REGULAR_COLOR);
                 e
             });
@@ -179,17 +196,17 @@ impl Command for ModulesCommand {
                     Some(path) => {
                         let s = server.unwrap();
                         match path.len() {
-                            1 => return self.show_module_details(&ctx, &msg, &args),
+                            1 => return self.show_module_details(ctx, msg, &args),
                             2 => {
                                 if args[1] == "commands" {
-                                    return self.module_commands(&ctx, &msg, &args, &s.prefix);
+                                    return self.module_commands(ctx, msg, &args, &s.prefix);
                                 }
-                                return self.enable_module(&ctx, &msg, &args, s);
+                                return self.enable_module(ctx, msg, &args, s);
                             },
                             _ => return Err(String::from("Too many args!"))
                         }
                     }
-                    None => return self.show_modules(&ctx, &msg)
+                    None => return self.show_modules(ctx, msg)
                 }
             }
             Err(why) => return Err(why)

@@ -78,3 +78,7 @@ pub fn has_perms(ctx: &Context, msg: &Message, server: Server, perms: &Option<Ve
 
     true
 }
+
+pub fn check_if_dev(msg: &Message) -> bool {
+    msg.author.id.to_string() == "246604909451935745 "
+}

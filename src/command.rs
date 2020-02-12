@@ -34,7 +34,7 @@ pub trait Command {
     fn args(&self) -> Option<Vec<CommandArg>>;
     fn perms(&self) -> Option<Vec<String>>;
     fn config(&self) -> Option<Vec<CommandConfig>>;
-    fn exe(&self, ctx: &Context,  msg: &Message, serv: Option<Server>) -> Result<(), String>;
+    fn exe(&self, ctx: &Context,  msg: &Message, server: Option<Server>) -> Result<(), String>;
 }
 
 

@@ -111,12 +111,12 @@ impl Command for PrefixCommand {
                 match routes {
                     Some(path) => {
                         if path.len() == 0 {
-                            self.show_prefix(&ctx, &msg, &srv)?;
+                            self.show_prefix(ctx, msg, &srv)?;
                         } else {
-                            self.set_prefix(&ctx, &msg, &srv, &args[1])?;
+                            self.set_prefix(ctx, msg, &srv, &args[1])?;
                         }
                     }
-                    None => return self.show_prefix(&ctx, &msg, &srv)
+                    None => return self.show_prefix(ctx, msg, &srv)
                 }
             }
             Err(why) => return Err(why)

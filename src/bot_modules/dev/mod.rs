@@ -1,19 +1,19 @@
 use super::BotModule;
 use crate::command::Command;
 
-pub struct ModerationModule;
+pub struct DevModule;
 
-impl BotModule for ModerationModule {
+impl BotModule for DevModule {
     fn name(&self) -> String {
-        String::from("moderation")
+        String::from("dev")
     }
 
     fn desc(&self) -> String {
-        String::from("moderation commands.")
+        String::from("provides commands that can be used by this bot developers.")
     }
 
     fn enabled(&self) -> bool {
-        true
+        false
     }
 
     fn commands(&self) -> Vec<Box<dyn Command>> {

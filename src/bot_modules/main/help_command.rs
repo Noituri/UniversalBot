@@ -2,9 +2,9 @@ use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, ge
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::database::models::Server;
-use crate::config::{DEFAULT_PREFIX};
+use crate::config::{DEFAULT_PREFIX, DEV_MODULE};
 use crate::bot_modules::get_modules;
-use crate::utils::has_perms;
+use crate::utils::{has_perms, check_if_dev};
 
 pub struct HelpCommand;
 
@@ -39,14 +39,16 @@ impl HelpCommand {
         let mut commands_message = String::from("**Commands:**\n");
         let mut commands = Vec::new();
         for m in get_modules().iter() {
-
+            if m.name() == DEV_MODULE && !check_if_dev(msg) {
+                continue
+            }
             for c in m.commands() {
                 if all || (c.use_in_dm() && server.is_none()) {
                     commands.push(c);
                     continue;
                 }
                 if let Some(s) = &server {
-                    if all || has_perms(&ctx, &msg,s.clone(), &c.perms()) {
+                    if all || has_perms(ctx, msg,s.clone(), &c.perms()) {
                         commands.push(c);
                         continue;
                     }
@@ -101,6 +103,9 @@ impl HelpCommand {
             };
 
         for m in get_modules() {
+            if m.name() == DEV_MODULE && !check_if_dev(msg) {
+                continue
+            }
             for c in m.commands() {
                 if c.name() == cmd_name {
                     let mut args_message = String::new();
@@ -236,26 +241,26 @@ impl Command for HelpCommand {
                     Some(path) => {
                         match path.len() {
                             1 => if path[0].name == "all" {
-                                return self.show_help(&ctx, &msg, server.clone(), true, 1)
+                                return self.show_help(ctx, msg, server.clone(), true, 1)
                             } else {
                                 match args[0].parse::<usize>() {
-                                    Ok(p) => return self.show_help(&ctx, &msg, server.clone(), false, p),
-                                    Err(_) => return self.show_cmd_details(&ctx, &msg, server.clone(), args[0].to_owned())
+                                    Ok(p) => return self.show_help(ctx, msg, server.clone(), false, p),
+                                    Err(_) => return self.show_cmd_details(ctx, msg, server.clone(), args[0].to_owned())
                                 }
                             }
                             2 => if path[0].name == "all" {
                                 match args[1].parse::<usize>() {
-                                    Ok(p) => return self.show_help(&ctx, &msg, server.clone(), true, p),
+                                    Ok(p) => return self.show_help(ctx, msg, server.clone(), true, p),
                                     Err(_) => return Err(String::from("Invalid page number!"))
                                 }
                             }
                             _ => return Err(String::from("Too many args!"))
                         }
                         if path.len() == 1 && path[0].name == "all" {
-                            return self.show_help(&ctx, &msg, server.clone(), true, 1)
+                            return self.show_help(ctx, msg, server.clone(), true, 1)
                         }
                     }
-                    None => return self.show_help(&ctx, &msg, server.clone(), false, 1)
+                    None => return self.show_help(ctx, msg, server.clone(), false, 1)
                 }
             }
             Err(why) => return Err(why)

@@ -1,5 +1,6 @@
 pub mod main;
 mod moderation;
+mod dev;
 
 use crate::command::Command;
 
@@ -14,7 +15,9 @@ pub trait BotModule {
 
 pub fn get_modules() -> Vec<Box<dyn BotModule>> {
     vec! [
-        Box::new(main::MainModule{})
+        Box::new(main::MainModule{}),
+        Box::new(moderation::ModerationModule{}),
+        Box::new(dev::DevModule{})
     ]
 }
 
