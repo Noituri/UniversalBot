@@ -32,8 +32,9 @@ impl EventHandler for Handler {
         let prefix =
             if msg.content.starts_with(&format!("<@{}> ", ctx.cache.read().user.id)) {
                 format!("<@{}> ", ctx.cache.read().user.id)
-            }
-            else if let Some(g) = guild.to_owned() {
+            } else if msg.content.starts_with(&format!("<@!{}> ", ctx.cache.read().user.id)) {
+                format!("<@!{}> ", ctx.cache.read().user.id)
+            } else if let Some(g) = guild.to_owned() {
                 g.prefix
             } else {
                 super::config::DEFAULT_PREFIX.to_owned()
