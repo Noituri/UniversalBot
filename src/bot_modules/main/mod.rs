@@ -1,6 +1,6 @@
+pub mod help_command;
 mod about_command;
 mod modules_command;
-mod help_command;
 mod prefix_command;
 
 use super::BotModule;

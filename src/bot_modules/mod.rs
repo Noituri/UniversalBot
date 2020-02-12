@@ -1,4 +1,4 @@
-mod main;
+pub mod main;
 mod moderation;
 
 use crate::command::Command;

@@ -4,6 +4,7 @@ use serenity::{
     prelude::*,
 };
 use crate::utils::{get_server, has_perms};
+use crate::command::Command;
 
 pub struct Handler;
 
@@ -39,6 +40,12 @@ impl EventHandler for Handler {
             } else {
                 super::config::DEFAULT_PREFIX.to_owned()
             };
+
+        if msg.content.trim() == format!("<@{}>", ctx.cache.read().user.id)
+            || msg.content.trim() == format!("<@!{}>", ctx.cache.read().user.id) {
+            let _ = super::bot_modules::main::help_command::HelpCommand{}.exe(&ctx, &msg, guild);
+            return
+        }
 
         for m in super::get_modules().iter() {
             if !m.enabled() {
