@@ -10,17 +10,17 @@ fn test_parse_args() {
         CommandArg{
             name: "name".to_string(),
             desc: None,
-            optional: false,
             next: Some(
                 Box::new(
                     CommandArg{
                         name: "<ok/no>".to_string(),
                         desc: None,
-                        optional: false,
-                        next: None
+                        next: None,
+                        option: None
                     }
                 )
-            )
+            ),
+            option: None
         }
     ];
 

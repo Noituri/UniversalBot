@@ -170,7 +170,6 @@ impl Command for HelpCommand {
     }
 
     fn enabled(&self) -> bool {
-        // TODO: make it disable-able
         true
     }
 
