@@ -1,6 +1,7 @@
 mod about_command;
 mod modules_command;
 mod help_command;
+mod prefix_command;
 
 use super::BotModule;
 use crate::command::Command;
@@ -24,7 +25,8 @@ impl BotModule for MainModule {
         vec! [
             Box::new(help_command::HelpCommand{}),
             Box::new(about_command::AboutCommand{}),
-            Box::new(modules_command::ModulesCommand{})
+            Box::new(modules_command::ModulesCommand{}),
+            Box::new(prefix_command::PrefixCommand{})
         ]
     }
 }

@@ -150,13 +150,13 @@ impl Command for ModulesCommand {
             },
             CommandArg{
                 name: String::from("<module name>"),
-                desc: Some(String::from("shows information about provided module")),
+                desc: Some(String::from("shows information about provided module.")),
                 option: Some(ArgOption::Any),
                 next: None
             },
             CommandArg{
                 name: String::from(""),
-                desc: Some(String::from("shows information about every module")),
+                desc: Some(String::from("shows information about every module.")),
                 option: None,
                 next: None
             },

@@ -180,13 +180,13 @@ impl Command for HelpCommand {
         Some(vec![
             CommandArg{
                 name: String::from("all"),
-                desc: Some(String::from("shows commands from enabled and disabled modules")),
+                desc: Some(String::from("shows commands from enabled and disabled modules.")),
                 option: Some(ArgOption::Numeric),
                 next: None
             },
             CommandArg{
                 name: String::from("all"),
-                desc: Some(String::from("shows commands from enabled and disabled modules for given page")),
+                desc: Some(String::from("shows commands from enabled and disabled modules for given page.")),
                 option: Some(ArgOption::Numeric),
                 next: Some(
                     Box::new(
@@ -201,19 +201,19 @@ impl Command for HelpCommand {
             },
             CommandArg{
                 name: String::from("<page>"),
-                desc: Some(String::from("shows 10 first commands of given page")),
+                desc: Some(String::from("shows 10 first commands of given page.")),
                 option: Some(ArgOption::Numeric),
                 next: None
             },
             CommandArg{
                 name: String::from("<command>"),
-                desc: Some(String::from("shows details about command")),
+                desc: Some(String::from("shows details about command.")),
                 option: Some(ArgOption::Any),
                 next: None
             },
             CommandArg{
                 name: String::from(""),
-                desc: Some(String::from("shows enabled commands from enabled modules")),
+                desc: Some(String::from("shows enabled commands from enabled modules.")),
                 option: None,
                 next: None
             }
