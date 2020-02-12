@@ -1,9 +1,6 @@
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use serenity::Error;
 use crate::database::models::Server;
-use std::fmt;
-use serde::export::Formatter;
 
 pub const EMBED_REGULAR_COLOR: i32 = 714968;
 pub const EMBED_ERROR_COLOR: i32 = 13632773;
@@ -13,6 +10,7 @@ pub struct CommandConfig {
     pub values: Vec<String>
 }
 
+#[allow(dead_code)]
 #[derive(Clone)]
 pub enum ArgOption {
     Numeric,
@@ -87,7 +85,6 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
 }
 
 pub fn parse_args(args: &Vec<CommandArg>, message_args: &Vec<String>) -> Result<Option<Vec<CommandArg>>, String> {
-    let mut qualified_arg_routes: Vec<Vec<CommandArg>> = Vec::new();
     'main: for a in args.iter() {
         let mut depth = 0;
         let mut route: Vec<CommandArg> = Vec::new();

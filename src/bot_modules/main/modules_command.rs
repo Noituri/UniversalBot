@@ -3,15 +3,10 @@ use crate::database::schema::*;
 use super::super::*;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use serenity::Error;
-use diesel::{PgExpressionMethods, TextExpressionMethods};
-use crate::database::schema::servers::columns::{guildid, enabledmodules};
+use crate::database::schema::servers::columns::{enabledmodules};
 use crate::database::models::*;
 use diesel::prelude::*;
-use std::ops::Deref;
 use crate::database::get_db_con;
-use crate::utils::{create_server};
-use crate::config::{DEFAULT_PREFIX as PREFIX, DEFAULT_PREFIX};
 
 pub struct ModulesCommand;
 
@@ -22,7 +17,7 @@ impl ModulesCommand {
             modules_str += &format!("**{}** - {}\n", m.name(), m.desc());
         }
 
-        msg.channel_id.send_message(&ctx.http, |m| {
+        let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Modules");
                 e.description(modules_str);
@@ -36,7 +31,7 @@ impl ModulesCommand {
 
     fn show_module_details(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
         let module = find_module(&args[0])?;
-        msg.channel_id.send_message(&ctx.http, |m| {
+        let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title(format!("Module - {}", module.name()));
                 e.description(format!(r#"
@@ -60,7 +55,7 @@ impl ModulesCommand {
             commands_str += &format!("**{}{}** - {}\n", prefix, m.name(), m.desc());
         }
 
-        msg.channel_id.send_message(&ctx.http, |m| {
+        let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Commands");
                 e.description(commands_str);
@@ -95,7 +90,7 @@ impl ModulesCommand {
             .get_result::<Server>(&db)
             .expect("Could not update the server!");
 
-        msg.channel_id.send_message(&ctx.http, |m| {
+        let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Module management");
                 e.description(format!("Module {} has been {}d", &args[0], args[1]));
@@ -199,6 +194,5 @@ impl Command for ModulesCommand {
             }
             Err(why) => return Err(why)
         }
-        Ok(())
     }
 }

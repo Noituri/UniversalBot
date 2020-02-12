@@ -1,7 +1,6 @@
-use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, get_args, parse_args};
+use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg };
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use serenity::Error;
 use crate::database::models::Server;
 use crate::config::VERSION;
 
@@ -37,7 +36,7 @@ impl Command for AboutCommand {
     }
 
     fn exe(&self, ctx: &Context, msg: &Message, _: Option<Server>) -> Result<(), String> {
-        msg.channel_id.send_message(&ctx.http, |m| {
+        let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("About");
                 e.description(

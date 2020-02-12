@@ -1,9 +1,8 @@
 use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, get_args, parse_args, ArgOption};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use serenity::Error;
 use crate::database::models::Server;
-use crate::config::{VERSION, DEFAULT_PREFIX};
+use crate::config::{DEFAULT_PREFIX};
 use crate::bot_modules::get_modules;
 use crate::utils::has_perms;
 
@@ -77,7 +76,7 @@ impl HelpCommand {
             pages_number += 1;
         }
 
-        msg.channel_id.send_message(&ctx.http, |m| {
+        let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Help");
                 e.description(format!("{}{}", usage_message, commands_message));
@@ -105,7 +104,7 @@ impl HelpCommand {
             for c in m.commands() {
                 if c.name() == cmd_name {
                     let mut args_message = String::new();
-                    if let Some(args) = c.args() {
+                    if let Some(_args) = c.args() {
                         args_message = String::from("**Arguments:**\n");
                         for a in c.args().unwrap().iter() {
                             let mut next_arg = a.next.as_ref();
@@ -135,7 +134,7 @@ impl HelpCommand {
                         perms_message.push_str("No extra permissions needed.\n");
                     }
 
-                    msg.channel_id.send_message(&ctx.http, |m| {
+                    let _ = msg.channel_id.send_message(&ctx.http, |m| {
                         m.embed(|e| {
                             e.title("Help - Command details");
                             e.description(

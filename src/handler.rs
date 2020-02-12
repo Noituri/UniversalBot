@@ -3,21 +3,13 @@ use serenity::{
     model::{channel::Message, gateway::Ready},
     prelude::*,
 };
-use std::error::Error;
 use crate::utils::{get_server, has_perms};
-use crate::database::get_db_con;
-use crate::database::models::Role;
-use crate::database::schema::roles;
-use diesel::prelude::*;
-use diesel::dsl::*;
-use diesel::BelongingToDsl;
-use crate::database::schema::roles::id;
 
 pub struct Handler;
 
 impl Handler {
     fn send_error(&self, ctx: Context, msg: Message, why: &str) {
-        msg.channel_id.send_message(ctx.http, |m| {
+        let _ = msg.channel_id.send_message(ctx.http, |m| {
             m.embed(|e| {
                 e.title("Error");
                 e.color(super::command::EMBED_ERROR_COLOR);
