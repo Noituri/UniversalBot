@@ -7,6 +7,10 @@ use diesel::{RunQueryDsl, TextExpressionMethods};
 use serenity::model::id::GuildId;
 use serenity::model::prelude::Message;
 use serenity::prelude::Context;
+use serenity::model::guild;
+use crate::handler::{State, FindsAwaitingAnswer, FindType};
+use crate::handler::STATE;
+use std::sync::MutexGuard;
 
 pub fn create_server(
     guild_id: String,
@@ -91,4 +95,61 @@ pub fn has_perms(
 
 pub fn check_if_dev(msg: &Message) -> bool {
     msg.author.id.to_string() == "246604909451935745 "
+}
+
+pub fn find_role(ctx: &Context, msg: &Message, find_text_range: (usize, usize)) -> Result<u64, String> {
+    let guild = if let Some(g) = msg.guild_id {
+        g
+    } else {
+        return Err("Could not retrieve guild info!".to_string())
+    };
+
+    let roles = if let Ok(guild_roles) = ctx.http.get_guild_roles(*guild.as_u64()) {
+        guild_roles
+    } else {
+        return Err("Could not retrieve roles from the guild!".to_string())
+    };
+
+    let mut matched_roles: Vec<(u64, String)> = Vec::new();
+    let find_text = &msg.content[find_text_range.0 .. find_text_range.1];
+    for (i, v) in roles.iter().enumerate() {
+        if v.name.contains(find_text) {
+            matched_roles.push((v.id.0, format!("**{}.** {}\n", matched_roles.len()+1, v.name)))
+        }
+    }
+
+    match matched_roles.len() {
+        0 => return Err("Could not find requested role!".to_string()),
+        1 => return Ok(matched_roles[0].0),
+        l if l > 15 => return Err("Too many results. Please be more specific.".to_string()),
+        _ => {
+            let mut description = String::new();
+            matched_roles.iter().for_each(|r| description.push_str(&r.1));
+            {
+                let mut state = STATE.lock().unwrap();
+                state.role_finds_awaiting.push(FindsAwaitingAnswer{
+                    find_type: FindType::Role,
+                    who: msg.author.id.0,
+                    when: 0,
+                    finds: matched_roles,
+                    replace_range: find_text_range,
+                    msg_content: msg.content.to_owned()
+                })
+            }
+
+            msg.channel_id.send_message(&ctx.http, |m| {
+                m.embed(|e| {
+                    e.title("Which role did you have in mind?");
+                    e.description(description);
+                    e.footer(|f| {
+                        f.text("Respond with number corresponding to the role.");
+                        f
+                    });
+                    e
+                });
+                m
+            });
+        }
+    }
+    Ok(0)
 }

@@ -1,12 +1,40 @@
 use crate::command::Command;
 use crate::utils::{get_server, has_perms};
 use log::{error, info};
+use lazy_static::lazy_static;
+use std::sync::Mutex;
 use serenity::{
-    model::{channel::Message, gateway::Ready},
+    model::{channel::Message, gateway::Ready, guild},
     prelude::*,
 };
 
 pub struct Handler;
+
+#[derive(Clone)]
+pub enum FindType {
+    Role,
+    User,
+    Channel
+}
+
+#[derive(Clone)]
+pub struct FindsAwaitingAnswer {
+    pub find_type: FindType,
+    pub who: u64,
+    pub when: i32,
+    pub finds: Vec<(u64, String)>,
+    pub replace_range: (usize, usize),
+    pub msg_content: String
+}
+
+#[derive(Default)]
+pub struct State {
+    pub role_finds_awaiting: Vec<FindsAwaitingAnswer>,
+}
+
+lazy_static! {
+    pub static ref STATE: Mutex<State> = Mutex::new(State::default());
+}
 
 impl Handler {
     fn send_error(&self, ctx: Context, msg: Message, why: &str) {
@@ -20,14 +48,58 @@ impl Handler {
             m
         });
     }
+
+    fn check_awaiting_answers(&self, ctx: Context, msg: &mut Message) -> bool {
+        let answer = if let Ok(num) = msg.content.trim().parse::<usize>() {
+            num
+        } else {
+            return false
+        };
+
+        let mut picked = FindsAwaitingAnswer{
+            find_type: FindType::Role,
+            who: 0,
+            when: 0,
+            finds: vec![],
+            replace_range: (0, 0),
+            msg_content: "".to_string()
+        };
+
+        {
+            let state = STATE.lock().unwrap();
+            for v in state.role_finds_awaiting.iter() {
+                if v.who == msg.author.id.0 {
+                    if answer < 0 || answer > v.finds.len() {
+                        self.send_error(ctx, msg.to_owned(), "Your answer does not match any found roles!");
+                        return true
+                    }
+                    picked = v.clone();
+                }
+            }
+        }
+
+        if picked.who == 0 {
+            return false
+        }
+
+        picked.msg_content.replace_range(
+            picked.replace_range.0 .. picked.replace_range.1,
+            &picked.finds[answer-1].0.to_string()
+        );
+
+        msg.content = picked.msg_content;
+        false
+    }
 }
 
 impl EventHandler for Handler {
-    fn message(&self, ctx: Context, msg: Message) {
+    fn message(&self, ctx: Context, mut msg: Message) {
         // ignore other bots
         if msg.author.bot {
             return;
         }
+
+        self.check_awaiting_answers(ctx.to_owned(), &mut msg);
 
         let guild = get_server(msg.guild_id);
         let prefix = if msg

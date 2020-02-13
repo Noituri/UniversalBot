@@ -3,6 +3,7 @@ use serenity::model::channel::Message;
 use serenity::prelude::Context;
 
 pub const EMBED_REGULAR_COLOR: i32 = 714968;
+pub const EMBED_QUESTION_COLOR: i32 = 16772147;
 pub const EMBED_ERROR_COLOR: i32 = 13632773;
 
 pub struct CommandConfig {
