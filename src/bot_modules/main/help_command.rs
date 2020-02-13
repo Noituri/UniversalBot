@@ -1,25 +1,33 @@
-use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, get_args, parse_args, ArgOption};
+use crate::bot_modules::get_modules;
+use crate::command::{
+    get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR,
+};
+use crate::config::{DEFAULT_PREFIX, DEV_MODULE};
+use crate::database::models::Server;
+use crate::utils::{check_if_dev, has_perms};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::database::models::Server;
-use crate::config::{DEFAULT_PREFIX, DEV_MODULE};
-use crate::bot_modules::get_modules;
-use crate::utils::{has_perms, check_if_dev};
 
 pub struct HelpCommand;
 
 impl HelpCommand {
-    fn show_help(&self, ctx: &Context, msg: &Message, server: Option<Server>, all: bool, page: usize) -> Result<(), String> {
+    fn show_help(
+        &self,
+        ctx: &Context,
+        msg: &Message,
+        server: Option<Server>,
+        all: bool,
+        page: usize,
+    ) -> Result<(), String> {
         if page == 0 {
             return Err(String::from("Page does not exist!"));
         }
 
-        let prefix =
-            if let Some(s) = server.clone() {
-                s.prefix
-            } else {
-                DEFAULT_PREFIX.to_string()
-            };
+        let prefix = if let Some(s) = server.clone() {
+            s.prefix
+        } else {
+            DEFAULT_PREFIX.to_string()
+        };
 
         let usage_message = if page == 1 {
             format!(
@@ -40,7 +48,7 @@ impl HelpCommand {
         let mut commands = Vec::new();
         for m in get_modules().iter() {
             if m.name() == DEV_MODULE && !check_if_dev(msg) {
-                continue
+                continue;
             }
             for c in m.commands() {
                 if all || (c.use_in_dm() && server.is_none()) {
@@ -48,7 +56,7 @@ impl HelpCommand {
                     continue;
                 }
                 if let Some(s) = &server {
-                    if all || has_perms(ctx, msg,s.clone(), &c.perms()) {
+                    if all || has_perms(ctx, msg, s.clone(), &c.perms()) {
                         commands.push(c);
                         continue;
                     }
@@ -56,16 +64,16 @@ impl HelpCommand {
             }
         }
 
-        let start_page = if (page-1)*10 > commands.len() {
+        let start_page = if (page - 1) * 10 > commands.len() {
             return Err(String::from("Page does not exist"));
         } else {
-            (page-1)*10
+            (page - 1) * 10
         };
 
-        let end_page = if (page-1)*10 + 10 > commands.len() {
+        let end_page = if (page - 1) * 10 + 10 > commands.len() {
             commands.len()
         } else {
-            (page-1)*10 + 10
+            (page - 1) * 10 + 10
         };
 
         commands.sort_by(|a, b| a.name().to_lowercase().cmp(&b.name().to_lowercase()));
@@ -94,17 +102,22 @@ impl HelpCommand {
         Ok(())
     }
 
-    fn show_cmd_details(&self, ctx: &Context, msg: &Message, server: Option<Server>, cmd_name: String) -> Result<(), String> {
-        let prefix =
-            if let Some(s) = server.clone() {
-                s.prefix
-            } else {
-                DEFAULT_PREFIX.to_string()
-            };
+    fn show_cmd_details(
+        &self,
+        ctx: &Context,
+        msg: &Message,
+        server: Option<Server>,
+        cmd_name: String,
+    ) -> Result<(), String> {
+        let prefix = if let Some(s) = server.clone() {
+            s.prefix
+        } else {
+            DEFAULT_PREFIX.to_string()
+        };
 
         for m in get_modules() {
             if m.name() == DEV_MODULE && !check_if_dev(msg) {
-                continue
+                continue;
             }
             for c in m.commands() {
                 if c.name() == cmd_name {
@@ -119,12 +132,13 @@ impl HelpCommand {
                                 options_message.push_str(&format!(" {}", na.name));
                                 next_arg = na.next.as_ref();
                             }
-                            args_message.push_str(&format!("**{}{} {}** - {}\n",
-                                                           prefix,
-                                                           c.name(),
-                                                           options_message,
-                                                           a.desc.as_ref().unwrap())
-                            );
+                            args_message.push_str(&format!(
+                                "**{}{} {}** - {}\n",
+                                prefix,
+                                c.name(),
+                                options_message,
+                                a.desc.as_ref().unwrap()
+                            ));
                         }
                     }
 
@@ -142,21 +156,27 @@ impl HelpCommand {
                     let _ = msg.channel_id.send_message(&ctx.http, |m| {
                         m.embed(|e| {
                             e.title("Help - Command details");
-                            e.description(
-                                format!("**Name: ** {}\n\
-                                **Description:** {}\n\
-                                **Enabled:** {} \n\
-                                **Can be used in DM:** {}\n\n\
-                                {}\n\
-                                {}\
-                                ", c.name(), c.desc(), c.enabled(), c.use_in_dm(), args_message, perms_message)
-                            );
+                            e.description(format!(
+                                "**Name: ** {}\n\
+                                 **Description:** {}\n\
+                                 **Enabled:** {} \n\
+                                 **Can be used in DM:** {}\n\n\
+                                 {}\n\
+                                 {}\
+                                 ",
+                                c.name(),
+                                c.desc(),
+                                c.enabled(),
+                                c.use_in_dm(),
+                                args_message,
+                                perms_message
+                            ));
                             e.color(EMBED_REGULAR_COLOR);
                             e
                         });
                         m
                     });
-                    return Ok(())
+                    return Ok(());
                 }
             }
         }
@@ -183,45 +203,45 @@ impl Command for HelpCommand {
 
     fn args(&self) -> Option<Vec<CommandArg>> {
         Some(vec![
-            CommandArg{
+            CommandArg {
                 name: String::from("all"),
-                desc: Some(String::from("shows commands from enabled and disabled modules.")),
+                desc: Some(String::from(
+                    "shows commands from enabled and disabled modules.",
+                )),
                 option: Some(ArgOption::Numeric),
-                next: None
+                next: None,
             },
-            CommandArg{
+            CommandArg {
                 name: String::from("all"),
-                desc: Some(String::from("shows commands from enabled and disabled modules for given page.")),
+                desc: Some(String::from(
+                    "shows commands from enabled and disabled modules for given page.",
+                )),
                 option: Some(ArgOption::Numeric),
-                next: Some(
-                    Box::new(
-                        CommandArg{
-                            name: String::from("<page>"),
-                            desc: None,
-                            option: Some(ArgOption::Numeric),
-                            next: None
-                        },
-                    )
-                )
+                next: Some(Box::new(CommandArg {
+                    name: String::from("<page>"),
+                    desc: None,
+                    option: Some(ArgOption::Numeric),
+                    next: None,
+                })),
             },
-            CommandArg{
+            CommandArg {
                 name: String::from("<page>"),
                 desc: Some(String::from("shows 10 first commands of given page.")),
                 option: Some(ArgOption::Numeric),
-                next: None
+                next: None,
             },
-            CommandArg{
+            CommandArg {
                 name: String::from("<command>"),
                 desc: Some(String::from("shows details about command.")),
                 option: Some(ArgOption::Any),
-                next: None
+                next: None,
             },
-            CommandArg{
+            CommandArg {
                 name: String::from(""),
                 desc: Some(String::from("shows enabled commands from enabled modules.")),
                 option: None,
-                next: None
-            }
+                next: None,
+            },
         ])
     }
 
@@ -236,34 +256,47 @@ impl Command for HelpCommand {
     fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String> {
         let args = get_args(msg.clone());
         match parse_args(&self.args().unwrap(), &args) {
-            Ok(routes) => {
-                match routes {
-                    Some(path) => {
-                        match path.len() {
-                            1 => if path[0].name == "all" {
-                                return self.show_help(ctx, msg, server.clone(), true, 1)
+            Ok(routes) => match routes {
+                Some(path) => {
+                    match path.len() {
+                        1 => {
+                            if path[0].name == "all" {
+                                return self.show_help(ctx, msg, server.clone(), true, 1);
                             } else {
                                 match args[0].parse::<usize>() {
-                                    Ok(p) => return self.show_help(ctx, msg, server.clone(), false, p),
-                                    Err(_) => return self.show_cmd_details(ctx, msg, server.clone(), args[0].to_owned())
+                                    Ok(p) => {
+                                        return self.show_help(ctx, msg, server.clone(), false, p)
+                                    }
+                                    Err(_) => {
+                                        return self.show_cmd_details(
+                                            ctx,
+                                            msg,
+                                            server.clone(),
+                                            args[0].to_owned(),
+                                        )
+                                    }
                                 }
                             }
-                            2 => if path[0].name == "all" {
+                        }
+                        2 => {
+                            if path[0].name == "all" {
                                 match args[1].parse::<usize>() {
-                                    Ok(p) => return self.show_help(ctx, msg, server.clone(), true, p),
-                                    Err(_) => return Err(String::from("Invalid page number!"))
+                                    Ok(p) => {
+                                        return self.show_help(ctx, msg, server.clone(), true, p)
+                                    }
+                                    Err(_) => return Err(String::from("Invalid page number!")),
                                 }
                             }
-                            _ => return Err(String::from("Too many args!"))
                         }
-                        if path.len() == 1 && path[0].name == "all" {
-                            return self.show_help(ctx, msg, server.clone(), true, 1)
-                        }
+                        _ => return Err(String::from("Too many args!")),
                     }
-                    None => return self.show_help(ctx, msg, server.clone(), false, 1)
+                    if path.len() == 1 && path[0].name == "all" {
+                        return self.show_help(ctx, msg, server.clone(), true, 1);
+                    }
                 }
-            }
-            Err(why) => return Err(why)
+                None => return self.show_help(ctx, msg, server.clone(), false, 1),
+            },
+            Err(why) => return Err(why),
         }
         Ok(())
     }

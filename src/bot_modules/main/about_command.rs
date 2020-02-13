@@ -1,8 +1,8 @@
-use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg };
+use crate::command::{Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR};
+use crate::config::VERSION;
+use crate::database::models::Server;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::database::models::Server;
-use crate::config::VERSION;
 
 pub struct AboutCommand;
 
@@ -39,14 +39,16 @@ impl Command for AboutCommand {
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("About");
-                e.description(
-                    format!("**Created by:**\n\
-                    Mikołaj '[Noituri](https://github.com/noituri)' Radkowski\n\n\
-                    **Source code:**\n\
-                    Link -> [click](https://github.com/noituri/universalbot)\n\
-                    Discord Library -> [serenity](https://github.com/serenity-rs/serenity)\n\n\
-                    **Version:**\n\
-                    {}", VERSION));
+                e.description(format!(
+                    "**Created by:**\n\
+                     Mikołaj '[Noituri](https://github.com/noituri)' Radkowski\n\n\
+                     **Source code:**\n\
+                     Link -> [click](https://github.com/noituri/universalbot)\n\
+                     Discord Library -> [serenity](https://github.com/serenity-rs/serenity)\n\n\
+                     **Version:**\n\
+                     {}",
+                    VERSION
+                ));
                 e.color(EMBED_REGULAR_COLOR);
                 e
             });

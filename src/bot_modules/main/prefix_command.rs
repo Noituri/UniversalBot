@@ -1,11 +1,13 @@
-use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, get_args, parse_args, ArgOption};
-use serenity::model::channel::Message;
-use serenity::prelude::Context;
+use crate::command::{
+    get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR,
+};
+use crate::database::get_db_con;
 use crate::database::models::Server;
 use crate::database::schema::servers;
 use crate::database::schema::servers::columns::prefix;
-use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl};
-use crate::database::get_db_con;
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+use serenity::model::channel::Message;
+use serenity::prelude::Context;
 
 pub struct PrefixCommand;
 
@@ -23,9 +25,15 @@ impl PrefixCommand {
         Ok(())
     }
 
-    fn set_prefix(&self, ctx: &Context, msg: &Message, server: &Server, new_prefix: &str) -> Result<(), String> {
+    fn set_prefix(
+        &self,
+        ctx: &Context,
+        msg: &Message,
+        server: &Server,
+        new_prefix: &str,
+    ) -> Result<(), String> {
         if new_prefix.trim() == "" {
-            return Err(String::from("Prefix can't be empty!"))
+            return Err(String::from("Prefix can't be empty!"));
         }
 
         let db = get_db_con().get().expect("Could not get db pool!");
@@ -35,7 +43,7 @@ impl PrefixCommand {
             .get_result::<Server>(&db);
 
         if result.is_err() {
-            return Err(String::from("Could not update the server config"))
+            return Err(String::from("Could not update the server config"));
         }
 
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
@@ -71,27 +79,23 @@ impl Command for PrefixCommand {
 
     fn args(&self) -> Option<Vec<CommandArg>> {
         Some(vec![
-            CommandArg{
+            CommandArg {
                 name: String::from("set"),
                 desc: Some(String::from("sets custom bot prefix for server.")),
                 option: Some(ArgOption::Numeric),
-                next: Some(
-                    Box::new(
-                        CommandArg{
-                            name: String::from("<prefix>"),
-                            desc: None,
-                            option: Some(ArgOption::Text),
-                            next: None
-                        },
-                    )
-                )
+                next: Some(Box::new(CommandArg {
+                    name: String::from("<prefix>"),
+                    desc: None,
+                    option: Some(ArgOption::Text),
+                    next: None,
+                })),
             },
-            CommandArg{
+            CommandArg {
                 name: String::from(""),
                 desc: Some(String::from("shows bot prefix.")),
                 option: None,
-                next: None
-            }
+                next: None,
+            },
         ])
     }
 
@@ -116,10 +120,10 @@ impl Command for PrefixCommand {
                             self.set_prefix(ctx, msg, &srv, &args[1])?;
                         }
                     }
-                    None => return self.show_prefix(ctx, msg, &srv)
+                    None => return self.show_prefix(ctx, msg, &srv),
                 }
             }
-            Err(why) => return Err(why)
+            Err(why) => return Err(why),
         }
         Ok(())
     }

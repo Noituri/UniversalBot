@@ -1,13 +1,13 @@
+use crate::database::models::Server;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::database::models::Server;
 
 pub const EMBED_REGULAR_COLOR: i32 = 714968;
 pub const EMBED_ERROR_COLOR: i32 = 13632773;
 
 pub struct CommandConfig {
     pub name: String,
-    pub values: Vec<String>
+    pub values: Vec<String>,
 }
 
 #[allow(dead_code)]
@@ -16,14 +16,15 @@ pub enum ArgOption {
     Numeric,
     Text,
     Boolean,
-    Any
+    Any,
+    Role
 }
 
 pub struct CommandArg {
     pub name: String,
     pub desc: Option<String>,
     pub option: Option<ArgOption>,
-    pub next: Option<Box<CommandArg>>
+    pub next: Option<Box<CommandArg>>,
 }
 
 pub trait Command {
@@ -34,12 +35,16 @@ pub trait Command {
     fn args(&self) -> Option<Vec<CommandArg>>;
     fn perms(&self) -> Option<Vec<String>>;
     fn config(&self) -> Option<Vec<CommandConfig>>;
-    fn exe(&self, ctx: &Context,  msg: &Message, server: Option<Server>) -> Result<(), String>;
+    fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String>;
 }
 
-
 pub fn get_args(msg: Message) -> Vec<String> {
-    let mut args: Vec<String> = msg.content.trim().split_whitespace().map(|a| a.to_string()).collect();
+    let mut args: Vec<String> = msg
+        .content
+        .trim()
+        .split_whitespace()
+        .map(|a| a.to_string())
+        .collect();
     if msg.content.starts_with("<@") && args.len() != 0 {
         args.remove(0);
     }
@@ -55,18 +60,28 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
         match op {
             ArgOption::Numeric => {
                 if message.parse::<f64>().is_err() {
-                    return Ok(true)
+                    return Ok(true);
                 }
             }
             ArgOption::Text => {
                 if message.parse::<f64>().is_ok() {
-                    return Ok(true)
+                    return Ok(true);
                 }
             }
-            ArgOption::Boolean => {
-                match message {
-                    "yes" | "no" | "true" | "false" => {},
-                    _ => return Ok(true)
+            ArgOption::Boolean => match message {
+                "yes" | "no" | "true" | "false" => {}
+                _ => return Ok(true),
+            },
+            ArgOption::Role => {
+                if message.starts_with("<@&") || message.ends_with(">") {
+                    if message.len() != 22 {
+                        return Ok(true);
+                    }
+                    if message[3..message.len()-1].parse::<f64>().is_err() {
+                        return Ok(true);
+                    }
+                } else {
+                    // TODO: add role finding by name
                 }
             }
             ArgOption::Any => {}
@@ -86,7 +101,10 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
     Ok(false)
 }
 
-pub fn parse_args(args: &Vec<CommandArg>, message_args: &Vec<String>) -> Result<Option<Vec<CommandArg>>, String> {
+pub fn parse_args(
+    args: &Vec<CommandArg>,
+    message_args: &Vec<String>,
+) -> Result<Option<Vec<CommandArg>>, String> {
     'main: for a in args.iter() {
         let mut depth = 0;
         let mut route: Vec<CommandArg> = Vec::new();
@@ -97,22 +115,23 @@ pub fn parse_args(args: &Vec<CommandArg>, message_args: &Vec<String>) -> Result<
 
         if !a.name.starts_with("<") && !a.name.ends_with(">") {
             if message_args.len() == 0 {
-                continue
+                continue;
             }
             if a.name != message_args[0] {
                 continue;
             }
         } else {
+            // TODO: if option contains "..." don't limit args length
             if check_option(&a, message_args[depth].as_str())? {
                 continue;
             }
         }
 
-        route.push(CommandArg{
+        route.push(CommandArg {
             name: a.name.to_owned(),
             desc: a.desc.to_owned(),
             option: a.option.clone(),
-            next: None
+            next: None,
         });
 
         let mut next_arg = a.next.as_ref();
@@ -127,16 +146,17 @@ pub fn parse_args(args: &Vec<CommandArg>, message_args: &Vec<String>) -> Result<
                     continue 'main;
                 }
             } else {
+                // TODO: if option contains "..." don't limit args length
                 if check_option(&na, message_args[depth + 1].as_str())? {
                     continue 'main;
                 }
             }
 
-            route.push(CommandArg{
+            route.push(CommandArg {
                 name: na.name.to_owned(),
                 desc: na.desc.to_owned(),
                 option: na.option.clone(),
-                next: None
+                next: None,
             });
 
             depth += 1;
@@ -144,7 +164,7 @@ pub fn parse_args(args: &Vec<CommandArg>, message_args: &Vec<String>) -> Result<
         }
 
         if route.len() == message_args.len() {
-            return Ok(Some(route))
+            return Ok(Some(route));
         }
     }
 

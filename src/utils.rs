@@ -1,18 +1,22 @@
-use crate::database::models::{Server, NewServer, Role};
-use crate::database::schema::servers;
-use diesel::{RunQueryDsl, TextExpressionMethods};
 use crate::database::get_db_con;
-use diesel::prelude::*;
+use crate::database::models::{NewServer, Role, Server};
+use crate::database::schema::servers;
 use crate::database::schema::servers::columns::guildid;
-use serenity::model::id::{GuildId};
-use serenity::prelude::Context;
+use diesel::prelude::*;
+use diesel::{RunQueryDsl, TextExpressionMethods};
+use serenity::model::id::GuildId;
 use serenity::model::prelude::Message;
+use serenity::prelude::Context;
 
-pub fn create_server(guild_id: String, enabled_modules: Vec<String>, disabled_cmds: Vec<String>) -> Server {
+pub fn create_server(
+    guild_id: String,
+    enabled_modules: Vec<String>,
+    disabled_cmds: Vec<String>,
+) -> Server {
     let new_server = NewServer {
         guildid: guild_id,
         enabledmodules: enabled_modules,
-        disabledcommands: disabled_cmds
+        disabledcommands: disabled_cmds,
     };
 
     diesel::insert_into(servers::table)
@@ -28,7 +32,8 @@ pub fn get_server(guild_id: Option<GuildId>) -> Option<Server> {
 
     let db = get_db_con().get().expect("Could not get db pool!");
     let g_id = guild_id.unwrap().to_string();
-    let results: Vec<Server> = servers::dsl::servers.filter(guildid.like(g_id.to_owned()))
+    let results: Vec<Server> = servers::dsl::servers
+        .filter(guildid.like(g_id.to_owned()))
         .limit(1)
         .load::<Server>(&db)
         .expect("Could not load servers!");
@@ -36,14 +41,19 @@ pub fn get_server(guild_id: Option<GuildId>) -> Option<Server> {
     if results.len() == 0 {
         return Some(create_server(g_id, Vec::new(), Vec::new()));
     } else {
-        return Some(results[0].clone())
+        return Some(results[0].clone());
     }
 }
 
-pub fn has_perms(ctx: &Context, msg: &Message, server: Server, perms: &Option<Vec<String>>) -> bool {
+pub fn has_perms(
+    ctx: &Context,
+    msg: &Message,
+    server: Server,
+    perms: &Option<Vec<String>>,
+) -> bool {
     let guild = match msg.guild(ctx.clone().cache) {
         Some(g) => g,
-        None => return true
+        None => return true,
     };
     let guild = guild.read();
     let is_owner = msg.author.id == guild.owner_id;

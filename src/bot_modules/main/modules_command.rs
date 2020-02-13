@@ -1,14 +1,16 @@
-use crate::command::{Command, CommandConfig, EMBED_REGULAR_COLOR, CommandArg, parse_args, get_args, ArgOption};
-use crate::database::schema::*;
 use super::super::*;
+use crate::command::{
+    get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR,
+};
+use crate::config::DEV_MODULE;
+use crate::database::get_db_con;
+use crate::database::models::*;
+use crate::database::schema::servers::columns::enabledmodules;
+use crate::database::schema::*;
+use crate::utils::check_if_dev;
+use diesel::prelude::*;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::database::schema::servers::columns::{enabledmodules};
-use crate::database::models::*;
-use diesel::prelude::*;
-use crate::database::get_db_con;
-use crate::config::DEV_MODULE;
-use crate::utils::check_if_dev;
 
 pub struct ModulesCommand;
 
@@ -37,20 +39,31 @@ impl ModulesCommand {
         Ok(())
     }
 
-    fn show_module_details(&self, ctx: &Context, msg: &Message, args: &Vec<String>) -> Result<(), String> {
+    fn show_module_details(
+        &self,
+        ctx: &Context,
+        msg: &Message,
+        args: &Vec<String>,
+    ) -> Result<(), String> {
         if args[0] == DEV_MODULE && !check_if_dev(msg) {
-            return Err(String::from("This module is available only for developers!"))
+            return Err(String::from(
+                "This module is available only for developers!",
+            ));
         }
         let module = find_module(&args[0])?;
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title(format!("Module - {}", module.name()));
-                e.description(format!(r#"
+                e.description(format!(
+                    r#"
                     **Description:**
                     {}
 
                     **Enabled:** {}
-                "#, module.desc(), module.enabled()));
+                "#,
+                    module.desc(),
+                    module.enabled()
+                ));
                 e.color(EMBED_REGULAR_COLOR);
                 e
             });
@@ -59,9 +72,17 @@ impl ModulesCommand {
         Ok(())
     }
 
-    fn module_commands(&self, ctx: &Context, msg: &Message, args: &Vec<String>, prefix: &str) -> Result<(), String> {
+    fn module_commands(
+        &self,
+        ctx: &Context,
+        msg: &Message,
+        args: &Vec<String>,
+        prefix: &str,
+    ) -> Result<(), String> {
         if args[0] == DEV_MODULE && !check_if_dev(msg) {
-            return Err(String::from("This module is available only for developers!"))
+            return Err(String::from(
+                "This module is available only for developers!",
+            ));
         }
         let module = find_module(&args[0])?;
         let mut commands_str = String::new();
@@ -81,13 +102,23 @@ impl ModulesCommand {
         Ok(())
     }
 
-    fn enable_module(&self, ctx: &Context, msg: &Message, args: &Vec<String>, mut server: Server) -> Result<(), String> {
+    fn enable_module(
+        &self,
+        ctx: &Context,
+        msg: &Message,
+        args: &Vec<String>,
+        mut server: Server,
+    ) -> Result<(), String> {
         if args[0] == DEV_MODULE && !check_if_dev(msg) {
-            return Err(String::from("This module is available only for developers!"))
+            return Err(String::from(
+                "This module is available only for developers!",
+            ));
         }
         let _ = find_module(&args[0])?;
         if PROTECTED_MODULES.contains(&args[0].as_str()) {
-            return Err(String::from("This module is protected. It means that it can't be enabled or disabled."));
+            return Err(String::from(
+                "This module is protected. It means that it can't be enabled or disabled.",
+            ));
         }
 
         let db = get_db_con().get().expect("Could not get db pool!");
@@ -139,43 +170,41 @@ impl Command for ModulesCommand {
 
     fn args(&self) -> Option<Vec<CommandArg>> {
         Some(vec![
-            CommandArg{
+            CommandArg {
                 name: String::from("<module name>"),
-                desc: Some(String::from("shows every command available in provided module.")),
+                desc: Some(String::from(
+                    "shows every command available in provided module.",
+                )),
                 option: Some(ArgOption::Any),
-                next: Some(
-                    Box::new(CommandArg{
-                        name: String::from("commands"),
-                        desc: None,
-                        option: None,
-                        next: None
-                    })
-                )
+                next: Some(Box::new(CommandArg {
+                    name: String::from("commands"),
+                    desc: None,
+                    option: None,
+                    next: None,
+                })),
             },
-            CommandArg{
+            CommandArg {
                 name: String::from("<module name>"),
                 desc: Some(String::from("allows you to enable/disable module.")),
                 option: Some(ArgOption::Any),
-                next: Some(
-                    Box::new(CommandArg{
-                        name: String::from("<enable/disable>"),
-                        desc: None,
-                        option: Some(ArgOption::Text),
-                        next: None
-                    })
-                )
+                next: Some(Box::new(CommandArg {
+                    name: String::from("<enable/disable>"),
+                    desc: None,
+                    option: Some(ArgOption::Text),
+                    next: None,
+                })),
             },
-            CommandArg{
+            CommandArg {
                 name: String::from("<module name>"),
                 desc: Some(String::from("shows information about provided module.")),
                 option: Some(ArgOption::Any),
-                next: None
+                next: None,
             },
-            CommandArg{
+            CommandArg {
                 name: String::from(""),
                 desc: Some(String::from("shows information about every module.")),
                 option: None,
-                next: None
+                next: None,
             },
         ])
     }
@@ -191,25 +220,23 @@ impl Command for ModulesCommand {
     fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String> {
         let args = get_args(msg.clone());
         match parse_args(&self.args().unwrap(), &args) {
-            Ok(routes) => {
-                match routes {
-                    Some(path) => {
-                        let s = server.unwrap();
-                        match path.len() {
-                            1 => return self.show_module_details(ctx, msg, &args),
-                            2 => {
-                                if args[1] == "commands" {
-                                    return self.module_commands(ctx, msg, &args, &s.prefix);
-                                }
-                                return self.enable_module(ctx, msg, &args, s);
-                            },
-                            _ => return Err(String::from("Too many args!"))
+            Ok(routes) => match routes {
+                Some(path) => {
+                    let s = server.unwrap();
+                    match path.len() {
+                        1 => return self.show_module_details(ctx, msg, &args),
+                        2 => {
+                            if args[1] == "commands" {
+                                return self.module_commands(ctx, msg, &args, &s.prefix);
+                            }
+                            return self.enable_module(ctx, msg, &args, s);
                         }
+                        _ => return Err(String::from("Too many args!")),
                     }
-                    None => return self.show_modules(ctx, msg)
                 }
-            }
-            Err(why) => return Err(why)
+                None => return self.show_modules(ctx, msg),
+            },
+            Err(why) => return Err(why),
         }
     }
 }

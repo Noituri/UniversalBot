@@ -17,6 +17,6 @@ impl BotModule for ModerationModule {
     }
 
     fn commands(&self) -> Vec<Box<dyn Command>> {
-        vec! []
+        vec![]
     }
 }

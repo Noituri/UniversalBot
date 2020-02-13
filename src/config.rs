@@ -1,8 +1,8 @@
-use serde::Deserialize;
-use config::{ConfigError, Config};
-use std::path::Path;
+use config::{Config, ConfigError};
 use lazy_static::lazy_static;
 use log::error;
+use serde::Deserialize;
+use std::path::Path;
 
 lazy_static! {
     pub static ref BOT_CONFIG: Settings = Settings::new().unwrap();
@@ -14,7 +14,7 @@ pub const DEV_MODULE: &str = "dev";
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {
-    pub token: String
+    pub token: String,
 }
 
 impl Settings {
