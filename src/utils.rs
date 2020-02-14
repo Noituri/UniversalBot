@@ -14,6 +14,8 @@ use std::sync::MutexGuard;
 use crate::database::schema::roles;
 use diesel::associations::HasTable;
 use crate::command::EMBED_QUESTION_COLOR;
+use crate::bot_modules::get_modules;
+use crate::config::DEV_MODULE;
 
 pub fn create_server(
     guild_id: String,
@@ -84,6 +86,31 @@ pub fn get_role(guild_id: Option<GuildId>, role_id: String) -> Option<Role> {
     } else {
         return Some(create_role(&servers[0], role_id, Vec::new()))
     }
+}
+
+pub fn perms_exists(perms: &Vec<String>) -> bool {
+    let mut exists = true;
+    let mut all_perms: Vec<String> = Vec::new();
+
+    for m in get_modules().iter() {
+        if m.name() == DEV_MODULE {
+            continue
+        }
+
+        for c in m.commands().iter() {
+            if let Some(perm) = c.perms() {
+                all_perms.extend(perm.iter().cloned())
+            }
+        }
+    }
+
+    perms.iter().for_each(|p| {
+        if !all_perms.contains(p) {
+            exists = false;
+        }
+    });
+
+    exists
 }
 
 pub fn has_perms(

@@ -8,20 +8,24 @@ use crate::database::schema::servers::columns::prefix;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::utils::{get_role_from_id, get_role};
+use crate::utils::{get_role_from_id, get_role, perms_exists};
 use crate::database::schema::roles::columns::perms;
 
 pub struct PermsCommand;
 
 impl PermsCommand {
     fn add_perm (&self, ctx: &Context, msg: &Message, args: Vec<String>) -> Result<(), String> {
+        let mut perms_to_add = args[2..].to_vec();
+        if !perms_exists(&perms_to_add) {
+            return Err("One of the provided permissions does not exist!".to_string())
+        }
+
         let role = if let Some(r) = get_role_from_id(ctx, msg, args[1].to_owned())? {
             r
         } else {
             return Ok(())
         };
 
-        let mut perms_to_add = args[2..].to_vec();
         let mut db_role = if let Some(db_r) = get_role(msg.guild_id, role.id.to_string()) {
             db_r
         } else {
