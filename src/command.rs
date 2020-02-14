@@ -81,8 +81,6 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
                     if message[3..message.len()-1].parse::<f64>().is_err() {
                         return Ok(true);
                     }
-                } else {
-                    // TODO: add role finding by name
                 }
             }
             ArgOption::Any => {}
@@ -122,7 +120,6 @@ pub fn parse_args(
                 continue;
             }
         } else {
-            // TODO: if option contains "..." don't limit args length
             if check_option(&a, message_args[depth].as_str())? {
                 continue;
             }
@@ -147,7 +144,6 @@ pub fn parse_args(
                     continue 'main;
                 }
             } else {
-                // TODO: if option contains "..." don't limit args length
                 if check_option(&na, message_args[depth + 1].as_str())? {
                     continue 'main;
                 }
@@ -166,6 +162,12 @@ pub fn parse_args(
 
         if route.len() == message_args.len() {
             return Ok(Some(route));
+        } else if route.len() < message_args.len() {
+            if let Some(ma) = route.last() {
+                if ma.name.ends_with("...>") {
+                    return Ok(Some(route));
+                }
+            }
         }
     }
 
