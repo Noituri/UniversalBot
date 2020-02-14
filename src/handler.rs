@@ -23,7 +23,7 @@ pub struct FindsAwaitingAnswer {
     pub who: u64,
     pub when: i32,
     pub finds: Vec<(u64, String)>,
-    pub replace_range: (usize, usize),
+    pub replace_text: String,
     pub msg_content: String
 }
 
@@ -61,19 +61,21 @@ impl Handler {
             who: 0,
             when: 0,
             finds: vec![],
-            replace_range: (0, 0),
+            replace_text: "".to_owned(),
             msg_content: "".to_string()
         };
 
         {
-            let state = STATE.lock().unwrap();
-            for v in state.role_finds_awaiting.iter() {
+            let mut state = STATE.lock().unwrap();
+            for (i, v) in state.role_finds_awaiting.iter().enumerate() {
                 if v.who == msg.author.id.0 {
                     if answer < 0 || answer > v.finds.len() {
                         self.send_error(ctx, msg.to_owned(), "Your answer does not match any found roles!");
                         return true
                     }
                     picked = v.clone();
+                    state.role_finds_awaiting.remove(i);
+                    break;
                 }
             }
         }
@@ -82,12 +84,11 @@ impl Handler {
             return false
         }
 
-        picked.msg_content.replace_range(
-            picked.replace_range.0 .. picked.replace_range.1,
-            &picked.finds[answer-1].0.to_string()
+        msg.content = picked.msg_content.replacen(
+            &picked.replace_text,
+            &picked.finds[answer-1].0.to_string(),
+            1
         );
-
-        msg.content = picked.msg_content;
         false
     }
 }
@@ -96,10 +97,12 @@ impl EventHandler for Handler {
     fn message(&self, ctx: Context, mut msg: Message) {
         // ignore other bots
         if msg.author.bot {
-            return;
+            return
         }
 
-        self.check_awaiting_answers(ctx.to_owned(), &mut msg);
+        if self.check_awaiting_answers(ctx.to_owned(), &mut msg) {
+            return
+        }
 
         let guild = get_server(msg.guild_id);
         let prefix = if msg
@@ -122,7 +125,7 @@ impl EventHandler for Handler {
             || msg.content.trim() == format!("<@!{}>", ctx.cache.read().user.id)
         {
             let _ = super::bot_modules::main::help_command::HelpCommand {}.exe(&ctx, &msg, guild);
-            return;
+            return
         }
 
         for m in super::get_modules().iter() {

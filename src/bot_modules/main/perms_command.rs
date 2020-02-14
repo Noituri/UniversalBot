@@ -8,10 +8,23 @@ use crate::database::schema::servers::columns::prefix;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
+use crate::utils::get_role_from_id;
 
 pub struct PermsCommand;
 
-impl PermsCommand {}
+impl PermsCommand {
+    fn add_perm (&self, ctx: &Context, msg: &Message, args: Vec<String>) -> Result<(), String> {
+        let role = if let Some(r) = get_role_from_id(ctx, msg, args[1].to_owned())? {
+            r
+        } else {
+            return Ok(())
+        };
+
+        println!("ROLE: {}", role.name);
+
+        Ok(())
+    }
+}
 
 impl Command for PermsCommand {
     fn name(&self) -> String {
@@ -87,7 +100,17 @@ impl Command for PermsCommand {
             Ok(routes) => {
                 let srv = server.unwrap();
                 match routes {
-                    Some(path) => {}
+                    Some(path) => {
+                        if path.len() == 0 {
+
+                        } else {
+                            if path[0].name == "add" {
+                                self.add_perm(ctx, msg, args)?;
+                            } else {
+
+                            }
+                        }
+                    }
                     None => {}
                 }
             }

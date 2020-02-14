@@ -97,23 +97,16 @@ pub fn check_if_dev(msg: &Message) -> bool {
     msg.author.id.to_string() == "246604909451935745 "
 }
 
-pub fn find_role(ctx: &Context, msg: &Message, find_text_range: (usize, usize)) -> Result<u64, String> {
+pub fn find_role(ctx: &Context, msg: &Message, roles: Vec<guild::Role>, find_text: &str) -> Result<u64, String> {
     let guild = if let Some(g) = msg.guild_id {
         g
     } else {
         return Err("Could not retrieve guild info!".to_string())
     };
 
-    let roles = if let Ok(guild_roles) = ctx.http.get_guild_roles(*guild.as_u64()) {
-        guild_roles
-    } else {
-        return Err("Could not retrieve roles from the guild!".to_string())
-    };
-
     let mut matched_roles: Vec<(u64, String)> = Vec::new();
-    let find_text = &msg.content[find_text_range.0 .. find_text_range.1];
     for (i, v) in roles.iter().enumerate() {
-        if v.name.contains(find_text) {
+        if v.name.contains(&find_text) {
             matched_roles.push((v.id.0, format!("**{}.** {}\n", matched_roles.len()+1, v.name)))
         }
     }
@@ -132,7 +125,7 @@ pub fn find_role(ctx: &Context, msg: &Message, find_text_range: (usize, usize)) 
                     who: msg.author.id.0,
                     when: 0,
                     finds: matched_roles,
-                    replace_range: find_text_range,
+                    replace_text: find_text.to_owned(),
                     msg_content: msg.content.to_owned()
                 })
             }
@@ -152,4 +145,28 @@ pub fn find_role(ctx: &Context, msg: &Message, find_text_range: (usize, usize)) 
         }
     }
     Ok(0)
+}
+
+pub fn get_role_from_id(ctx: &Context, msg: &Message, id: String) -> Result<Option<guild::Role>, String> {
+    let mut tmp_id = id;
+    if msg.mention_roles.len() != 0 {
+        tmp_id = msg.mention_roles[0].to_string();
+    }
+    let roles = if let Ok(guildRoles) = ctx.http.get_guild_roles(msg.guild_id.unwrap().0) {
+        guildRoles
+    } else {
+        return Err("Could not retrieve guild roles!".to_string())
+    };
+
+    for v in roles.iter() {
+        if &v.id.to_string() == &tmp_id{
+            return Ok(Some(v.clone()))
+        }
+    }
+
+    let found_role = find_role(ctx, msg, roles,&tmp_id)?;
+    if found_role != 0 {
+        return get_role_from_id(ctx, msg, found_role.to_string())
+    };
+    Ok(None)
 }
