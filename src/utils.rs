@@ -16,6 +16,7 @@ use diesel::associations::HasTable;
 use crate::command::EMBED_QUESTION_COLOR;
 use crate::bot_modules::get_modules;
 use crate::config::DEV_MODULE;
+use chrono::Utc;
 
 pub fn create_server(
     guild_id: String,
@@ -184,14 +185,27 @@ pub fn find_role(ctx: &Context, msg: &Message, g_roles: Vec<guild::Role>, find_t
             matched_roles.iter().for_each(|r| description.push_str(&r.1));
             {
                 let mut state = STATE.lock().unwrap();
-                state.role_finds_awaiting.push(FindsAwaitingAnswer{
+                let tmp_find = FindsAwaitingAnswer{
                     find_type: FindType::Role,
                     who: msg.author.id.0,
-                    when: 0,
+                    when: Utc::now(),
                     finds: matched_roles,
                     replace_text: find_text.to_owned(),
                     msg_content: msg.content.to_owned()
-                })
+                };
+
+                let mut exists = false;
+                for (i, v) in state.role_finds_awaiting.iter().enumerate() {
+                    if v.who == msg.author.id.0 {
+                        exists = true;
+                        state.role_finds_awaiting[i] = tmp_find.clone();
+                        break
+                    }
+                }
+
+                if !exists {
+                    state.role_finds_awaiting.push(tmp_find);
+                }
             }
 
             msg.channel_id.send_message(&ctx.http, |m| {

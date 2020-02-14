@@ -7,6 +7,7 @@ use serenity::{
     model::{channel::Message, gateway::Ready, guild},
     prelude::*,
 };
+use chrono::{DateTime, Utc, Duration};
 
 pub struct Handler;
 
@@ -14,17 +15,17 @@ pub struct Handler;
 pub enum FindType {
     Role,
     User,
-    Channel
+    Channel,
 }
 
 #[derive(Clone)]
 pub struct FindsAwaitingAnswer {
     pub find_type: FindType,
     pub who: u64,
-    pub when: i32,
+    pub when: DateTime<Utc>,
     pub finds: Vec<(u64, String)>,
     pub replace_text: String,
-    pub msg_content: String
+    pub msg_content: String,
 }
 
 #[derive(Default)]
@@ -50,19 +51,30 @@ impl Handler {
     }
 
     fn check_awaiting_answers(&self, ctx: Context, msg: &mut Message) -> bool {
+        {
+            let mut state = STATE.lock().unwrap();
+
+            for i in (0..state.role_finds_awaiting.len()).rev() {
+                let tmp = &state.role_finds_awaiting[i];
+                if tmp.when + Duration::seconds(30) < Utc::now() {
+                    state.role_finds_awaiting.remove(i);
+                }
+            }
+        }
+
         let answer = if let Ok(num) = msg.content.trim().parse::<usize>() {
             num
         } else {
-            return false
+            return false;
         };
 
-        let mut picked = FindsAwaitingAnswer{
+        let mut picked = FindsAwaitingAnswer {
             find_type: FindType::Role,
             who: 0,
-            when: 0,
+            when: Utc::now(),
             finds: vec![],
             replace_text: "".to_owned(),
-            msg_content: "".to_string()
+            msg_content: "".to_string(),
         };
 
         {
@@ -71,8 +83,9 @@ impl Handler {
                 if v.who == msg.author.id.0 {
                     if answer < 0 || answer > v.finds.len() {
                         self.send_error(ctx, msg.to_owned(), "Your answer does not match any found roles!");
-                        return true
+                        return true;
                     }
+
                     picked = v.clone();
                     state.role_finds_awaiting.remove(i);
                     break;
@@ -81,14 +94,15 @@ impl Handler {
         }
 
         if picked.who == 0 {
-            return false
+            return false;
         }
 
         msg.content = picked.msg_content.replacen(
             &picked.replace_text,
-            &picked.finds[answer-1].0.to_string(),
-            1
+            &picked.finds[answer - 1].0.to_string(),
+            1,
         );
+
         false
     }
 }
@@ -97,23 +111,17 @@ impl EventHandler for Handler {
     fn message(&self, ctx: Context, mut msg: Message) {
         // ignore other bots
         if msg.author.bot {
-            return
+            return;
         }
 
         if self.check_awaiting_answers(ctx.to_owned(), &mut msg) {
-            return
+            return;
         }
 
         let guild = get_server(msg.guild_id);
-        let prefix = if msg
-            .content
-            .starts_with(&format!("<@{}> ", ctx.cache.read().user.id))
-        {
+        let prefix = if msg.content.starts_with(&format!("<@{}> ", ctx.cache.read().user.id)) {
             format!("<@{}> ", ctx.cache.read().user.id)
-        } else if msg
-            .content
-            .starts_with(&format!("<@!{}> ", ctx.cache.read().user.id))
-        {
+        } else if msg.content.starts_with(&format!("<@!{}> ", ctx.cache.read().user.id)) {
             format!("<@!{}> ", ctx.cache.read().user.id)
         } else if let Some(g) = guild.to_owned() {
             g.prefix
@@ -125,7 +133,7 @@ impl EventHandler for Handler {
             || msg.content.trim() == format!("<@!{}>", ctx.cache.read().user.id)
         {
             let _ = super::bot_modules::main::help_command::HelpCommand {}.exe(&ctx, &msg, guild);
-            return
+            return;
         }
 
         for m in super::get_modules().iter() {
