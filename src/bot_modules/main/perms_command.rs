@@ -13,10 +13,16 @@ use crate::database::schema::roles::columns::perms;
 
 pub struct PermsCommand;
 
+enum PermModifyOption {
+    Add,
+    Remove,
+    Set,
+}
+
 impl PermsCommand {
-    fn add_perm (&self, ctx: &Context, msg: &Message, args: Vec<String>) -> Result<(), String> {
-        let mut perms_to_add = args[2..].to_vec();
-        if !perms_exists(&perms_to_add) {
+    fn modify_perm (&self, ctx: &Context, msg: &Message, args: Vec<String>, modify_option: PermModifyOption) -> Result<(), String> {
+        let mut perms_to_modify = args[2..].to_vec();
+        if !perms_exists(&perms_to_modify) {
             return Err("One of the provided permissions does not exist!".to_string())
         }
 
@@ -32,10 +38,16 @@ impl PermsCommand {
             return Err("Could not find role in the database!".to_string())
         };
 
-        for (i, p) in perms_to_add.iter().enumerate() {
-            if !db_role.perms.contains(p) {
-                db_role.perms.push(p.to_owned());
-            }
+        match modify_option {
+            Add => {
+                for (i, p) in perms_to_modify.iter().enumerate() {
+                    if !db_role.perms.contains(p) {
+                        db_role.perms.push(p.to_owned());
+                    }
+                }
+            },
+            Remove => db_role.perms.retain(|v| !perms_to_modify.contains(v)),
+            Set => db_role.perms = perms_to_modify
         }
 
         diesel::update(roles::dsl::roles.find(db_role.id))
@@ -109,6 +121,22 @@ impl Command for PermsCommand {
                 })),
             },
             CommandArg {
+                name: "set".to_string(),
+                desc: Some("sets permissions for role".to_string()),
+                option: None,
+                next: Some(Box::new(CommandArg {
+                    name: "<role>".to_string(),
+                    desc: None,
+                    option: Some(ArgOption::Role),
+                    next: Some(Box::new(CommandArg{
+                        name: "<permissions...>".to_string(),
+                        desc: None,
+                        option: Some(ArgOption::Text),
+                        next: None
+                    })),
+                })),
+            },
+            CommandArg {
                 name: "get".to_string(),
                 desc: Some("gets role's permissions".to_string()),
                 option: None,
@@ -121,7 +149,7 @@ impl Command for PermsCommand {
             },
             CommandArg{ // TODO: show user perms
                 name: "".to_string(),
-                desc: None,
+                desc: Some("Shows usage information".to_string()),
                 option: None,
                 next: None
             }
@@ -144,7 +172,7 @@ impl Command for PermsCommand {
                 match routes {
                     Some(path) => {
                         match path[0].name.as_str() {
-                            "add" => self.add_perm(ctx, msg, args)?,
+                            "add" => self.modify_perm(ctx, msg, args, PermModifyOption::Add)?,
                             "remove" => {},
                             _ => {}
                         }

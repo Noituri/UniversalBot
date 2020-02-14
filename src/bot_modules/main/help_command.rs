@@ -137,7 +137,7 @@ impl HelpCommand {
                                 prefix,
                                 c.name(),
                                 options_message,
-                                a.desc.as_ref().unwrap()
+                                a.desc.as_ref().unwrap_or(&String::new())
                             ));
                         }
                     }
