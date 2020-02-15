@@ -1,12 +1,7 @@
 (ns utter.core
-    (:require
-      [reagent.core :as r]))
-
-;; -------------------------
-;; Views
-
-(defn home-page []
-  [:div [:h2 "Welcome to Reagent"]])
+  (:require
+    [reagent.core :as r]
+    [utter.pages.homepage :refer [home-page]]))
 
 ;; -------------------------
 ;; Initialize app

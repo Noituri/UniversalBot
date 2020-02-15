@@ -1,12 +1,13 @@
 (defproject utter "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :description "Web panel for Utter Bot"
+  :url "https://github.com/noituri/utterbot"
+  :license {:name "MIT"
+            :url "https://opensource.org/licenses/MIT"}
 
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.597"]
-                 [reagent "0.9.0-rc3"]]
+                 [reagent "0.9.0-rc3"]
+                 [clj-commons/cljss "1.6.4"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.19"]]
