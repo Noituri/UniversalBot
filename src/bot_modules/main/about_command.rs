@@ -43,7 +43,7 @@ impl Command for AboutCommand {
                     "**Created by:**\n\
                      Mikołaj '[Noituri](https://github.com/noituri)' Radkowski\n\n\
                      **Source code:**\n\
-                     Link -> [click](https://github.com/noituri/universalbot)\n\
+                     Link -> [click](https://github.com/noituri/utterbot)\n\
                      Discord Library -> [serenity](https://github.com/serenity-rs/serenity)\n\n\
                      **Version:**\n\
                      {}",

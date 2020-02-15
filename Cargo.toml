@@ -1,5 +1,5 @@
 [package]
-name = "universal_bot"
+name = "utter_bot"
 version = "0.1.0"
 authors = ["Mikołaj Radkowski <yknomeh@protonmail.com>"]
 edition = "2018"
