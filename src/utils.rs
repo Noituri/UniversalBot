@@ -68,7 +68,7 @@ pub fn create_role(server: &Server, role_id: String, perms: Vec<String>) -> Role
         .expect("Error occurred while inserting new server")
 }
 
-pub fn get_role(guild_id: Option<GuildId>, role_id: String) -> Option<Role> {
+pub fn get_db_role(guild_id: Option<GuildId>, role_id: String) -> Option<Role> {
     if guild_id.is_none() {
         return None;
     }
@@ -246,6 +246,22 @@ pub fn get_role_from_id(ctx: &Context, msg: &Message, id: String) -> Result<Opti
     let found_role = find_role(ctx, msg, g_roles,&tmp_id)?;
     if found_role != 0 {
         return get_role_from_id(ctx, msg, found_role.to_string())
-    };
+    }
     Ok(None)
+}
+
+pub fn get_module_perms(module_name: &str) -> Option<Vec<String>> {
+    for m in get_modules().iter() {
+        if m.name() == module_name {
+            let mut perms = Vec::new();
+            for c in m.commands().iter() {
+                if let Some(perm) = c.perms() {
+                    perms.extend(perm.iter().cloned());
+                }
+            }
+
+            return Some(perms)
+        }
+    }
+    None
 }

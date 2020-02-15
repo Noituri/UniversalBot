@@ -102,7 +102,7 @@ impl HelpCommand {
         Ok(())
     }
 
-    fn show_cmd_details(
+    pub(crate) fn show_cmd_details(
         &self,
         ctx: &Context,
         msg: &Message,
