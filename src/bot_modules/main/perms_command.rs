@@ -39,15 +39,15 @@ impl PermsCommand {
         };
 
         match modify_option {
-            Add => {
+            PermModifyOption::Add => {
                 for (i, p) in perms_to_modify.iter().enumerate() {
                     if !db_role.perms.contains(p) {
                         db_role.perms.push(p.to_owned());
                     }
                 }
             },
-            Remove => db_role.perms.retain(|v| !perms_to_modify.contains(v)),
-            Set => db_role.perms = perms_to_modify
+            PermModifyOption::Remove => db_role.perms.retain(|v| !perms_to_modify.contains(v)),
+            PermModifyOption::Set => db_role.perms = perms_to_modify
         }
 
         diesel::update(roles::dsl::roles.find(db_role.id))
@@ -171,11 +171,13 @@ impl Command for PermsCommand {
                 let srv = server.unwrap();
                 match routes {
                     Some(path) => {
+                        let mut selected_option: PermModifyOption;
                         match path[0].name.as_str() {
-                            "add" => self.modify_perm(ctx, msg, args, PermModifyOption::Add)?,
-                            "remove" => {},
-                            _ => {}
+                            "add" => selected_option = PermModifyOption::Add,
+                            "remove" => selected_option = PermModifyOption::Remove,
+                            _ => selected_option = PermModifyOption::Set
                         }
+                        self.modify_perm(ctx, msg, args, selected_option)?;
                     }
                     None => {}
                 }
