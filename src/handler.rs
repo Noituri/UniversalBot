@@ -1,5 +1,4 @@
 use crate::command::Command;
-use crate::utils::{get_server, has_perms};
 use log::{error, info};
 use lazy_static::lazy_static;
 use std::sync::Mutex;
@@ -7,27 +6,12 @@ use serenity::{
     model::{channel::Message, gateway::Ready},
     prelude::*,
 };
-use chrono::{DateTime, Utc, Duration};
+use chrono::{Utc, Duration};
+use crate::utils::object_finding::FindsAwaitingAnswer;
+use crate::utils::perms::has_perms;
+use crate::utils::db::get_db_server;
 
 pub struct Handler;
-
-#[allow(dead_code)]
-#[derive(Clone)]
-pub enum FindType {
-    Role,
-    User,
-    Channel,
-}
-
-#[derive(Clone)]
-pub struct FindsAwaitingAnswer {
-    pub find_type: FindType,
-    pub who: u64,
-    pub when: DateTime<Utc>,
-    pub finds: Vec<(u64, String)>,
-    pub replace_text: String,
-    pub msg_content: String,
-}
 
 #[derive(Default)]
 pub struct State {
@@ -70,7 +54,6 @@ impl Handler {
         };
 
         let mut picked = FindsAwaitingAnswer {
-            find_type: FindType::Role,
             who: 0,
             when: Utc::now(),
             finds: vec![],
@@ -83,7 +66,7 @@ impl Handler {
             for (i, v) in state.role_finds_awaiting.iter().enumerate() {
                 if v.who == msg.author.id.0 {
                     if answer > v.finds.len() {
-                        self.send_error(ctx, msg.to_owned(), "Your answer does not match any found roles!");
+                        self.send_error(ctx, msg.to_owned(), "Your answer does not match any found options!");
                         return true;
                     }
 
@@ -98,6 +81,7 @@ impl Handler {
             return false;
         }
 
+        // TODO: better handling this replacing
         msg.content = picked.msg_content.replacen(
             &picked.replace_text,
             &picked.finds[answer - 1].0.to_string(),
@@ -119,7 +103,7 @@ impl EventHandler for Handler {
             return;
         }
 
-        let guild = get_server(msg.guild_id);
+        let guild = get_db_server(msg.guild_id);
         let prefix = if msg.content.starts_with(&format!("<@{}> ", ctx.cache.read().user.id)) {
             format!("<@{}> ", ctx.cache.read().user.id)
         } else if msg.content.starts_with(&format!("<@!{}> ", ctx.cache.read().user.id)) {

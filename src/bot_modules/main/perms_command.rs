@@ -4,11 +4,13 @@ use crate::command::{
 use crate::database::get_db_con;
 use crate::database::models::{Server, Role};
 use crate::database::schema::roles;
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{ExpressionMethods, RunQueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::utils::{get_role_from_id, get_db_role, perms_exists, get_module_perms};
 use crate::database::schema::roles::columns::perms;
+use crate::utils::db::get_db_role;
+use crate::utils::object_finding::get_role_from_id;
+use crate::utils::perms::{get_module_perms, perms_exists};
 
 pub struct PermsCommand;
 

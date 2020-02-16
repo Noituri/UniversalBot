@@ -18,7 +18,8 @@ pub enum ArgOption {
     Text,
     Boolean,
     Any,
-    Role
+    Role,
+    Channel
 }
 
 pub struct CommandArg {
@@ -82,7 +83,17 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
                         return Ok(true);
                     }
                 }
-            }
+            },
+            ArgOption::Channel => {
+                if message.starts_with("<#") || message.ends_with(">") {
+                    if message.len() != 21 {
+                        return Ok(true);
+                    }
+                    if message[3..message.len()-1].parse::<f64>().is_err() {
+                        return Ok(true);
+                    }
+                }
+            },
             ArgOption::Any => {}
         }
     }

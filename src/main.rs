@@ -6,9 +6,10 @@ mod command;
 mod config;
 mod database;
 mod handler;
+mod utils;
+
 #[cfg(test)]
 mod tests;
-mod utils;
 
 use bot_modules::*;
 use handler::*;

@@ -4,9 +4,10 @@ use crate::command::{
 };
 use crate::config::{DEFAULT_PREFIX, DEV_MODULE};
 use crate::database::models::Server;
-use crate::utils::{check_if_dev, has_perms};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
+use crate::utils::perms::has_perms;
+use crate::utils::check_if_dev;
 
 pub struct HelpCommand;
 
