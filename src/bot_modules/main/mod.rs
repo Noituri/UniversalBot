@@ -30,6 +30,7 @@ impl BotModule for MainModule {
             Box::new(modules_command::ModulesCommand {}),
             Box::new(prefix_command::PrefixCommand {}),
             Box::new(perms_command::PermsCommand {}),
+            Box::new(cmd_command::CmdCommand {})
         ]
     }
 }

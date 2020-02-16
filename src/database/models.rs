@@ -1,4 +1,4 @@
-use super::schema::{roles, servers};
+use super::schema::{roles, servers, commands};
 
 #[derive(Identifiable, Queryable, Clone)]
 #[table_name = "servers"]
@@ -47,7 +47,7 @@ pub struct DBCommand {
 
 #[derive(Insertable, Associations)]
 #[belongs_to(Server, foreign_key = "server_id")]
-#[table_name = "command"]
+#[table_name = "commands"]
 pub struct NewDBCommand {
     pub server_id: i32,
     pub command_name: String,

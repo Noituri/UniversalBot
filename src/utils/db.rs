@@ -105,6 +105,6 @@ pub fn get_db_command(guild_id: Option<GuildId>, command_name: String) -> Option
     if let Ok(result) = query {
         return Some(result)
     } else {
-        return Some(create_db_command(&servers[0], role_id, Vec::new()))
+        return Some(create_db_command(&servers[0], command_name, Vec::new()))
     }
 }

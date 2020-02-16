@@ -4,7 +4,7 @@ use crate::command::{
 use crate::database::get_db_con;
 use crate::database::models::{Server, Role};
 use crate::database::schema::roles;
-use diesel::{ExpressionMethods, RunQueryDsl};
+use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::database::schema::roles::columns::perms;

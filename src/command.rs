@@ -1,6 +1,7 @@
 use crate::database::models::Server;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
+use crate::bot_modules::get_modules;
 
 pub const EMBED_REGULAR_COLOR: i32 = 714968;
 pub const EMBED_QUESTION_COLOR: i32 = 16772147;
@@ -183,4 +184,19 @@ pub fn parse_args(
     }
 
     Err(String::from("Invalid arguments!"))
+}
+
+pub fn find_command(name: &str, server: &Server) -> Result<Box<dyn Command>, String> {
+    for m in get_modules() {
+        for c in m.commands() {
+            if c.name() == name {
+                if m.enabled() {
+                    return Ok(c)
+                } else {
+                    return Err("Command is in disabled module!".to_string())
+                }
+            }
+        }
+    }
+    Err("Command does not exist!".to_string())
 }
