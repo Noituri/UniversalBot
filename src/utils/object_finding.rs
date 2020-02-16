@@ -138,3 +138,30 @@ pub fn get_role_from_id(ctx: &Context, msg: &Message, id: String) -> Result<Opti
     }
     Ok(None)
 }
+
+pub fn get_channel_from_id(ctx: &Context, msg: &Message, id: String) -> Result<Option<GuildChannel>, String> {
+    let mut tmp_id = id;
+    match &msg.mention_channels {
+        Some(mch) => if mch.len() != 0 {
+            tmp_id = mch[0].id.to_string();
+        }
+        None => {}
+    }
+
+    let channels = match ctx.http.get_channels(msg.guild_id.unwrap().0) {
+        Ok(ch) => ch,
+        Err(_) => return Err("Could not retrieve guild channels!".to_string())
+    };
+
+    for v in channels.iter() {
+        if &v.id.to_string() == &tmp_id{
+            return Ok(Some(v.clone()))
+        }
+    }
+
+    let found_role = find_object(ctx, msg, channels,&tmp_id, FindType::Channel)?;
+    if found_role != 0 {
+        return get_channel_from_id(ctx, msg, found_role.to_string())
+    }
+    Ok(None)
+}

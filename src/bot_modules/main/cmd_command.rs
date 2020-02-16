@@ -10,22 +10,26 @@ use diesel::prelude::*;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::utils::db::get_db_command;
+use crate::utils::object_finding::get_channel_from_id;
 
 pub struct CmdCommand;
 
 impl CmdCommand {
    fn change_command(&self, ctx: &Context, msg: &Message, args: Vec<String>, srv: Server, is_channel: bool) -> Result<(), String> {
        find_command(&args[0], &srv)?;
+
        let channel = if is_channel {
-           args[2].to_owned()
+           match get_channel_from_id(ctx, msg, args[2].to_owned())? {
+               Some(ch) => ch.id.0.to_string(),
+               None => return Ok(())
+           }
        } else {
            msg.channel_id.0.to_string()
        };
 
-       let mut cmd = if let Some(c) = get_db_command(msg.guild_id, args[0].to_string()) {
-           c
-       } else {
-           return Err("Could not find command in the database!".to_string())
+       let mut cmd = match get_db_command(msg.guild_id, args[0].to_string()) {
+           Some(c) => c,
+           None => return Err("Could not find command in the database!".to_string())
        };
 
        if args[1] == "enable" && !cmd.enabled_channels.contains(&channel) {
@@ -55,6 +59,28 @@ impl CmdCommand {
        });
        Ok(())
    }
+
+    fn get_cmd_info(&self, ctx: &Context, msg: &Message, cmd_name: String, srv: Server) -> Result<(), String> {
+        find_command(&cmd_name, &srv)?;
+        let cmd = match get_db_command(msg.guild_id, cmd_name) {
+            Some(c) => c,
+            None => return Err("Could not get this command from the database".to_string())
+        };
+
+        let mut channels_message = String::new();
+        cmd.enabled_channels.iter().for_each(|c| channels_message.push_str(&format!("- <#{}>\n", c)));
+
+        let _ = msg.channel_id.send_message(&ctx.http, |m| {
+           m.embed(|e| {
+               e.title(format!("{} details", cmd.command_name));
+               e.description(format!("Command enabled in those channels:\n{}", channels_message));
+               e.color(EMBED_REGULAR_COLOR);
+               e
+           });
+            m
+        });
+        Ok(())
+    }
 }
 
 impl Command for CmdCommand {
@@ -135,7 +161,7 @@ impl Command for CmdCommand {
                     match path.len() {
                         2 => self.change_command(ctx, msg, args, s, false),
                         3 => self.change_command(ctx, msg, args, s, true),
-                        _ => Ok(())
+                        _ => self.get_cmd_info(ctx, msg, args[0].to_owned(), s)
                     }
                 }
                 None => Ok(()),

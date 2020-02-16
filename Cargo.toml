@@ -8,7 +8,7 @@ edition = "2018"
 panic = "unwind"
 
 [dependencies]
-serenity = { path = "/home/noituri/Documents/Projects/serenity" }
+serenity = { git = "https://github.com/serenity-rs/serenity", branch ="current", rev = "5f9a27a" }
 diesel = { version = "1.4.3", features = ["postgres", "r2d2"] }
 dotenv = "0.15.0"
 config = "0.10.1"
