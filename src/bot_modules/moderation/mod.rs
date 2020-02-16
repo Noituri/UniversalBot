@@ -9,7 +9,7 @@ impl BotModule for ModerationModule {
     }
 
     fn desc(&self) -> String {
-        String::from("moderation commands.")
+        String::from("Moderation commands.")
     }
 
     fn commands(&self) -> Vec<Box<dyn Command>> {

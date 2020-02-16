@@ -9,7 +9,7 @@ use serenity::{
 use chrono::{Utc, Duration};
 use crate::utils::object_finding::FindsAwaitingAnswer;
 use crate::utils::perms::has_perms;
-use crate::utils::db::get_db_server;
+use crate::utils::db::ServerInfo;
 
 pub struct Handler;
 
@@ -103,12 +103,12 @@ impl EventHandler for Handler {
             return;
         }
 
-        let guild = get_db_server(msg.guild_id);
+        let info = ServerInfo::new(msg.guild_id);
         let prefix = if msg.content.starts_with(&format!("<@{}> ", ctx.cache.read().user.id)) {
             format!("<@{}> ", ctx.cache.read().user.id)
         } else if msg.content.starts_with(&format!("<@!{}> ", ctx.cache.read().user.id)) {
             format!("<@!{}> ", ctx.cache.read().user.id)
-        } else if let Some(g) = guild.to_owned() {
+        } else if let Some(g) = info.server.to_owned() {
             g.prefix
         } else {
             super::config::DEFAULT_PREFIX.to_owned()
@@ -117,20 +117,17 @@ impl EventHandler for Handler {
         if msg.content.trim() == format!("<@{}>", ctx.cache.read().user.id)
             || msg.content.trim() == format!("<@!{}>", ctx.cache.read().user.id)
         {
-            let _ = super::bot_modules::main::help_command::HelpCommand {}.exe(&ctx, &msg, guild);
+            let _ = super::bot_modules::main::help_command::HelpCommand {}.exe(&ctx, &msg, &info);
             return;
         }
 
         for m in super::get_modules().iter() {
-            match &guild {
-                Some(g) => if !m.enabled(g) {
-                    continue
-                }
-                None => {}
+            if !m.enabled(&info) {
+                continue
             }
 
             for c in m.commands().iter() {
-                if !c.enabled() {
+                if !c.enabled(&info) {
                     continue;
                 }
 
@@ -143,7 +140,7 @@ impl EventHandler for Handler {
                         );
                         return;
                     } else if !msg.is_private() {
-                        if !has_perms(&ctx, &msg, guild.clone().unwrap(), &c.perms()) {
+                        if !has_perms(&ctx, &msg, &info, &c.perms()) {
                             let mut needed_perms = String::new();
                             let mut command_example =
                                 format!("{}perms add <@role/role_name/role_id>", prefix);
@@ -169,7 +166,7 @@ impl EventHandler for Handler {
                         }
                     }
 
-                    if let Err(why) = c.exe(&ctx, &msg, guild.to_owned()) {
+                    if let Err(why) = c.exe(&ctx, &msg, &info) {
                         error!("Command '{}' failed. Reason: {}", c.name(), why.to_owned());
                         self.send_error(ctx.clone(), msg.clone(), &why);
                     }

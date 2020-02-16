@@ -3,28 +3,21 @@ use crate::command::{
     get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR,
 };
 use crate::config::{DEFAULT_PREFIX, DEV_MODULE};
-use crate::database::models::Server;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::utils::perms::has_perms;
 use crate::utils::check_if_dev;
+use crate::utils::db::ServerInfo;
 
 pub struct HelpCommand;
 
 impl HelpCommand {
-    fn show_help(
-        &self,
-        ctx: &Context,
-        msg: &Message,
-        server: Option<Server>,
-        all: bool,
-        page: usize,
-    ) -> Result<(), String> {
+    fn show_help(&self, ctx: &Context, msg: &Message, info: &ServerInfo, all: bool, page: usize) -> Result<(), String> {
         if page == 0 {
             return Err(String::from("Page does not exist!"));
         }
 
-        let prefix = if let Some(s) = server.clone() {
+        let prefix = if let Some(s) = info.server.clone() {
             s.prefix
         } else {
             DEFAULT_PREFIX.to_string()
@@ -52,15 +45,10 @@ impl HelpCommand {
                 continue;
             }
             for c in m.commands() {
-                if all || (c.use_in_dm() && server.is_none()) {
+                if all || (c.use_in_dm() && info.server.is_none()) ||
+                    (info.server.is_some() && has_perms(ctx, msg, info, &c.perms())) {
                     commands.push(c);
                     continue;
-                }
-                if let Some(s) = &server {
-                    if all || has_perms(ctx, msg, s.clone(), &c.perms()) {
-                        commands.push(c);
-                        continue;
-                    }
                 }
             }
         }
@@ -103,14 +91,8 @@ impl HelpCommand {
         Ok(())
     }
 
-    pub(crate) fn show_cmd_details(
-        &self,
-        ctx: &Context,
-        msg: &Message,
-        server: Option<Server>,
-        cmd_name: String,
-    ) -> Result<(), String> {
-        let prefix = if let Some(s) = server.clone() {
+    pub(crate) fn show_cmd_details(&self, ctx: &Context, msg: &Message, info: &ServerInfo, cmd_name: String) -> Result<(), String> {
+        let prefix = if let Some(s) = info.server.clone() {
             s.prefix
         } else {
             DEFAULT_PREFIX.to_string()
@@ -167,7 +149,7 @@ impl HelpCommand {
                                  ",
                                 c.name(),
                                 c.desc(),
-                                c.enabled(),
+                                c.enabled(info),
                                 c.use_in_dm(),
                                 args_message,
                                 perms_message
@@ -191,11 +173,7 @@ impl Command for HelpCommand {
     }
 
     fn desc(&self) -> String {
-        String::from("shows this help message.")
-    }
-
-    fn enabled(&self) -> bool {
-        true
+        String::from("Shows this help message.")
     }
 
     fn use_in_dm(&self) -> bool {
@@ -254,7 +232,7 @@ impl Command for HelpCommand {
         None
     }
 
-    fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String> {
+    fn exe(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
         let args = get_args(msg.clone());
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => match routes {
@@ -262,19 +240,14 @@ impl Command for HelpCommand {
                     match path.len() {
                         1 => {
                             if path[0].name == "all" {
-                                return self.show_help(ctx, msg, server.clone(), true, 1);
+                                return self.show_help(ctx, msg, info, true, 1);
                             } else {
                                 match args[0].parse::<usize>() {
                                     Ok(p) => {
-                                        return self.show_help(ctx, msg, server.clone(), false, p)
+                                        return self.show_help(ctx, msg, info, false, p)
                                     }
                                     Err(_) => {
-                                        return self.show_cmd_details(
-                                            ctx,
-                                            msg,
-                                            server.clone(),
-                                            args[0].to_owned(),
-                                        )
+                                        return self.show_cmd_details(ctx, msg, info, args[0].to_owned(),)
                                     }
                                 }
                             }
@@ -283,7 +256,7 @@ impl Command for HelpCommand {
                             if path[0].name == "all" {
                                 match args[1].parse::<usize>() {
                                     Ok(p) => {
-                                        return self.show_help(ctx, msg, server.clone(), true, p)
+                                        return self.show_help(ctx, msg, info, true, p)
                                     }
                                     Err(_) => return Err(String::from("Invalid page number!")),
                                 }
@@ -291,11 +264,8 @@ impl Command for HelpCommand {
                         }
                         _ => return Err(String::from("Too many args!")),
                     }
-                    if path.len() == 1 && path[0].name == "all" {
-                        return self.show_help(ctx, msg, server.clone(), true, 1);
-                    }
                 }
-                None => return self.show_help(ctx, msg, server.clone(), false, 1),
+                None => return self.show_help(ctx, msg, info, false, 1),
             },
             Err(why) => return Err(why),
         }

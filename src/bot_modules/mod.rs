@@ -4,7 +4,7 @@ mod moderation;
 
 use crate::command::Command;
 use crate::config::DEV_MODULE;
-use crate::database::models::Server;
+use crate::utils::db::ServerInfo;
 
 pub const PROTECTED_MODULES: [&str; 2] = ["main", DEV_MODULE];
 
@@ -15,8 +15,12 @@ pub trait BotModule {
 }
 
 impl dyn BotModule {
-    pub fn enabled(&self, srv: &Server) -> bool {
-        srv.enabledmodules.contains(&self.name()) || PROTECTED_MODULES.contains(&self.name().as_str())
+    pub fn enabled(&self, info: &ServerInfo) -> bool {
+        match &info.server {
+            Some(server) => server.enabledmodules.contains(&self.name()) || PROTECTED_MODULES.contains(&self.name().as_str()),
+            None => true
+        }
+
     }
 }
 

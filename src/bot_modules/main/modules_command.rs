@@ -39,7 +39,7 @@ impl ModulesCommand {
         Ok(())
     }
 
-    fn show_module_details(&self, ctx: &Context, msg: &Message, args: &Vec<String>, srv: Server) -> Result<(), String> {
+    fn show_module_details(&self, ctx: &Context, msg: &Message, args: &Vec<String>, info: &ServerInfo) -> Result<(), String> {
         if args[0] == DEV_MODULE && !check_if_dev(msg) {
             return Err(String::from(
                 "This module is available only for developers!",
@@ -57,7 +57,7 @@ impl ModulesCommand {
                     **Enabled:** {}
                 "#,
                     module.desc(),
-                    module.enabled(&srv)
+                    module.enabled(&info)
                 ));
                 e.color(EMBED_REGULAR_COLOR);
                 e
@@ -91,7 +91,7 @@ impl ModulesCommand {
         Ok(())
     }
 
-    fn enable_module(&self, ctx: &Context, msg: &Message, args: &Vec<String>, mut server: Server)-> Result<(), String> {
+    fn enable_module(&self, ctx: &Context, msg: &Message, args: &Vec<String>, info: &ServerInfo)-> Result<(), String> {
         if args[0] == DEV_MODULE && !check_if_dev(msg) {
             return Err(String::from(
                 "This module is available only for developers!",
@@ -105,6 +105,7 @@ impl ModulesCommand {
         }
 
         let db = get_db_con().get().expect("Could not get db pool!");
+        let mut server = info.server.clone().unwrap();
         if args[1] == "enable" && !server.enabledmodules.contains(&args[0]) {
             server.enabledmodules.push(args[0].to_owned())
         } else if args[1] == "disable" {
@@ -140,11 +141,7 @@ impl Command for ModulesCommand {
     }
 
     fn desc(&self) -> String {
-        String::from("managing tool for modules.")
-    }
-
-    fn enabled(&self) -> bool {
-        true
+        String::from("Managing tool for modules.")
     }
 
     fn use_in_dm(&self) -> bool {
@@ -200,19 +197,19 @@ impl Command for ModulesCommand {
         None
     }
 
-    fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String> {
+    fn exe(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
         let args = get_args(msg.clone());
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => match routes {
                 Some(path) => {
-                    let s = server.unwrap();
                     match path.len() {
-                        1 => return self.show_module_details(ctx, msg, &args, s),
+                        1 => return self.show_module_details(ctx, msg, &args, info),
                         2 => {
                             if args[1] == "commands" {
-                                return self.module_commands(ctx, msg, &args, &s.prefix);
+                                let server = info.server.as_ref().unwrap();
+                                return self.module_commands(ctx, msg, &args, &server.prefix);
                             }
-                            return self.enable_module(ctx, msg, &args, s);
+                            return self.enable_module(ctx, msg, &args, info);
                         }
                         _ => return Err(String::from("Too many args!")),
                     }

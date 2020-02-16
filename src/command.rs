@@ -1,7 +1,7 @@
-use crate::database::models::Server;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::bot_modules::get_modules;
+use crate::bot_modules::{get_modules, PROTECTED_MODULES};
+use crate::utils::db::ServerInfo;
 
 pub const EMBED_REGULAR_COLOR: i32 = 714968;
 pub const EMBED_QUESTION_COLOR: i32 = 16772147;
@@ -33,12 +33,27 @@ pub struct CommandArg {
 pub trait Command {
     fn name(&self) -> String;
     fn desc(&self) -> String;
-    fn enabled(&self) -> bool;
     fn use_in_dm(&self) -> bool;
     fn args(&self) -> Option<Vec<CommandArg>>;
     fn perms(&self) -> Option<Vec<String>>;
     fn config(&self) -> Option<Vec<CommandConfig>>;
-    fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String>;
+    fn exe(&self, ctx: &Context, msg: &Message, server: &ServerInfo) -> Result<(), String>;
+}
+
+impl dyn Command {
+    pub fn enabled(&self, info: &ServerInfo) -> bool {
+        let mut exists = false;
+        if let Some(commands) = &info.commands {
+            for v in commands.iter() {
+                if v.command_name == self.name() {
+                    exists = true;
+                    break
+                }
+            }
+        }
+
+        exists || is_command_protected(&self.name()).unwrap()
+    }
 }
 
 pub fn get_args(msg: Message) -> Vec<String> {
@@ -186,15 +201,26 @@ pub fn parse_args(
     Err(String::from("Invalid arguments!"))
 }
 
-pub fn find_command(name: &str, server: &Server) -> Result<Box<dyn Command>, String> {
+pub fn find_command(name: &str, info: &ServerInfo) -> Result<Box<dyn Command>, String> {
     for m in get_modules() {
         for c in m.commands() {
             if c.name() == name {
-                if m.enabled(server) {
+                if m.enabled(info) {
                     return Ok(c)
                 } else {
                     return Err("Command is in disabled module!".to_string())
                 }
+            }
+        }
+    }
+    Err("Command does not exist!".to_string())
+}
+
+pub fn is_command_protected(name: &str) -> Result<bool, String> {
+    for m in get_modules() {
+        for c in m.commands() {
+            if c.name() == name {
+                return Ok(PROTECTED_MODULES.contains(&m.name().as_str()))
             }
         }
     }

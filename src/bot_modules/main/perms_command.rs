@@ -2,13 +2,13 @@ use crate::command::{
     get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR,
 };
 use crate::database::get_db_con;
-use crate::database::models::{Server, Role};
+use crate::database::models::Role;
 use crate::database::schema::roles;
 use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::database::schema::roles::columns::perms;
-use crate::utils::db::get_db_role;
+use crate::utils::db::{ServerInfo, get_db_role_by_id};
 use crate::utils::object_finding::get_role_from_id;
 use crate::utils::perms::{get_module_perms, perms_exists};
 
@@ -21,14 +21,14 @@ enum PermModifyOption {
 }
 
 impl PermsCommand {
-    fn get_role_perms(&self, ctx: &Context, msg: &Message, args: Vec<String>) -> Result<(), String> {
-        let role = if let Some(r) = get_role_from_id(ctx, msg, args[1].to_owned())? {
+    fn get_role_perms(&self, ctx: &Context, msg: &Message, args: Vec<String>, info: &ServerInfo) -> Result<(), String> {
+        let role = if let Some(r) = get_role_from_id(ctx, msg, args[0].to_owned())? {
             r
         } else {
             return Ok(())
         };
 
-        let db_role = if let Some(db_r) = get_db_role(msg.guild_id, role.id.to_string()) {
+        let db_role = if let Some(db_r) = get_db_role_by_id(info, role.id.to_string()) {
             db_r
         } else {
             return Err("Could not find role in the database!".to_string())
@@ -49,7 +49,7 @@ impl PermsCommand {
         Ok(())
     }
 
-    fn modify_perm (&self, ctx: &Context, msg: &Message, args: Vec<String>, modify_option: PermModifyOption) -> Result<(), String> {
+    fn modify_perm (&self, ctx: &Context, msg: &Message, args: Vec<String>, modify_option: PermModifyOption, info: &ServerInfo) -> Result<(), String> {
         let mut perms_to_modify = args[2..].to_vec();
         if !perms_exists(&perms_to_modify) {
             let mut modules_perms = Vec::new();
@@ -70,7 +70,7 @@ impl PermsCommand {
             return Ok(())
         };
 
-        let mut db_role = if let Some(db_r) = get_db_role(msg.guild_id, role.id.to_string()) {
+        let mut db_role = if let Some(db_r) = get_db_role_by_id(info, role.id.to_string()) {
             db_r
         } else {
             return Err("Could not find role in the database!".to_string())
@@ -113,12 +113,8 @@ impl Command for PermsCommand {
     }
 
     fn desc(&self) -> String {
-        String::from("permission management. You can provide permissions you want to add/remove/set to role or \
+        String::from("Permission management. You can provide permissions you want to add/remove/set to role or \
         just type module name and it will add/remove/set every permission from that module")
-    }
-
-    fn enabled(&self) -> bool {
-        true
     }
 
     fn use_in_dm(&self) -> bool {
@@ -176,19 +172,14 @@ impl Command for PermsCommand {
                 })),
             },
             CommandArg {
-                name: "get".to_string(),
-                desc: Some("gets role's permissions".to_string()),
-                option: None,
-                next: Some(Box::new(CommandArg {
-                    name: "<role>".to_string(),
-                    desc: None,
-                    option: Some(ArgOption::Role),
-                    next: None
-                })),
+                name: "<role>".to_string(),
+                desc: Some("shows role's permissions".to_string()),
+                option: Some(ArgOption::Role),
+                next: None
             },
             CommandArg{
                 name: "".to_string(),
-                desc: Some("Shows usage information".to_string()),
+                desc: Some("shows usage information".to_string()),
                 option: None,
                 next: None
             }
@@ -203,22 +194,22 @@ impl Command for PermsCommand {
         None
     }
 
-    fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String> {
+    fn exe(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
         let args = get_args(msg.clone());
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
                 match routes {
                     Some(path) => {
                         match path[0].name.as_str() {
-                            "add" => self.modify_perm(ctx, msg, args, PermModifyOption::Add)?,
-                            "remove" => self.modify_perm(ctx, msg, args, PermModifyOption::Remove)?,
-                            "get" => self.get_role_perms(ctx, msg, args)?,
-                            _ => self.modify_perm(ctx, msg, args, PermModifyOption::Set)?
+                            "add" => self.modify_perm(ctx, msg, args, PermModifyOption::Add, info)?,
+                            "remove" => self.modify_perm(ctx, msg, args, PermModifyOption::Remove, info)?,
+                            "<role>" => self.get_role_perms(ctx, msg, args, info)?,
+                            _ => self.modify_perm(ctx, msg, args, PermModifyOption::Set, info)?
                         }
                     }
                     None => {
                         let help_cmd = super::help_command::HelpCommand{};
-                        help_cmd.show_cmd_details(ctx, msg, server, self.name())?;
+                        help_cmd.show_cmd_details(ctx, msg, info, self.name())?;
                     }
                 }
             }

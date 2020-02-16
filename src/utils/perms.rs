@@ -1,10 +1,11 @@
-use crate::database::models::{Role, Server};
+use crate::database::models::Role;
 use crate::database::get_db_con;
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use crate::config::DEV_MODULE;
 use crate::bot_modules::get_modules;
-use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl};
+use diesel::{RunQueryDsl, BelongingToDsl};
+use crate::utils::db::ServerInfo;
 
 pub fn get_module_perms(module_name: &str) -> Option<Vec<String>> {
     for m in get_modules().iter() {
@@ -47,12 +48,7 @@ pub fn perms_exists(perms: &Vec<String>) -> bool {
     exists
 }
 
-pub fn has_perms(
-    ctx: &Context,
-    msg: &Message,
-    server: Server,
-    perms: &Option<Vec<String>>,
-) -> bool {
+pub fn has_perms(ctx: &Context, msg: &Message, info: &ServerInfo, perms: &Option<Vec<String>>) -> bool {
     let guild = match msg.guild(ctx.clone().cache) {
         Some(g) => g,
         None => return true,
@@ -63,7 +59,7 @@ pub fn has_perms(
 
     if perms.is_some() && !is_owner && !is_admin {
         let db = get_db_con().get().expect("Could not get db pool!");
-        let server_roles: Vec<Role> = Role::belonging_to(&server)
+        let server_roles: Vec<Role> = Role::belonging_to(&info.server.clone().unwrap())
             .load::<Role>(&db)
             .expect("Could not get roles from guild");
         let mut has_perms = false;

@@ -16,7 +16,7 @@ impl BotModule for MainModule {
     }
 
     fn desc(&self) -> String {
-        String::from("main module that provides basic commands for this bot.")
+        String::from("Main module that provides basic commands for this bot.")
     }
 
     fn commands(&self) -> Vec<Box<dyn Command>> {

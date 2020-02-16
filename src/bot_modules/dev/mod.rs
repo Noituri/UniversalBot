@@ -9,7 +9,7 @@ impl BotModule for DevModule {
     }
 
     fn desc(&self) -> String {
-        String::from("provides commands that can be used by this bot developers.")
+        String::from("Provides commands that can be used by this bot developers.")
     }
 
     fn commands(&self) -> Vec<Box<dyn Command>> {

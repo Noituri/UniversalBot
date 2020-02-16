@@ -8,15 +8,16 @@ use crate::database::schema::servers::columns::prefix;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
+use crate::utils::db::ServerInfo;
 
 pub struct PrefixCommand;
 
 impl PrefixCommand {
-    fn show_prefix(&self, ctx: &Context, msg: &Message, server: &Server) -> Result<(), String> {
+    fn show_prefix(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Prefix");
-                e.description(format!("Current prefix: `{}`", server.prefix));
+                e.description(format!("Current prefix: `{}`", info.server.as_ref().unwrap().prefix));
                 e.color(EMBED_REGULAR_COLOR);
                 e
             });
@@ -25,19 +26,14 @@ impl PrefixCommand {
         Ok(())
     }
 
-    fn set_prefix(
-        &self,
-        ctx: &Context,
-        msg: &Message,
-        server: &Server,
-        new_prefix: &str,
-    ) -> Result<(), String> {
+    fn set_prefix(&self, ctx: &Context, msg: &Message, info: &ServerInfo, new_prefix: &str) -> Result<(), String> {
         if new_prefix.trim() == "" {
             return Err(String::from("Prefix can't be empty!"));
         }
 
         let db = get_db_con().get().expect("Could not get db pool!");
 
+        let server = info.server.as_ref().unwrap();
         let result = diesel::update(servers::dsl::servers.find(server.id))
             .set(prefix.eq(new_prefix))
             .get_result::<Server>(&db);
@@ -66,11 +62,7 @@ impl Command for PrefixCommand {
     }
 
     fn desc(&self) -> String {
-        String::from("prefix management.")
-    }
-
-    fn enabled(&self) -> bool {
-        true
+        String::from("Prefix manager.")
     }
 
     fn use_in_dm(&self) -> bool {
@@ -107,20 +99,19 @@ impl Command for PrefixCommand {
         None
     }
 
-    fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String> {
+    fn exe(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
         let args = get_args(msg.clone());
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
-                let srv = server.unwrap();
                 match routes {
                     Some(path) => {
                         if path.len() == 0 {
-                            self.show_prefix(ctx, msg, &srv)?;
+                            self.show_prefix(ctx, msg, info)?;
                         } else {
-                            self.set_prefix(ctx, msg, &srv, &args[1])?;
+                            self.set_prefix(ctx, msg, info, &args[1])?;
                         }
                     }
-                    None => return self.show_prefix(ctx, msg, &srv),
+                    None => return self.show_prefix(ctx, msg, info),
                 }
             }
             Err(why) => return Err(why),

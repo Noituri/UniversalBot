@@ -1,22 +1,22 @@
-use super::super::*;
-use crate::command::{get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR, find_command};
-use crate::config::DEV_MODULE;
+use crate::command::{get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR, find_command, is_command_protected};
 use crate::database::get_db_con;
 use crate::database::models::*;
 use crate::database::schema::commands::enabled_channels;
 use crate::database::schema::*;
-use crate::utils::check_if_dev;
 use diesel::prelude::*;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::utils::db::get_db_command;
+use crate::utils::db::{ServerInfo, get_db_command_by_name};
 use crate::utils::object_finding::get_channel_from_id;
 
 pub struct CmdCommand;
 
 impl CmdCommand {
-   fn change_command(&self, ctx: &Context, msg: &Message, args: Vec<String>, srv: Server, is_channel: bool) -> Result<(), String> {
-       find_command(&args[0], &srv)?;
+   fn change_command(&self, ctx: &Context, msg: &Message, args: Vec<String>, info: &ServerInfo, is_channel: bool) -> Result<(), String> {
+       find_command(&args[0], info)?;
+       if is_command_protected(&args[0])? {
+           return Err("Command is protected. It can't be modified!".to_string())
+       }
 
        let channel = if is_channel {
            match get_channel_from_id(ctx, msg, args[2].to_owned())? {
@@ -27,7 +27,7 @@ impl CmdCommand {
            msg.channel_id.0.to_string()
        };
 
-       let mut cmd = match get_db_command(msg.guild_id, args[0].to_string()) {
+       let mut cmd = match get_db_command_by_name(info, args[0].to_string()) {
            Some(c) => c,
            None => return Err("Could not find command in the database!".to_string())
        };
@@ -60,9 +60,12 @@ impl CmdCommand {
        Ok(())
    }
 
-    fn get_cmd_info(&self, ctx: &Context, msg: &Message, cmd_name: String, srv: Server) -> Result<(), String> {
-        find_command(&cmd_name, &srv)?;
-        let cmd = match get_db_command(msg.guild_id, cmd_name) {
+    fn get_cmd_info(&self, ctx: &Context, msg: &Message, cmd_name: String, info: &ServerInfo) -> Result<(), String> {
+        find_command(&cmd_name, info)?;
+        if is_command_protected(&cmd_name)? {
+            return Err("Command is protected. Enabled in every channel by default!".to_string())
+        }
+        let cmd = match get_db_command_by_name(info, cmd_name) {
             Some(c) => c,
             None => return Err("Could not get this command from the database".to_string())
         };
@@ -90,10 +93,6 @@ impl Command for CmdCommand {
 
     fn desc(&self) -> String {
         String::from("Managing tool for commands.")
-    }
-
-    fn enabled(&self) -> bool {
-        true
     }
 
     fn use_in_dm(&self) -> bool {
@@ -152,19 +151,21 @@ impl Command for CmdCommand {
         None
     }
 
-    fn exe(&self, ctx: &Context, msg: &Message, server: Option<Server>) -> Result<(), String> {
+    fn exe(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
         let args = get_args(msg.clone());
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => match routes {
                 Some(path) => {
-                    let s = server.unwrap();
                     match path.len() {
-                        2 => self.change_command(ctx, msg, args, s, false),
-                        3 => self.change_command(ctx, msg, args, s, true),
-                        _ => self.get_cmd_info(ctx, msg, args[0].to_owned(), s)
+                        2 => self.change_command(ctx, msg, args, info, false),
+                        3 => self.change_command(ctx, msg, args, info, true),
+                        _ => self.get_cmd_info(ctx, msg, args[0].to_owned(), info)
                     }
                 }
-                None => Ok(()),
+                None => {
+                    let help_cmd = super::help_command::HelpCommand{};
+                    help_cmd.show_cmd_details(ctx, msg, info, self.name())
+                },
             },
             Err(why) => return Err(why),
         }

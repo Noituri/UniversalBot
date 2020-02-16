@@ -1,8 +1,8 @@
 use crate::command::{Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR};
 use crate::config::VERSION;
-use crate::database::models::Server;
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
+use crate::utils::db::ServerInfo;
 
 pub struct AboutCommand;
 
@@ -12,11 +12,7 @@ impl Command for AboutCommand {
     }
 
     fn desc(&self) -> String {
-        String::from("shows information about this bot.")
-    }
-
-    fn enabled(&self) -> bool {
-        true
+        String::from("Shows information about this bot.")
     }
 
     fn use_in_dm(&self) -> bool {
@@ -35,7 +31,7 @@ impl Command for AboutCommand {
         None
     }
 
-    fn exe(&self, ctx: &Context, msg: &Message, _: Option<Server>) -> Result<(), String> {
+    fn exe(&self, ctx: &Context, msg: &Message, _: &ServerInfo) -> Result<(), String> {
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("About");
