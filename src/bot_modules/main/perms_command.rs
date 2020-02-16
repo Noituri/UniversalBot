@@ -114,7 +114,7 @@ impl Command for PermsCommand {
 
     fn desc(&self) -> String {
         String::from("Permission management. You can provide permissions you want to add/remove/set to role or \
-        just type module name and it will add/remove/set every permission from that module")
+        just type module name and it will add/remove/set every permission from that module.")
     }
 
     fn use_in_dm(&self) -> bool {

@@ -95,7 +95,7 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
                     if message.len() != 22 {
                         return Ok(true);
                     }
-                    if message[3..message.len()-1].parse::<f64>().is_err() {
+                    if message[2..message.len()-1].parse::<f64>().is_err() {
                         return Ok(true);
                     }
                 }
