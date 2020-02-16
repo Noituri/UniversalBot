@@ -12,10 +12,6 @@ impl BotModule for DevModule {
         String::from("provides commands that can be used by this bot developers.")
     }
 
-    fn enabled(&self) -> bool {
-        false
-    }
-
     fn commands(&self) -> Vec<Box<dyn Command>> {
         vec![]
     }

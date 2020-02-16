@@ -190,7 +190,7 @@ pub fn find_command(name: &str, server: &Server) -> Result<Box<dyn Command>, Str
     for m in get_modules() {
         for c in m.commands() {
             if c.name() == name {
-                if m.enabled() {
+                if m.enabled(server) {
                     return Ok(c)
                 } else {
                     return Err("Command is in disabled module!".to_string())

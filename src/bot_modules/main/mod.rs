@@ -19,10 +19,6 @@ impl BotModule for MainModule {
         String::from("main module that provides basic commands for this bot.")
     }
 
-    fn enabled(&self) -> bool {
-        true
-    }
-
     fn commands(&self) -> Vec<Box<dyn Command>> {
         vec![
             Box::new(help_command::HelpCommand {}),

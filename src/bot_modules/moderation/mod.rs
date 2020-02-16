@@ -12,10 +12,6 @@ impl BotModule for ModerationModule {
         String::from("moderation commands.")
     }
 
-    fn enabled(&self) -> bool {
-        true
-    }
-
     fn commands(&self) -> Vec<Box<dyn Command>> {
         vec![]
     }

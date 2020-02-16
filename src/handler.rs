@@ -122,8 +122,11 @@ impl EventHandler for Handler {
         }
 
         for m in super::get_modules().iter() {
-            if !m.enabled() {
-                continue;
+            match &guild {
+                Some(g) => if !m.enabled(g) {
+                    continue
+                }
+                None => {}
             }
 
             for c in m.commands().iter() {

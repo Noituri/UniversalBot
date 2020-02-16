@@ -39,12 +39,7 @@ impl ModulesCommand {
         Ok(())
     }
 
-    fn show_module_details(
-        &self,
-        ctx: &Context,
-        msg: &Message,
-        args: &Vec<String>,
-    ) -> Result<(), String> {
+    fn show_module_details(&self, ctx: &Context, msg: &Message, args: &Vec<String>, srv: Server) -> Result<(), String> {
         if args[0] == DEV_MODULE && !check_if_dev(msg) {
             return Err(String::from(
                 "This module is available only for developers!",
@@ -62,7 +57,7 @@ impl ModulesCommand {
                     **Enabled:** {}
                 "#,
                     module.desc(),
-                    module.enabled()
+                    module.enabled(&srv)
                 ));
                 e.color(EMBED_REGULAR_COLOR);
                 e
@@ -72,13 +67,7 @@ impl ModulesCommand {
         Ok(())
     }
 
-    fn module_commands(
-        &self,
-        ctx: &Context,
-        msg: &Message,
-        args: &Vec<String>,
-        prefix: &str,
-    ) -> Result<(), String> {
+    fn module_commands(&self, ctx: &Context, msg: &Message, args: &Vec<String>, prefix: &str) -> Result<(), String> {
         if args[0] == DEV_MODULE && !check_if_dev(msg) {
             return Err(String::from(
                 "This module is available only for developers!",
@@ -102,13 +91,7 @@ impl ModulesCommand {
         Ok(())
     }
 
-    fn enable_module(
-        &self,
-        ctx: &Context,
-        msg: &Message,
-        args: &Vec<String>,
-        mut server: Server,
-    ) -> Result<(), String> {
+    fn enable_module(&self, ctx: &Context, msg: &Message, args: &Vec<String>, mut server: Server)-> Result<(), String> {
         if args[0] == DEV_MODULE && !check_if_dev(msg) {
             return Err(String::from(
                 "This module is available only for developers!",
@@ -141,7 +124,7 @@ impl ModulesCommand {
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Module management");
-                e.description(format!("Module {} has been {}d", args[0], args[1]));
+                e.description(format!("Module **{}** has been {}d", args[0], args[1]));
                 e.color(EMBED_REGULAR_COLOR);
                 e
             });
@@ -224,7 +207,7 @@ impl Command for ModulesCommand {
                 Some(path) => {
                     let s = server.unwrap();
                     match path.len() {
-                        1 => return self.show_module_details(ctx, msg, &args),
+                        1 => return self.show_module_details(ctx, msg, &args, s),
                         2 => {
                             if args[1] == "commands" {
                                 return self.module_commands(ctx, msg, &args, &s.prefix);
