@@ -8,11 +8,9 @@ use serenity::model::id::GuildId;
 use serenity::model::prelude::Message;
 use serenity::prelude::Context;
 use serenity::model::guild;
-use crate::handler::{State, FindsAwaitingAnswer, FindType};
+use crate::handler::{FindsAwaitingAnswer, FindType};
 use crate::handler::STATE;
-use std::sync::MutexGuard;
 use crate::database::schema::roles;
-use diesel::associations::HasTable;
 use crate::command::EMBED_QUESTION_COLOR;
 use crate::bot_modules::get_modules;
 use crate::config::DEV_MODULE;
@@ -163,14 +161,8 @@ pub fn check_if_dev(msg: &Message) -> bool {
 }
 
 pub fn find_role(ctx: &Context, msg: &Message, g_roles: Vec<guild::Role>, find_text: &str) -> Result<u64, String> {
-    let guild = if let Some(g) = msg.guild_id {
-        g
-    } else {
-        return Err("Could not retrieve guild info!".to_string())
-    };
-
     let mut matched_roles: Vec<(u64, String)> = Vec::new();
-    for (i, v) in g_roles.iter().enumerate() {
+    for v in g_roles.iter() {
         if v.name.to_lowercase().contains(&find_text.to_lowercase()) {
             matched_roles.push((v.id.0, format!("**{}.** {}\n", matched_roles.len()+1, v.name)))
         }
@@ -208,7 +200,7 @@ pub fn find_role(ctx: &Context, msg: &Message, g_roles: Vec<guild::Role>, find_t
                 }
             }
 
-            msg.channel_id.send_message(&ctx.http, |m| {
+            let _ = msg.channel_id.send_message(&ctx.http, |m| {
                 m.embed(|e| {
                     e.title("Which role did you have in mind?");
                     e.color(EMBED_QUESTION_COLOR);
@@ -231,8 +223,8 @@ pub fn get_role_from_id(ctx: &Context, msg: &Message, id: String) -> Result<Opti
     if msg.mention_roles.len() != 0 {
         tmp_id = msg.mention_roles[0].to_string();
     }
-    let g_roles = if let Ok(guildRoles) = ctx.http.get_guild_roles(msg.guild_id.unwrap().0) {
-        guildRoles
+    let g_roles = if let Ok(guild_roles) = ctx.http.get_guild_roles(msg.guild_id.unwrap().0) {
+        guild_roles
     } else {
         return Err("Could not retrieve guild roles!".to_string())
     };

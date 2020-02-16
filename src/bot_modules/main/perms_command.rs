@@ -3,8 +3,7 @@ use crate::command::{
 };
 use crate::database::get_db_con;
 use crate::database::models::{Server, Role};
-use crate::database::schema::{servers, roles};
-use crate::database::schema::servers::columns::prefix;
+use crate::database::schema::roles;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
@@ -27,7 +26,7 @@ impl PermsCommand {
             return Ok(())
         };
 
-        let mut db_role = if let Some(db_r) = get_db_role(msg.guild_id, role.id.to_string()) {
+        let db_role = if let Some(db_r) = get_db_role(msg.guild_id, role.id.to_string()) {
             db_r
         } else {
             return Err("Could not find role in the database!".to_string())
@@ -77,7 +76,7 @@ impl PermsCommand {
 
         match modify_option {
             PermModifyOption::Add => {
-                for (i, p) in perms_to_modify.iter().enumerate() {
+                for p in perms_to_modify.iter() {
                     if !db_role.perms.contains(p) {
                         db_role.perms.push(p.to_owned());
                     }
@@ -206,7 +205,6 @@ impl Command for PermsCommand {
         let args = get_args(msg.clone());
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
-                let srv = server.clone().unwrap();
                 match routes {
                     Some(path) => {
                         match path[0].name.as_str() {
@@ -218,7 +216,7 @@ impl Command for PermsCommand {
                     }
                     None => {
                         let help_cmd = super::help_command::HelpCommand{};
-                        help_cmd.show_cmd_details(ctx, msg, server, self.name());
+                        help_cmd.show_cmd_details(ctx, msg, server, self.name())?;
                     }
                 }
             }

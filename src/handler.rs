@@ -4,13 +4,14 @@ use log::{error, info};
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 use serenity::{
-    model::{channel::Message, gateway::Ready, guild},
+    model::{channel::Message, gateway::Ready},
     prelude::*,
 };
 use chrono::{DateTime, Utc, Duration};
 
 pub struct Handler;
 
+#[allow(dead_code)]
 #[derive(Clone)]
 pub enum FindType {
     Role,
@@ -81,7 +82,7 @@ impl Handler {
             let mut state = STATE.lock().unwrap();
             for (i, v) in state.role_finds_awaiting.iter().enumerate() {
                 if v.who == msg.author.id.0 {
-                    if answer < 0 || answer > v.finds.len() {
+                    if answer > v.finds.len() {
                         self.send_error(ctx, msg.to_owned(), "Your answer does not match any found roles!");
                         return true;
                     }
