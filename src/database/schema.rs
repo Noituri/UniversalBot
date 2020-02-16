@@ -13,7 +13,15 @@ table! {
         guildid -> Varchar,
         prefix -> Varchar,
         enabledmodules -> Array<Text>,
-        disabledcommands -> Array<Text>,
+    }
+}
+
+table! {
+    commands (id) {
+        id -> Int4,
+        server_id -> Int4,
+        command_name -> Varchar,
+        enabled_channels -> Array<Text>
     }
 }
 

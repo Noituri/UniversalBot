@@ -7,7 +7,6 @@ pub struct Server {
     pub guildid: String,
     pub prefix: String,
     pub enabledmodules: Vec<String>,
-    pub disabledcommands: Vec<String>,
 }
 
 #[derive(Insertable)]
@@ -15,7 +14,6 @@ pub struct Server {
 pub struct NewServer {
     pub guildid: String,
     pub enabledmodules: Vec<String>,
-    pub disabledcommands: Vec<String>,
 }
 
 #[derive(Identifiable, Queryable, Associations, Clone)]
@@ -35,4 +33,23 @@ pub struct NewRole {
     pub server_id: i32,
     pub role_id: String,
     pub perms: Vec<String>
+}
+
+#[derive(Identifiable, Queryable, Associations, Clone)]
+#[belongs_to(Server, foreign_key = "server_id")]
+#[table_name = "commands"]
+pub struct DBCommand {
+    pub id: i32,
+    pub server_id: i32,
+    pub command_name: String,
+    pub enabled_channels: Vec<String>
+}
+
+#[derive(Insertable, Associations)]
+#[belongs_to(Server, foreign_key = "server_id")]
+#[table_name = "command"]
+pub struct NewDBCommand {
+    pub server_id: i32,
+    pub command_name: String,
+    pub enabled_channels: Vec<String>
 }
