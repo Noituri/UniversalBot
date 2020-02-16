@@ -28,11 +28,11 @@ impl CmdCommand {
            return Err("Could not find command in the database!".to_string())
        };
 
-       if args[1] == "enable" && !cmd.enabled_channels.contains(&args[0]) {
-           cmd.enabled_channels.push(args[0].to_owned())
+       if args[1] == "enable" && !cmd.enabled_channels.contains(&channel) {
+           cmd.enabled_channels.push(channel)
        } else if args[1] == "disable" {
            for (i, c) in cmd.enabled_channels.iter().enumerate() {
-               if c == &args[0] {
+               if c == &channel {
                    cmd.enabled_channels.remove(i);
                    break;
                }
@@ -47,7 +47,7 @@ impl CmdCommand {
        let _ = msg.channel_id.send_message(&ctx.http, |m| {
            m.embed(|e| {
                e.title("Commands management");
-               e.description(format!("Command {} has been {}d", args[0], args[1]));
+               e.description(format!("Command **{}** has been {}d", args[0], args[1]));
                e.color(EMBED_REGULAR_COLOR);
                e
            });
