@@ -19,8 +19,8 @@ pub struct FindsAwaitingAnswer {
     pub who: u64,
     pub when: DateTime<Utc>,
     pub finds: Vec<(u64, String)>,
-    pub replace_text: String,
-    pub msg_content: String,
+    pub args: Vec<String>,
+    pub replace_index: usize,
 }
 
 pub trait FindObject {
@@ -52,7 +52,9 @@ impl FindObject for User {
     }
 }
 
-pub fn find_object<T: FindObject>(ctx: &Context, msg: &Message, objects: Vec<T>, find_text: &str, obj_type: FindType) -> Result<u64, String> {
+pub fn find_object<T>(ctx: &Context, msg: &Message, objects: Vec<T>, args: &Vec<String>, a_index: usize, obj_type: FindType) -> Result<u64, String>
+    where T: FindObject {
+    let find_text = &args[a_index];
     let obj_name = match obj_type {
         FindType::Channel => "channel",
         FindType::Role => "role",
@@ -79,8 +81,8 @@ pub fn find_object<T: FindObject>(ctx: &Context, msg: &Message, objects: Vec<T>,
                     who: msg.author.id.0,
                     when: Utc::now(),
                     finds: matched_objects,
-                    replace_text: find_text.to_owned(),
-                    msg_content: msg.content.to_owned()
+                    args: args.clone(),
+                    replace_index: a_index
                 };
 
                 let mut exists = false;
@@ -115,8 +117,8 @@ pub fn find_object<T: FindObject>(ctx: &Context, msg: &Message, objects: Vec<T>,
     Ok(0)
 }
 
-pub fn get_role_from_id(ctx: &Context, msg: &Message, id: String) -> Result<Option<guild::Role>, String> {
-    let mut tmp_id = id;
+pub fn get_role_from_id(ctx: &Context, msg: &Message, mut args: Vec<String>, a_index: usize) -> Result<Option<guild::Role>, String> {
+    let mut tmp_id = args[a_index].to_owned();
     if msg.mention_roles.len() != 0 {
         tmp_id = msg.mention_roles[0].to_string();
     }
@@ -132,15 +134,16 @@ pub fn get_role_from_id(ctx: &Context, msg: &Message, id: String) -> Result<Opti
         }
     }
 
-    let found_role = find_object(ctx, msg, g_roles,&tmp_id, FindType::Role)?;
+    let found_role = find_object(ctx, msg, g_roles, &args, a_index,FindType::Role)?;
     if found_role != 0 {
-        return get_role_from_id(ctx, msg, found_role.to_string())
+        args[a_index] = found_role.to_string();
+        return get_role_from_id(ctx, msg, args, a_index)
     }
     Ok(None)
 }
 
-pub fn get_channel_from_id(ctx: &Context, msg: &Message, id: String) -> Result<Option<GuildChannel>, String> {
-    let mut tmp_id = id;
+pub fn get_channel_from_id(ctx: &Context, msg: &Message, mut args: Vec<String>, a_index: usize) -> Result<Option<GuildChannel>, String> {
+    let mut tmp_id = args[a_index].to_owned();
     match &msg.mention_channels {
         Some(mch) => if mch.len() != 0 {
             tmp_id = mch[0].id.to_string();
@@ -159,9 +162,10 @@ pub fn get_channel_from_id(ctx: &Context, msg: &Message, id: String) -> Result<O
         }
     }
 
-    let found_role = find_object(ctx, msg, channels,&tmp_id, FindType::Channel)?;
+    let found_role = find_object(ctx, msg, channels, &args, a_index, FindType::Channel)?;
     if found_role != 0 {
-        return get_channel_from_id(ctx, msg, found_role.to_string())
+        args[a_index] = found_role.to_string();
+        return get_channel_from_id(ctx, msg, args, a_index)
     }
     Ok(None)
 }

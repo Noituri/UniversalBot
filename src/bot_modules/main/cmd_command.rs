@@ -19,7 +19,7 @@ impl CmdCommand {
        }
 
        let channel = if is_channel {
-           match get_channel_from_id(ctx, msg, args[2].to_owned())? {
+           match get_channel_from_id(ctx, msg, get_args(msg.to_owned(), true), 3)? {
                Some(ch) => ch.id.0.to_string(),
                None => return Ok(())
            }
@@ -152,7 +152,7 @@ impl Command for CmdCommand {
     }
 
     fn exe(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
-        let args = get_args(msg.clone());
+        let args = get_args(msg.clone(), false);
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => match routes {
                 Some(path) => {

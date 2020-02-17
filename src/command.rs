@@ -56,19 +56,23 @@ impl dyn Command {
     }
 }
 
-pub fn get_args(msg: Message) -> Vec<String> {
+pub fn get_args(msg: Message, include_cmd: bool) -> Vec<String> {
     let mut args: Vec<String> = msg
         .content
         .trim()
         .split_whitespace()
         .map(|a| a.to_string())
         .collect();
-    if msg.content.starts_with("<@") && args.len() != 0 {
-        args.remove(0);
+
+    if !include_cmd {
+        if msg.content.starts_with("<@") && args.len() != 0 {
+            args.remove(0);
+        }
+        if args.len() != 0 {
+            args.remove(0);
+        }
     }
-    if args.len() != 0 {
-        args.remove(0);
-    }
+
     args
 }
 

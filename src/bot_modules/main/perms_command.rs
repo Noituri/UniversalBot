@@ -21,8 +21,8 @@ enum PermModifyOption {
 }
 
 impl PermsCommand {
-    fn get_role_perms(&self, ctx: &Context, msg: &Message, args: Vec<String>, info: &ServerInfo) -> Result<(), String> {
-        let role = if let Some(r) = get_role_from_id(ctx, msg, args[0].to_owned())? {
+    fn get_role_perms(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
+        let role = if let Some(r) = get_role_from_id(ctx, msg, get_args(msg.to_owned(), true), 1)? {
             r
         } else {
             return Ok(())
@@ -64,7 +64,7 @@ impl PermsCommand {
             perms_to_modify = modules_perms;
         }
 
-        let role = if let Some(r) = get_role_from_id(ctx, msg, args[1].to_owned())? {
+        let role = if let Some(r) = get_role_from_id(ctx, msg, get_args(msg.to_owned(), true), 2)? {
             r
         } else {
             return Ok(())
@@ -195,7 +195,7 @@ impl Command for PermsCommand {
     }
 
     fn exe(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
-        let args = get_args(msg.clone());
+        let args = get_args(msg.clone(), false);
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
                 match routes {
@@ -203,7 +203,7 @@ impl Command for PermsCommand {
                         match path[0].name.as_str() {
                             "add" => self.modify_perm(ctx, msg, args, PermModifyOption::Add, info)?,
                             "remove" => self.modify_perm(ctx, msg, args, PermModifyOption::Remove, info)?,
-                            "<role>" => self.get_role_perms(ctx, msg, args, info)?,
+                            "<role>" => self.get_role_perms(ctx, msg, info)?,
                             _ => self.modify_perm(ctx, msg, args, PermModifyOption::Set, info)?
                         }
                     }

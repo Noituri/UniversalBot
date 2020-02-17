@@ -57,8 +57,8 @@ impl Handler {
             who: 0,
             when: Utc::now(),
             finds: vec![],
-            replace_text: "".to_owned(),
-            msg_content: "".to_string(),
+            args: vec![],
+            replace_index: 0
         };
 
         {
@@ -81,12 +81,8 @@ impl Handler {
             return false;
         }
 
-        // TODO: better handling this replacing
-        msg.content = picked.msg_content.replacen(
-            &picked.replace_text,
-            &picked.finds[answer - 1].0.to_string(),
-            1,
-        );
+        picked.args[picked.replace_index] = picked.finds[answer-1].0.to_string();
+        msg.content = picked.args.join(" ");
 
         false
     }
@@ -102,6 +98,8 @@ impl EventHandler for Handler {
         if self.check_awaiting_answers(ctx.to_owned(), &mut msg) {
             return;
         }
+
+        println!("{}", msg.content);
 
         let info = ServerInfo::new(msg.guild_id);
         let prefix = if msg.content.starts_with(&format!("<@{}> ", ctx.cache.read().user.id)) {

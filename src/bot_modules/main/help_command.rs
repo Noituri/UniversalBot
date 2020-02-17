@@ -233,7 +233,7 @@ impl Command for HelpCommand {
     }
 
     fn exe(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
-        let args = get_args(msg.clone());
+        let args = get_args(msg.clone(), false);
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => match routes {
                 Some(path) => {
