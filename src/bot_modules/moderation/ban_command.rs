@@ -9,15 +9,19 @@ use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::database::schema::roles::columns::perms;
 use crate::utils::db::{ServerInfo, get_db_role_by_id};
-use crate::utils::object_finding::get_role_from_id;
+use crate::utils::object_finding::{get_role_from_id, get_member_from_id};
 use crate::utils::perms::{get_module_perms, perms_exists};
 
 pub struct BanCommand;
 
 impl BanCommand {
     fn ban(&self, ctx: &Context, msg: &Message, args: Vec<CommandArg>) -> Result<(), String> {
+        let member = match get_member_from_id(ctx, msg, get_args(msg.to_owned(), true), 1)? {
+            Some(m) => m,
+            None => return Ok(())
+        };
         args.iter().for_each(|a| println!("{}", a.name));
-
+        println!("{}", member.display_name());
         Ok(())
     }
 }

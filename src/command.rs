@@ -118,18 +118,18 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
                 }
             },
             ArgOption::User => {
-                if message.starts_with("<@") || message.ends_with(">") {
-                    if message.len() != 21 {
-                        return Ok(true);
-                    }
-                    if message[2..message.len()-1].parse::<f64>().is_err() {
-                        return Ok(true);
-                    }
-                } else if message.starts_with("<@!") || message.ends_with(">") {
+                if message.starts_with("<@!") || message.ends_with(">") {
                     if message.len() != 22 {
                         return Ok(true);
                     }
                     if message[3..message.len()-1].parse::<f64>().is_err() {
+                        return Ok(true);
+                    }
+                } else if message.starts_with("<@") || message.ends_with(">") {
+                    if message.len() != 21 {
+                        return Ok(true);
+                    }
+                    if message[2..message.len()-1].parse::<f64>().is_err() {
                         return Ok(true);
                     }
                 }
@@ -201,7 +201,6 @@ pub fn parse_args(
         let mut next_arg = a.next.as_ref();
         'nextArg: while next_arg.is_some() {
             let na = next_arg.unwrap();
-            println!("PARSING: {}", na.name);
             if depth >= message_args.len() - 1 {
                 if na.is_optional() {
                     break

@@ -5,6 +5,10 @@ use serenity::model::guild;
 use chrono::{Utc, DateTime};
 use serenity::model::user::User;
 use crate::handler::STATE;
+use std::borrow::Borrow;
+use serenity::model::id::{GuildId, UserId};
+use std::str::FromStr;
+use serenity::model::guild::Member;
 
 #[allow(dead_code)]
 #[derive(Clone)]
@@ -25,32 +29,39 @@ pub struct FindsAwaitingAnswer {
 
 pub trait FindObject {
     fn get_id(&self) -> u64;
-    fn get_name(&self) -> &str;
+    fn get_name(&self) -> String;
 }
 impl FindObject for GuildChannel {
     fn get_id(&self) -> u64 {
         self.id.0
     }
-    fn get_name(&self) -> &str {
-        &self.name
+    fn get_name(&self) -> String {
+        self.name.to_owned()
     }
 }
 impl FindObject for guild::Role {
     fn get_id(&self) -> u64 {
         self.id.0
     }
-    fn get_name(&self) -> &str {
-        &self.name
+    fn get_name(&self) -> String {
+        self.name.to_owned()
     }
 }
 impl FindObject for guild::Member {
     fn get_id(&self) -> u64 {
         self.user_id().0
     }
-    fn get_name(&self) -> &str {
-        let user = &self.user.read().name;
-//        &user.name.to_owned()
-        ""
+    fn get_name(&self) -> String {
+        self.user.read().name.to_owned()
+    }
+}
+
+impl FindObject for &guild::Member {
+    fn get_id(&self) -> u64 {
+        self.user_id().0
+    }
+    fn get_name(&self) -> String {
+        self.user.read().name.to_owned()
     }
 }
 
@@ -172,29 +183,63 @@ pub fn get_channel_from_id(ctx: &Context, msg: &Message, mut args: Vec<String>, 
     Ok(None)
 }
 
-pub fn get_user_from_id(ctx: &Context, msg: &Message, mut args: Vec<String>, a_index: usize) -> Result<Option<User>, String> {
-    if msg.mentions.len() > 0 {
-        return Ok(Some(msg.mentions[0].to_owned()))
-    }
+pub fn get_member_from_id(ctx: &Context, msg: &Message, mut args: Vec<String>, a_index: usize) -> Result<Option<guild::Member>, String> {
+    let tmp_id =  if msg.mentions.len() > 0 {
+        msg.mentions[0].id.to_string()
+    } else {
+        args[a_index].to_owned()
+    };
 
-    let mut tmp_id = args[a_index].to_owned();
 
-    let members = match ctx.http.get_guild_members(msg.guild_id.unwrap().0, None, None) {
-        Ok(m) => m,
-        Err(_) => return Err("Could not retrieve guild members!".to_string())
+    let members: Vec<Member> = match msg.guild(&ctx.cache) {
+        Some(g) => {
+            let guild = g.read();
+            if let Ok(u) = UserId::from_str(&tmp_id) {
+                if let Some(m) = guild.members.get(&u) {
+                    return Ok(Some(m.clone()))
+                }
+            }
+
+            guild.members_username_containing(&tmp_id, false, false)
+                .iter()
+                .map(|m| m.clone())
+                .cloned()
+                .collect()
+        },
+        None => {
+            get_guild_members(ctx, msg.guild_id.unwrap())?
+        },
     };
 
     for v in members.iter() {
-        let user = v.user.clone().into_inner();
-        if &user.id.to_string() == &tmp_id {
-            return Ok(Some(user.clone()))
+        if v.user_id().to_string() == tmp_id {
+            return Ok(Some(v.clone().clone()))
         }
     }
 
-    let found_user = find_object(ctx, msg, members, &args, a_index, FindType::Channel)?;
+    let found_user = find_object(ctx, msg, members, &args, a_index, FindType::User)?;
     if found_user != 0 {
         args[a_index] = found_user.to_string();
-        return get_user_from_id(ctx, msg, args, a_index)
+        return get_member_from_id(ctx, msg, args, a_index)
     }
     Ok(None)
+}
+
+pub fn get_guild_members(ctx: &Context, guild_id: GuildId) -> Result<Vec<guild::Member>, String> {
+    let limit = match &ctx.cache.read().guilds.get(&guild_id) {
+        Some(g) => {
+            let member_count = g.read().member_count;
+            if member_count > 1000 {
+                1000
+            } else {
+                member_count
+            }
+        },
+        None => 1000
+    };
+
+    match ctx.http.get_guild_members(guild_id.0, Some(limit), None) {
+        Ok(m) => Ok(m),
+        Err(_) => Err("Could not retrieve guild members!".to_string())
+    }
 }
