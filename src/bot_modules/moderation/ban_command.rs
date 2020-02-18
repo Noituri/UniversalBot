@@ -17,6 +17,7 @@ pub struct BanCommand;
 impl BanCommand {
     fn ban(&self, ctx: &Context, msg: &Message, args: Vec<CommandArg>) -> Result<(), String> {
         args.iter().for_each(|a| println!("{}", a.name));
+
         Ok(())
     }
 }
@@ -76,13 +77,8 @@ impl Command for BanCommand {
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
                 match routes {
-                    Some(path) => {
-                        println!("{}", path.len());
-                        self.ban(ctx, msg, path)?;
-                    }
-                    None => {
-                        println!("NOTHING");
-                    }
+                    Some(path) => self.ban(ctx, msg, path)?,
+                    None => {}
                 }
             }
             Err(why) => return Err(why),

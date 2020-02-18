@@ -43,12 +43,14 @@ impl FindObject for guild::Role {
         &self.name
     }
 }
-impl FindObject for User {
+impl FindObject for guild::Member {
     fn get_id(&self) -> u64 {
-        self.id.0
+        self.user_id().0
     }
     fn get_name(&self) -> &str {
-        &self.name
+        let user = &self.user.read().name;
+//        &user.name.to_owned()
+        ""
     }
 }
 
@@ -162,10 +164,37 @@ pub fn get_channel_from_id(ctx: &Context, msg: &Message, mut args: Vec<String>, 
         }
     }
 
-    let found_role = find_object(ctx, msg, channels, &args, a_index, FindType::Channel)?;
-    if found_role != 0 {
-        args[a_index] = found_role.to_string();
+    let found_channel = find_object(ctx, msg, channels, &args, a_index, FindType::Channel)?;
+    if found_channel != 0 {
+        args[a_index] = found_channel.to_string();
         return get_channel_from_id(ctx, msg, args, a_index)
+    }
+    Ok(None)
+}
+
+pub fn get_user_from_id(ctx: &Context, msg: &Message, mut args: Vec<String>, a_index: usize) -> Result<Option<User>, String> {
+    if msg.mentions.len() > 0 {
+        return Ok(Some(msg.mentions[0].to_owned()))
+    }
+
+    let mut tmp_id = args[a_index].to_owned();
+
+    let members = match ctx.http.get_guild_members(msg.guild_id.unwrap().0, None, None) {
+        Ok(m) => m,
+        Err(_) => return Err("Could not retrieve guild members!".to_string())
+    };
+
+    for v in members.iter() {
+        let user = v.user.clone().into_inner();
+        if &user.id.to_string() == &tmp_id {
+            return Ok(Some(user.clone()))
+        }
+    }
+
+    let found_user = find_object(ctx, msg, members, &args, a_index, FindType::Channel)?;
+    if found_user != 0 {
+        args[a_index] = found_user.to_string();
+        return get_user_from_id(ctx, msg, args, a_index)
     }
     Ok(None)
 }
