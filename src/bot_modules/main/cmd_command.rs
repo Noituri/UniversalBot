@@ -18,6 +18,7 @@ impl CmdCommand {
            return Err("Command is protected. It can't be modified!".to_string())
        }
 
+       // TODO if `all` is used then add every channel
        let channel = if is_channel {
            match get_channel_from_id(ctx, msg, get_args(msg.to_owned(), true), 3)? {
                Some(ch) => ch.id.0.to_string(),

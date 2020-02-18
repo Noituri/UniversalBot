@@ -44,9 +44,11 @@ impl HelpCommand {
             if m.name() == DEV_MODULE && !check_if_dev(msg) {
                 continue;
             }
+
             for c in m.commands() {
-                if all || (c.use_in_dm() && info.server.is_none()) ||
-                    (info.server.is_some() && has_perms(ctx, msg, info, &c.perms())) {
+                let first_cond = c.use_in_dm() && info.server.is_none();
+                let second_cond = info.server.is_some() && has_perms(ctx, msg, info, &c.perms()) && m.enabled(info) && c.enabled(info);
+                if all || first_cond || second_cond {
                     commands.push(c);
                     continue;
                 }

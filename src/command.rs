@@ -2,6 +2,7 @@ use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::bot_modules::{get_modules, PROTECTED_MODULES};
 use crate::utils::db::ServerInfo;
+use crate::utils::{get_time, TimeFormat};
 
 pub const EMBED_REGULAR_COLOR: i32 = 714968;
 pub const EMBED_QUESTION_COLOR: i32 = 16772147;
@@ -20,7 +21,9 @@ pub enum ArgOption {
     Boolean,
     Any,
     Role,
-    Channel
+    Channel,
+    User,
+    Time
 }
 
 pub struct CommandArg {
@@ -114,6 +117,26 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
                     }
                 }
             },
+            ArgOption::User => {
+                if message.starts_with("<@") || message.ends_with(">") {
+                    if message.len() != 21 {
+                        return Ok(true);
+                    }
+                    if message[2..message.len()-1].parse::<f64>().is_err() {
+                        return Ok(true);
+                    }
+                } else if message.starts_with("<@!") || message.ends_with(">") {
+                    if message.len() != 22 {
+                        return Ok(true);
+                    }
+                    if message[3..message.len()-1].parse::<f64>().is_err() {
+                        return Ok(true);
+                    }
+                }
+            },
+            ArgOption::Time => {
+                return Ok(get_time(message, TimeFormat::Seconds).is_err());
+            },
             ArgOption::Any => {}
         }
     }
@@ -131,6 +154,21 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
     Ok(false)
 }
 
+impl CommandArg {
+    fn is_arg_variable(&self) -> bool {
+        self.name.starts_with("<") && self.name.ends_with(">") ||
+            self.name.starts_with("[") && self.name.ends_with("]")
+    }
+
+    fn is_optional(&self) -> bool {
+        self.name.starts_with("[") && self.name.ends_with("]")
+    }
+
+    fn accepts_more(&self) -> bool {
+        self.name.ends_with("...>") || self.name.ends_with("...]")
+    }
+}
+
 pub fn parse_args(
     args: &Vec<CommandArg>,
     message_args: &Vec<String>,
@@ -143,10 +181,7 @@ pub fn parse_args(
             return Ok(None);
         }
 
-        if !a.name.starts_with("<") && !a.name.ends_with(">") {
-            if message_args.len() == 0 {
-                continue;
-            }
+        if !a.is_arg_variable() {
             if a.name != message_args[0] {
                 continue;
             }
@@ -164,19 +199,26 @@ pub fn parse_args(
         });
 
         let mut next_arg = a.next.as_ref();
-        while next_arg.is_some() {
+        'nextArg: while next_arg.is_some() {
+            let na = next_arg.unwrap();
             if depth >= message_args.len() - 1 {
+                if na.is_optional() {
+                    break
+                }
                 continue 'main;
             }
-            let na = next_arg.unwrap();
 
-            if !na.name.starts_with("<") && !na.name.ends_with(">") {
+            if !na.is_arg_variable() {
                 if na.name != message_args[depth + 1] {
                     continue 'main;
                 }
             } else {
                 if check_option(&na, message_args[depth + 1].as_str())? {
-                    continue 'main;
+                    if na.is_optional() {
+                        continue 'nextArg;
+                    } else {
+                        continue 'main;
+                    }
                 }
             }
 
@@ -195,7 +237,7 @@ pub fn parse_args(
             return Ok(Some(route));
         } else if route.len() < message_args.len() {
             if let Some(ma) = route.last() {
-                if ma.name.ends_with("...>") {
+                if ma.accepts_more() {
                     return Ok(Some(route));
                 }
             }
