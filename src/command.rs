@@ -201,6 +201,7 @@ pub fn parse_args(
         let mut next_arg = a.next.as_ref();
         'nextArg: while next_arg.is_some() {
             let na = next_arg.unwrap();
+            println!("PARSING: {}", na.name);
             if depth >= message_args.len() - 1 {
                 if na.is_optional() {
                     break
@@ -215,6 +216,8 @@ pub fn parse_args(
             } else {
                 if check_option(&na, message_args[depth + 1].as_str())? {
                     if na.is_optional() {
+                        depth += 1;
+                        next_arg = na.next.as_ref();
                         continue 'nextArg;
                     } else {
                         continue 'main;

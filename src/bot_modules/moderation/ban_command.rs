@@ -14,6 +14,13 @@ use crate::utils::perms::{get_module_perms, perms_exists};
 
 pub struct BanCommand;
 
+impl BanCommand {
+    fn ban(&self, ctx: &Context, msg: &Message, args: Vec<CommandArg>) -> Result<(), String> {
+        args.iter().for_each(|a| println!("{}", a.name));
+        Ok(())
+    }
+}
+
 impl Command for BanCommand {
     fn name(&self) -> String {
         String::from("ban")
@@ -70,10 +77,11 @@ impl Command for BanCommand {
             Ok(routes) => {
                 match routes {
                     Some(path) => {
-
+                        println!("{}", path.len());
+                        self.ban(ctx, msg, path)?;
                     }
                     None => {
-
+                        println!("NOTHING");
                     }
                 }
             }
