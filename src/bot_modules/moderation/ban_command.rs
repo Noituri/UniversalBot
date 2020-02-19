@@ -21,6 +21,10 @@ impl BanCommand {
             None => return Ok(())
         };
 
+        if member.user_id() == ctx.cache.read().user.id {
+            return Err("What did I do to you?".to_string())
+        }
+
         // TODO check if mod-logs channel exist and send message there
         let reason = if args.len() > 1 {
             args[1..].join(" ")
