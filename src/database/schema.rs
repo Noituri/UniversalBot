@@ -1,4 +1,15 @@
 table! {
+    actions (id) {
+        id -> Int4,
+        server_id -> Int4,
+        action_type -> Int4,
+        issuer -> Varchar,
+        target -> Nullable<Varchar>,
+        message -> Varchar,
+    }
+}
+
+table! {
     commands (id) {
         id -> Int4,
         server_id -> Int4,
@@ -26,6 +37,7 @@ table! {
 }
 
 allow_tables_to_appear_in_same_query!(
+    actions,
     commands,
     roles,
     servers,

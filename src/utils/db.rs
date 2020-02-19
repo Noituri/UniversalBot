@@ -1,9 +1,9 @@
 use serenity::model::id::GuildId;
-use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand};
+use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction};
 use crate::database::get_db_con;
 use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods};
 use crate::database::schema::servers::columns::guildid;
-use crate::database::schema::{servers, roles, commands};
+use crate::database::schema::{servers, roles, commands, actions};
 
 pub struct ServerInfo {
     pub server: Option<Server>,
@@ -161,4 +161,26 @@ pub fn get_db_commands(server: &Server) -> Option<Vec<DBCommand>> {
     } else {
         None
     }
+}
+
+#[allow(dead_code)]
+pub enum ActionType {
+    Ban = 1,
+    Kick = 2,
+    Mute = 3
+}
+
+pub fn create_action(info: &ServerInfo, issuer: String, target: Option<String>, action_type: ActionType, message: String) {
+    let new_action = NewAction {
+        server_id: info.server.clone().unwrap().id,
+        action_type: action_type as i32,
+        issuer,
+        target,
+        message
+    };
+
+    diesel::insert_into(actions::table)
+        .values(&new_action)
+        .execute(&get_db_con().get().expect("Could not get db pool!"))
+        .expect("Error occurred while inserting new server");
 }

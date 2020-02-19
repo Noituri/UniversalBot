@@ -1,4 +1,4 @@
-use super::schema::{roles, servers, commands};
+use super::schema::{roles, servers, commands, actions};
 
 #[derive(Identifiable, Queryable, Clone)]
 #[table_name = "servers"]
@@ -52,4 +52,27 @@ pub struct NewDBCommand {
     pub server_id: i32,
     pub command_name: String,
     pub enabled_channels: Vec<String>
+}
+
+#[derive(Identifiable, Queryable, Associations, Clone)]
+#[belongs_to(Server, foreign_key = "server_id")]
+#[table_name = "actions"]
+pub struct Action {
+    pub id: i32,
+    pub server_id: i32,
+    pub action_type: i32,
+    pub issuer: String,
+    pub target: Option<String>,
+    pub message: String,
+}
+
+#[derive(Insertable, Associations)]
+#[belongs_to(Server, foreign_key = "server_id")]
+#[table_name = "actions"]
+pub struct NewAction {
+    pub server_id: i32,
+    pub action_type: i32,
+    pub issuer: String,
+    pub target: Option<String>,
+    pub message: String
 }

@@ -41,6 +41,7 @@ pub trait Command {
     fn perms(&self) -> Option<Vec<String>>;
     fn config(&self) -> Option<Vec<CommandConfig>>;
     fn exe(&self, ctx: &Context, msg: &Message, server: &ServerInfo) -> Result<(), String>;
+    fn init(&self) {}
 }
 
 impl dyn Command {
