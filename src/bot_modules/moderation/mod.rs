@@ -2,6 +2,7 @@ use super::BotModule;
 use crate::command::Command;
 
 mod ban_command;
+mod temp_ban_command;
 
 pub struct ModerationModule;
 
@@ -16,7 +17,8 @@ impl BotModule for ModerationModule {
 
     fn commands(&self) -> Vec<Box<dyn Command>> {
         vec![
-            Box::new(ban_command::BanCommand {})
+            Box::new(ban_command::BanCommand {}),
+            Box::new(temp_ban_command::TempBanCommand {})
         ]
     }
 }

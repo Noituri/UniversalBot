@@ -13,9 +13,9 @@ use crate::utils::object_finding::{get_role_from_id, get_member_from_id};
 use crate::utils::perms::{get_module_perms, perms_exists};
 use crate::bot_modules::main::help_command;
 
-pub struct BanCommand;
+pub struct TempBanCommand;
 
-impl BanCommand {
+impl TempBanCommand {
     fn ban(&self, ctx: &Context, msg: &Message, args: Vec<String>, info: &ServerInfo) -> Result<(), String> {
         let member = match get_member_from_id(ctx, msg, get_args(msg.to_owned(), true), 1)? {
             Some(m) => m,
@@ -39,7 +39,7 @@ impl BanCommand {
             "!".to_string()
         };
 
-        let action_message = format!("User {} has been banned{}", member.display_name(), reason_action_msg);
+        let action_message = format!("User {} has been temp-banned for {}{}", member.display_name(), reason_action_msg);
 
         match member.ban(&ctx.http, &reason) {
             Ok(_) => create_action(
@@ -66,13 +66,13 @@ impl BanCommand {
     }
 }
 
-impl Command for BanCommand {
+impl Command for TempBanCommand {
     fn name(&self) -> String {
-        String::from("ban")
+        String::from("tempBan")
     }
 
     fn desc(&self) -> String {
-        String::from("Banish users from your server.")
+        String::from("Temporarily Banish users from your server.")
     }
 
     fn use_in_dm(&self) -> bool {
@@ -83,13 +83,19 @@ impl Command for BanCommand {
         Some(vec![
             CommandArg {
                 name: "<user>".to_string(),
-                desc: Some("bans user.".to_string()),
+                desc: Some("bans user for given amount of time. `<time>` by default is in hours. You can change that by adding `m`\
+                for minutes, `h` for hours, `d` for days behind the `<time>`. Example: `2d`.".to_string()),
                 option: Some(ArgOption::User),
                 next: Some(Box::new(CommandArg {
-                    name: "[reason...]".to_string(),
+                    name: "<time>".to_string(),
                     desc: None,
-                    option: Some(ArgOption::Any),
-                    next: None,
+                    option: Some(ArgOption::Time),
+                    next: Some(Box::new(CommandArg {
+                        name: "[reason...]".to_string(),
+                        desc: None,
+                        option: Some(ArgOption::Any),
+                        next: None,
+                    })),
                 }))
             },
             CommandArg {
