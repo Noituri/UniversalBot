@@ -1,4 +1,5 @@
-use super::schema::{roles, servers, commands, actions};
+use super::schema::{roles, servers, commands, actions, temp_bans_mutes};
+use chrono::{DateTime, Utc};
 
 #[derive(Identifiable, Queryable, Clone)]
 #[table_name = "servers"]
@@ -75,4 +76,25 @@ pub struct NewAction {
     pub issuer: String,
     pub target: Option<String>,
     pub message: String
+}
+
+#[derive(Identifiable, Queryable, Associations, Clone)]
+#[belongs_to(Server, foreign_key = "server_id")]
+#[table_name = "temp_bans_mutes"]
+pub struct TempBanMute {
+    pub id: i32,
+    pub server_id: i32,
+    pub action_type: i32,
+    pub user_id: String,
+    pub end_date: DateTime<Utc>
+}
+
+#[derive(Insertable, Associations)]
+#[belongs_to(Server, foreign_key = "server_id")]
+#[table_name = "temp_bans_mutes"]
+pub struct NewTempBanMute {
+    pub server_id: i32,
+    pub action_type: i32,
+    pub user_id: String,
+    pub end_date: DateTime<Utc>
 }

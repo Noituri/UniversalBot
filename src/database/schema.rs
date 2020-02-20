@@ -36,9 +36,20 @@ table! {
     }
 }
 
+table! {
+    temp_bans_mutes (id) {
+        id -> Int4,
+        server_id -> Int4,
+        action_type -> Int4,
+        user_id -> Varchar,
+        end_date -> Date,
+    }
+}
+
 allow_tables_to_appear_in_same_query!(
     actions,
     commands,
     roles,
     servers,
+    temp_bans_mutes,
 );

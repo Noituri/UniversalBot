@@ -1,9 +1,10 @@
 use serenity::model::id::GuildId;
-use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction};
+use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction, NewTempBanMute};
 use crate::database::get_db_con;
 use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods};
 use crate::database::schema::servers::columns::guildid;
-use crate::database::schema::{servers, roles, commands, actions};
+use crate::database::schema::{servers, roles, commands, actions, temp_bans_mutes};
+use chrono::{DateTime, Utc};
 
 pub struct ServerInfo {
     pub server: Option<Server>,
@@ -181,6 +182,20 @@ pub fn create_action(info: &ServerInfo, issuer: String, target: Option<String>, 
 
     diesel::insert_into(actions::table)
         .values(&new_action)
+        .execute(&get_db_con().get().expect("Could not get db pool!"))
+        .expect("Error occurred while inserting new server");
+}
+
+pub fn create_temp_ban_mute(info: &ServerInfo, user_id: String, end_date: DateTime<Utc>, action_type: ActionType) {
+    let new_entry = NewTempBanMute {
+        server_id: info.server.clone().unwrap().id,
+        action_type: action_type as i32,
+        user_id,
+        end_date
+    };
+
+    diesel::insert_into(temp_bans_mutes::table)
+        .values(&new_entry)
         .execute(&get_db_con().get().expect("Could not get db pool!"))
         .expect("Error occurred while inserting new server");
 }

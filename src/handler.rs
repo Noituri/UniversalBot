@@ -117,6 +117,7 @@ impl EventHandler for Handler {
             return;
         }
 
+        let check_msg = msg.content.to_lowercase();
         for m in super::get_modules().iter() {
             if !m.enabled(&info) {
                 continue
@@ -127,7 +128,7 @@ impl EventHandler for Handler {
                     continue;
                 }
 
-                if msg.content.starts_with(&format!("{}{}", prefix, c.name())) {
+                if check_msg.starts_with(&format!("{}{}", prefix, c.name().to_lowercase())) {
                     if !c.use_in_dm() && msg.is_private() {
                         self.send_error(
                             ctx.clone(),
