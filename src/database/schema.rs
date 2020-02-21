@@ -6,6 +6,7 @@ table! {
         issuer -> Varchar,
         target -> Nullable<Varchar>,
         message -> Varchar,
+        creation_date -> Timestamp,
     }
 }
 
@@ -42,7 +43,7 @@ table! {
         server_id -> Int4,
         action_type -> Int4,
         user_id -> Varchar,
-        end_date -> Date,
+        end_date -> Timestamp,
     }
 }
 

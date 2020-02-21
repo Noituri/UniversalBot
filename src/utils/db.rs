@@ -175,6 +175,7 @@ pub fn create_action(info: &ServerInfo, issuer: String, target: Option<String>, 
     let new_action = NewAction {
         server_id: info.server.clone().unwrap().id,
         action_type: action_type as i32,
+        creation_date: Utc::now().naive_utc(),
         issuer,
         target,
         message
@@ -190,8 +191,8 @@ pub fn create_temp_ban_mute(info: &ServerInfo, user_id: String, end_date: DateTi
     let new_entry = NewTempBanMute {
         server_id: info.server.clone().unwrap().id,
         action_type: action_type as i32,
+        end_date: end_date.naive_utc(),
         user_id,
-        end_date: end_date.naive_utc().date()
     };
 
     diesel::insert_into(temp_bans_mutes::table)

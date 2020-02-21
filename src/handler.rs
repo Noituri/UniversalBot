@@ -10,6 +10,7 @@ use chrono::{Utc, Duration};
 use crate::utils::object_finding::FindsAwaitingAnswer;
 use crate::utils::perms::has_perms;
 use crate::utils::db::ServerInfo;
+use crate::bot_modules::get_modules;
 
 pub struct Handler;
 
@@ -174,7 +175,13 @@ impl EventHandler for Handler {
         }
     }
 
-    fn ready(&self, _: Context, ready: Ready) {
+    fn ready(&self, ctx: Context, ready: Ready) {
         info!("{} is connected!", ready.user.name);
+        for m in get_modules() {
+            for c in m.commands() {
+                c.init(&ctx);
+                info!("Command {} initialized!", c.name())
+            }
+        }
     }
 }

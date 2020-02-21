@@ -6,5 +6,6 @@ CREATE TABLE actions (
     issuer VARCHAR NOT NULL,
     target VARCHAR,
     message VARCHAR NOT NULL,
+    creation_date TIMESTAMP NOT NULL,
     FOREIGN KEY (server_id) REFERENCES servers(id)
 )

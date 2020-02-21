@@ -2,17 +2,24 @@ use crate::command::{
     get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR,
 };
 use crate::database::get_db_con;
-use crate::database::models::Role;
-use crate::database::schema::roles;
+use crate::database::models::{Role, TempBanMute, Server};
+use crate::database::schema::{roles, servers, temp_bans_mutes};
 use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::database::schema::roles::columns::perms;
+use crate::database::schema::servers::columns::guildid;
+use crate::database::schema::temp_bans_mutes::{id, action_type};
 use crate::utils::db::{ServerInfo, get_db_role_by_id, create_action, ActionType, create_temp_ban_mute};
 use crate::utils::object_finding::{get_role_from_id, get_member_from_id};
 use crate::utils::perms::{get_module_perms, perms_exists};
 use crate::bot_modules::main::help_command;
-use crate::utils::{get_time_string, TimeFormat};
+use crate::utils::{get_time_string, TimeFormat, get_time};
+use crate::diesel::{BelongingToDsl, GroupedBy};
+use std::thread;
+use std::time::Duration;
+use chrono::Utc;
+use std::sync::Mutex;
 
 pub struct TempBanCommand;
 
@@ -56,7 +63,12 @@ impl TempBanCommand {
             Err(e) => return Err("Could not ban the user. Check permissions!".to_string())
         }
 
-        // create_temp_ban_mute(info, member.user_id().to_string())
+         create_temp_ban_mute(
+             info,
+             member.user_id().to_string(),
+             get_time(&args[1], TimeFormat::Hours)?,
+             ActionType::Ban
+         );
 
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
@@ -136,5 +148,38 @@ impl Command for TempBanCommand {
             Err(why) => return Err(why),
         }
         Ok(())
+    }
+
+    fn init(&self, ctx: &Context) {
+        let ctx = Mutex::new(ctx.clone());
+        thread::spawn(move || {
+            let db = get_db_con().get().expect("Could not get db pool!");
+            loop {
+                thread::sleep(Duration::from_secs(5));
+                let servers = servers::dsl::servers
+                    .load::<Server>(&db)
+                    .expect("Could not load servers!");
+
+                let unbans = TempBanMute::belonging_to(&servers)
+                    .filter(action_type.eq(ActionType::Ban as i32))
+                    .load::<TempBanMute>(&db)
+                    .expect("Could not load temp bans and mutes")
+                    .grouped_by(&servers);
+
+                let data = servers.into_iter().zip(unbans).collect::<Vec<_>>();
+
+                for v in data {
+                    for ub in v.1 {
+                        if ub.end_date < Utc::now().naive_utc() {
+                            let guild_id = v.0.guildid.parse::<u64>().unwrap();
+                            let user_id = ub.user_id.parse::<u64>().unwrap();
+                            &ctx.lock().unwrap().http.remove_ban(guild_id, user_id);
+                            diesel::delete(temp_bans_mutes::table.filter(id.eq(ub.id)))
+                                .execute(&db);
+                        }
+                    }
+                }
+            }
+        });
     }
 }
