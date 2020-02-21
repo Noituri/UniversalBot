@@ -191,7 +191,7 @@ pub fn create_temp_ban_mute(info: &ServerInfo, user_id: String, end_date: DateTi
         server_id: info.server.clone().unwrap().id,
         action_type: action_type as i32,
         user_id,
-        end_date
+        end_date: end_date.naive_utc().date()
     };
 
     diesel::insert_into(temp_bans_mutes::table)

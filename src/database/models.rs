@@ -1,5 +1,5 @@
 use super::schema::{roles, servers, commands, actions, temp_bans_mutes};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveTime, NaiveDate};
 
 #[derive(Identifiable, Queryable, Clone)]
 #[table_name = "servers"]
@@ -86,7 +86,7 @@ pub struct TempBanMute {
     pub server_id: i32,
     pub action_type: i32,
     pub user_id: String,
-    pub end_date: DateTime<Utc>
+    pub end_date: NaiveDate
 }
 
 #[derive(Insertable, Associations)]
@@ -96,5 +96,5 @@ pub struct NewTempBanMute {
     pub server_id: i32,
     pub action_type: i32,
     pub user_id: String,
-    pub end_date: DateTime<Utc>
+    pub end_date: NaiveDate
 }

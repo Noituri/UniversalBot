@@ -9,7 +9,7 @@ panic = "unwind"
 
 [dependencies]
 serenity = { git = "https://github.com/serenity-rs/serenity", rev = "5f9a27a" }
-diesel = { version = "1.4.3", features = ["postgres", "r2d2"] }
+diesel = { version = "1.4.3", features = ["postgres", "r2d2", "chrono"] }
 dotenv = "0.15.0"
 config = "0.10.1"
 serde = { version = "1.0", features = ["derive"] }

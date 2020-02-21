@@ -8,10 +8,11 @@ use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::database::schema::roles::columns::perms;
-use crate::utils::db::{ServerInfo, get_db_role_by_id, create_action, ActionType};
+use crate::utils::db::{ServerInfo, get_db_role_by_id, create_action, ActionType, create_temp_ban_mute};
 use crate::utils::object_finding::{get_role_from_id, get_member_from_id};
 use crate::utils::perms::{get_module_perms, perms_exists};
 use crate::bot_modules::main::help_command;
+use crate::utils::{get_time_string, TimeFormat};
 
 pub struct TempBanCommand;
 
@@ -27,8 +28,8 @@ impl TempBanCommand {
         }
 
         // TODO check if mod-logs channel exist and send message there
-        let reason = if args.len() > 1 {
-            args[1..].join(" ")
+        let reason = if args.len() > 2 {
+            args[2..].join(" ")
         } else {
             String::new()
         };
@@ -39,7 +40,10 @@ impl TempBanCommand {
             "!".to_string()
         };
 
-        let action_message = format!("User {} has been temp-banned for {}{}", member.display_name(), reason_action_msg);
+        let action_message = format!("User {} has been temp-banned for {}{}",
+                                     member.display_name(),
+                                     get_time_string(&args[1], TimeFormat::Hours),
+                                     reason_action_msg);
 
         match member.ban(&ctx.http, &reason) {
             Ok(_) => create_action(
@@ -51,6 +55,8 @@ impl TempBanCommand {
             ),
             Err(e) => return Err("Could not ban the user. Check permissions!".to_string())
         }
+
+        // create_temp_ban_mute(info, member.user_id().to_string())
 
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
