@@ -1,16 +1,10 @@
 use crate::command::{
     get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR,
 };
-use crate::database::get_db_con;
-use crate::database::models::Role;
-use crate::database::schema::roles;
-use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::database::schema::roles::columns::perms;
-use crate::utils::db::{ServerInfo, get_db_role_by_id, create_action, ActionType};
-use crate::utils::object_finding::{get_role_from_id, get_member_from_id};
-use crate::utils::perms::{get_module_perms, perms_exists};
+use crate::utils::db::{ServerInfo, create_action, ActionType};
+use crate::utils::object_finding::get_member_from_id;
 use crate::bot_modules::main::help_command;
 
 pub struct BanCommand;
@@ -49,7 +43,7 @@ impl BanCommand {
                 ActionType::Ban,
                 action_message.to_owned()
             ),
-            Err(e) => return Err("Could not ban the user. Check permissions!".to_string())
+            Err(_) => return Err("Could not ban the user. Check permissions!".to_string())
         }
 
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
@@ -114,7 +108,7 @@ impl Command for BanCommand {
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
                 match routes {
-                    Some(path) => self.ban(ctx, msg, args, info)?,
+                    Some(_path) => self.ban(ctx, msg, args, info)?,
                     None => {
                         let help_cmd = help_command::HelpCommand {};
                         help_cmd.show_cmd_details(ctx, msg, info, self.name())?;

@@ -2,17 +2,14 @@ use crate::command::{
     get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR,
 };
 use crate::database::get_db_con;
-use crate::database::models::{Role, TempBanMute, Server};
-use crate::database::schema::{roles, servers, temp_bans_mutes};
+use crate::database::models::{TempBanMute, Server};
+use crate::database::schema::{servers, temp_bans_mutes};
 use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::database::schema::roles::columns::perms;
-use crate::database::schema::servers::columns::guildid;
 use crate::database::schema::temp_bans_mutes::{id, action_type};
-use crate::utils::db::{ServerInfo, get_db_role_by_id, create_action, ActionType, create_temp_ban_mute};
-use crate::utils::object_finding::{get_role_from_id, get_member_from_id};
-use crate::utils::perms::{get_module_perms, perms_exists};
+use crate::utils::db::{ServerInfo, create_action, ActionType, create_temp_ban_mute};
+use crate::utils::object_finding::get_member_from_id;
 use crate::bot_modules::main::help_command;
 use crate::utils::get_time;
 use crate::diesel::{BelongingToDsl, GroupedBy};
@@ -60,7 +57,7 @@ impl TempBanCommand {
                 ActionType::Ban,
                 action_message.to_owned()
             ),
-            Err(e) => return Err("Could not ban the user. Check permissions!".to_string())
+            Err(_) => return Err("Could not ban the user. Check permissions!".to_string())
         }
 
          create_temp_ban_mute(
@@ -138,7 +135,7 @@ impl Command for TempBanCommand {
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
                 match routes {
-                    Some(path) => self.ban(ctx, msg, args, info)?,
+                    Some(_path) => self.ban(ctx, msg, args, info)?,
                     None => {
                         let help_cmd = help_command::HelpCommand {};
                         help_cmd.show_cmd_details(ctx, msg, info, self.name())?;
@@ -174,7 +171,7 @@ impl Command for TempBanCommand {
                             let guild_id = v.0.guildid.parse::<u64>().unwrap();
                             let user_id = ub.user_id.parse::<u64>().unwrap();
                             &ctx.lock().unwrap().http.remove_ban(guild_id, user_id);
-                            diesel::delete(temp_bans_mutes::table.filter(id.eq(ub.id)))
+                            let _ = diesel::delete(temp_bans_mutes::table.filter(id.eq(ub.id)))
                                 .execute(&db);
                         }
                     }
