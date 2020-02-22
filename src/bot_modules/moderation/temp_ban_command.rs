@@ -14,7 +14,7 @@ use crate::utils::db::{ServerInfo, get_db_role_by_id, create_action, ActionType,
 use crate::utils::object_finding::{get_role_from_id, get_member_from_id};
 use crate::utils::perms::{get_module_perms, perms_exists};
 use crate::bot_modules::main::help_command;
-use crate::utils::{get_time_string, TimeFormat, get_time};
+use crate::utils::get_time;
 use crate::diesel::{BelongingToDsl, GroupedBy};
 use std::thread;
 use std::time::Duration;
@@ -49,7 +49,7 @@ impl TempBanCommand {
 
         let action_message = format!("User {} has been temp-banned for {}{}",
                                      member.display_name(),
-                                     get_time_string(&args[1], TimeFormat::Hours),
+                                     &args[1],
                                      reason_action_msg);
 
         match member.ban(&ctx.http, &reason) {
@@ -66,7 +66,7 @@ impl TempBanCommand {
          create_temp_ban_mute(
              info,
              member.user_id().to_string(),
-             get_time(&args[1], TimeFormat::Hours)?,
+             get_time(&args[1])?,
              ActionType::Ban
          );
 

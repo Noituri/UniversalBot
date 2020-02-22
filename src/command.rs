@@ -2,7 +2,7 @@ use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::bot_modules::{get_modules, PROTECTED_MODULES};
 use crate::utils::db::ServerInfo;
-use crate::utils::{get_time, TimeFormat};
+use crate::utils::get_time;
 
 pub const EMBED_REGULAR_COLOR: i32 = 714968;
 pub const EMBED_QUESTION_COLOR: i32 = 16772147;
@@ -136,7 +136,7 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
                 }
             },
             ArgOption::Time => {
-                return Ok(get_time(message, TimeFormat::Seconds).is_err());
+                return Ok(get_time(message).is_err());
             },
             ArgOption::Any => {}
         }
