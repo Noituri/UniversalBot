@@ -3,14 +3,24 @@ use crate::command::{
 };
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::utils::db::{ServerInfo, create_action, ActionType};
+use crate::utils::db::{ServerInfo, create_action, ActionType, create_temp_ban_mute};
 use crate::utils::object_finding::get_member_from_id;
 use crate::bot_modules::main::help_command;
+use crate::utils::get_time;
+use std::thread;
+use crate::database::get_db_con;
+use std::sync::Mutex;
+use std::time::Duration;
+use crate::database::models::{Server, TempBanMute};
+use crate::database::schema::{servers, temp_bans_mutes};
+use crate::database::schema::temp_bans_mutes::columns::{id, action_type};
+use crate::diesel::{RunQueryDsl, BelongingToDsl, ExpressionMethods, QueryDsl, GroupedBy};
+use chrono::Utc;
 
 pub struct BanCommand;
 
 impl BanCommand {
-    fn ban(&self, ctx: &Context, msg: &Message, args: Vec<String>, info: &ServerInfo) -> Result<(), String> {
+    fn ban(&self, ctx: &Context, msg: &Message, path: Vec<CommandArg>, args: Vec<String>, info: &ServerInfo) -> Result<(), String> {
         let member = match get_member_from_id(ctx, msg, get_args(msg.to_owned(), true), 1)? {
             Some(m) => m,
             None => return Ok(())
@@ -21,19 +31,36 @@ impl BanCommand {
         }
 
         // TODO check if mod-logs channel exist and send message there
-        let reason = if args.len() > 1 {
-            args[1..].join(" ")
-        } else {
-            String::new()
-        };
+        let mut reason = String::new();
+        let mut is_temp = false;
 
-        let reason_action_msg = if args.len() > 1 {
+        if path.len() > 1 {
+            if path[1].name == "[time]" {
+                is_temp = true;
+                if path.len() > 2 {
+                    reason = args[2..].join(" ");
+                }
+            } else {
+                reason = args[1..].join(" ");
+            }
+        }
+
+
+        let reason_action_msg = if !reason.is_empty() {
             format!(". Reason: {}.", reason)
         } else {
             "!".to_string()
         };
 
-        let action_message = format!("User {} has been banned{}", member.display_name(), reason_action_msg);
+        let action_message = if is_temp {
+            format!("User {} has been temp-banned for {}{}",
+                    member.display_name(),
+                    &args[1],
+                    reason_action_msg
+            )
+        } else {
+            format!("User {} has been banned{}", member.display_name(), reason_action_msg)
+        };
 
         match member.ban(&ctx.http, &reason) {
             Ok(_) => create_action(
@@ -44,6 +71,15 @@ impl BanCommand {
                 action_message.to_owned()
             ),
             Err(_) => return Err("Could not ban the user. Check permissions!".to_string())
+        }
+
+        if is_temp {
+            create_temp_ban_mute(
+                info,
+                member.user_id().to_string(),
+                get_time(&args[1])?,
+                ActionType::Ban
+            );
         }
 
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
@@ -77,13 +113,20 @@ impl Command for BanCommand {
         Some(vec![
             CommandArg {
                 name: "<user>".to_string(),
-                desc: Some("bans user.".to_string()),
+                desc: Some("bans user. If `[time]` is provided then user will be temp-banned. \
+                You create `[time]` by adding to desired time: `m` \
+                for minutes, `h` for hours, `d` for days behind the `time`. \nExample: `2d`.".to_string()),
                 option: Some(ArgOption::User),
                 next: Some(Box::new(CommandArg {
-                    name: "[reason...]".to_string(),
+                    name: "[time]".to_string(),
                     desc: None,
-                    option: Some(ArgOption::Any),
-                    next: None,
+                    option: Some(ArgOption::Time),
+                    next: Some(Box::new(CommandArg {
+                        name: "[reason...]".to_string(),
+                        desc: None,
+                        option: Some(ArgOption::Any),
+                        next: None,
+                    })),
                 }))
             },
             CommandArg {
@@ -108,7 +151,7 @@ impl Command for BanCommand {
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => {
                 match routes {
-                    Some(_path) => self.ban(ctx, msg, args, info)?,
+                    Some(path) => self.ban(ctx, msg, path, args, info)?,
                     None => {
                         let help_cmd = help_command::HelpCommand {};
                         help_cmd.show_cmd_details(ctx, msg, info, self.name())?;
@@ -118,5 +161,38 @@ impl Command for BanCommand {
             Err(why) => return Err(why),
         }
         Ok(())
+    }
+
+    fn init(&self, ctx: &Context) {
+        let ctx = Mutex::new(ctx.clone());
+        thread::spawn(move || {
+            let db = get_db_con().get().expect("Could not get db pool!");
+            loop {
+                thread::sleep(Duration::from_secs(5));
+                let servers = servers::dsl::servers
+                    .load::<Server>(&db)
+                    .expect("Could not load servers!");
+
+                let unbans = TempBanMute::belonging_to(&servers)
+                    .filter(action_type.eq(ActionType::Ban as i32))
+                    .load::<TempBanMute>(&db)
+                    .expect("Could not load temp bans and mutes")
+                    .grouped_by(&servers);
+
+                let data = servers.into_iter().zip(unbans).collect::<Vec<_>>();
+
+                for v in data {
+                    for ub in v.1 {
+                        if ub.end_date < Utc::now().naive_utc() {
+                            let guild_id = v.0.guildid.parse::<u64>().unwrap();
+                            let user_id = ub.user_id.parse::<u64>().unwrap();
+                            &ctx.lock().unwrap().http.remove_ban(guild_id, user_id);
+                            let _ = diesel::delete(temp_bans_mutes::table.filter(id.eq(ub.id)))
+                                .execute(&db);
+                        }
+                    }
+                }
+            }
+        });
     }
 }

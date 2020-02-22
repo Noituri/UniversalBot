@@ -204,7 +204,7 @@ pub fn parse_args(
             let na = next_arg.unwrap();
             if depth >= message_args.len() - 1 {
                 if na.is_optional() {
-                    break
+                    break;
                 }
                 continue 'main;
             }
@@ -216,7 +216,6 @@ pub fn parse_args(
             } else {
                 if check_option(&na, message_args[depth + 1].as_str())? {
                     if na.is_optional() {
-                        depth += 1;
                         next_arg = na.next.as_ref();
                         continue 'nextArg;
                     } else {
