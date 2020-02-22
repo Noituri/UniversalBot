@@ -14,7 +14,7 @@ pub struct CommandConfig {
 }
 
 #[allow(dead_code)]
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum ArgOption {
     Numeric,
     Text,
@@ -23,6 +23,7 @@ pub enum ArgOption {
     Role,
     Channel,
     User,
+    UserId,
     Time
 }
 
@@ -103,7 +104,7 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
                     if message.len() != 22 {
                         return Ok(true);
                     }
-                    if message[3..message.len()-1].parse::<f64>().is_err() {
+                    if message[3..message.len()-1].parse::<u64>().is_err() {
                         return Ok(true);
                     }
                 }
@@ -113,24 +114,31 @@ fn check_option(arg: &CommandArg, message: &str) -> Result<bool, String> {
                     if message.len() != 21 {
                         return Ok(true);
                     }
-                    if message[2..message.len()-1].parse::<f64>().is_err() {
+                    if message[2..message.len()-1].parse::<u64>().is_err() {
                         return Ok(true);
                     }
                 }
             },
-            ArgOption::User => {
+            ArgOption::User | ArgOption::UserId => {
                 if message.starts_with("<@!") && message.ends_with(">") {
                     if message.len() != 22 {
                         return Ok(true);
                     }
-                    if message[3..message.len()-1].parse::<f64>().is_err() {
+                    if message[3..message.len()-1].parse::<u64>().is_err() {
                         return Ok(true);
                     }
                 } else if message.starts_with("<@") && message.ends_with(">") {
                     if message.len() != 21 {
                         return Ok(true);
                     }
-                    if message[2..message.len()-1].parse::<f64>().is_err() {
+                    if message[2..message.len()-1].parse::<u64>().is_err() {
+                        return Ok(true);
+                    }
+                } else if op.to_owned() == ArgOption::UserId {
+                    if message.len() != 18 {
+                        return Ok(true);
+                    }
+                    if message.parse::<u64>().is_err() {
                         return Ok(true);
                     }
                 }

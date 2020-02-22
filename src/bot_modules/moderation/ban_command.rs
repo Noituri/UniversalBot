@@ -16,6 +16,7 @@ use crate::database::schema::{servers, temp_bans_mutes};
 use crate::database::schema::temp_bans_mutes::columns::{id, action_type};
 use crate::diesel::{RunQueryDsl, BelongingToDsl, ExpressionMethods, QueryDsl, GroupedBy};
 use chrono::Utc;
+use log::error;
 
 pub struct BanCommand;
 
@@ -186,7 +187,10 @@ impl Command for BanCommand {
                         if ub.end_date < Utc::now().naive_utc() {
                             let guild_id = v.0.guildid.parse::<u64>().unwrap();
                             let user_id = ub.user_id.parse::<u64>().unwrap();
-                            &ctx.lock().unwrap().http.remove_ban(guild_id, user_id);
+                            match &ctx.lock().unwrap().http.remove_ban(guild_id, user_id) {
+                                Ok(_) => {/* send dm */},
+                                Err(_) => error!("Could not unban user")
+                            }
                             let _ = diesel::delete(temp_bans_mutes::table.filter(id.eq(ub.id)))
                                 .execute(&db);
                         }

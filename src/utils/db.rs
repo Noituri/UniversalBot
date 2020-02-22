@@ -167,8 +167,9 @@ pub fn get_db_commands(server: &Server) -> Option<Vec<DBCommand>> {
 #[allow(dead_code)]
 pub enum ActionType {
     Ban = 1,
-    Kick = 2,
-    Mute = 3
+    UnBan = 2,
+    Kick = 3,
+    Mute = 4
 }
 
 pub fn create_action(info: &ServerInfo, issuer: String, target: Option<String>, action_type: ActionType, message: String) {
