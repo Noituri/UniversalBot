@@ -1,6 +1,6 @@
 use crate::command::EMBED_QUESTION_COLOR;
 use serenity::prelude::Context;
-use serenity::model::channel::{Message, GuildChannel};
+use serenity::model::channel::{Message, GuildChannel, ChannelType};
 use serenity::model::guild;
 use chrono::{Utc, DateTime};
 use crate::handler::STATE;
@@ -168,6 +168,9 @@ pub fn get_channel_from_id(ctx: &Context, msg: &Message, mut args: Vec<String>, 
     };
 
     for v in channels.iter() {
+        if v.kind != ChannelType::Text {
+            continue
+        }
         if &v.id.to_string() == &tmp_id{
             return Ok(Some(v.clone()))
         }

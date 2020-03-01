@@ -4,7 +4,7 @@ use crate::database::models::*;
 use crate::database::schema::commands::enabled_channels;
 use crate::database::schema::*;
 use diesel::prelude::*;
-use serenity::model::channel::Message;
+use serenity::model::channel::{Message, ChannelType};
 use serenity::prelude::Context;
 use crate::utils::db::{ServerInfo, get_db_command_by_name};
 use crate::utils::object_finding::get_channel_from_id;
@@ -18,11 +18,15 @@ impl CmdCommand {
            return Err("Command is protected. It can't be modified!".to_string())
        }
 
-       // TODO if `all` is used then add every channel
+       // If channel is empty then enable/disable for every channel
        let channel = if is_channel {
-           match get_channel_from_id(ctx, msg, get_args(msg.to_owned(), true), 3)? {
-               Some(ch) => ch.id.0.to_string(),
-               None => return Ok(())
+           if args[2] == "every-channel" {
+               String::new()
+           } else {
+               match get_channel_from_id(ctx, msg, get_args(msg.to_owned(), true), 3)? {
+                   Some(ch) => ch.id.0.to_string(),
+                   None => return Ok(())
+               }
            }
        } else {
            msg.channel_id.0.to_string()
@@ -33,13 +37,29 @@ impl CmdCommand {
            None => return Err("Could not find command in the database!".to_string())
        };
 
-       if args[1] == "enable" && !cmd.enabled_channels.contains(&channel) {
-           cmd.enabled_channels.push(channel)
-       } else if args[1] == "disable" {
-           for (i, c) in cmd.enabled_channels.iter().enumerate() {
-               if c == &channel {
-                   cmd.enabled_channels.remove(i);
-                   break;
+       if channel.is_empty() {
+           match ctx.http.get_channels(msg.guild_id.unwrap().0) {
+               Ok(ch) => {
+                   if args[1] == "enable" {
+                       cmd.enabled_channels = ch.iter()
+                           .filter(|c| c.kind == ChannelType::Text)
+                           .map(|c| c.id.to_string())
+                           .collect();
+                   } else {
+                       cmd.enabled_channels = Vec::new();
+                   }
+               },
+               Err(_) => return Err("Could not retrieve guild channels!".to_string())
+           };
+       } else {
+           if args[1] == "enable" && !cmd.enabled_channels.contains(&channel) {
+               cmd.enabled_channels.push(channel)
+           } else if args[1] == "disable" {
+               for (i, c) in cmd.enabled_channels.iter().enumerate() {
+                   if c == &channel {
+                       cmd.enabled_channels.remove(i);
+                       break;
+                   }
                }
            }
        }
@@ -104,7 +124,8 @@ impl Command for CmdCommand {
         Some(vec![
             CommandArg {
                 name: String::from("<command name>"),
-                desc: Some(String::from("allows you to enable/disable command for provided channel.")),
+                desc: Some(String::from("allows you to enable/disable command for provided channel. \
+                If you want to enable/disable command for every channel then use`every-channel` in `<channel>`.")),
                 option: Some(ArgOption::Any),
                 next: Some(Box::new(CommandArg {
                     name: String::from("<enable/disable>"),
