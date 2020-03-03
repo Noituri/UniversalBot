@@ -7,10 +7,11 @@
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.597"]
                  [reagent "0.9.0-rc3"]
-                 [clj-commons/cljss "1.6.4"]]
+                 [clj-commons/cljss "1.6.4"]
+                 [figwheel-sidecar "0.5.18"]
+                 [re-frame "0.11.0"]]
 
-  :plugins [[lein-cljsbuild "1.1.7"]
-            [lein-figwheel "0.5.19"]]
+  :plugins [[lein-cljsbuild "1.1.7"]]
 
   :clean-targets ^{:protect false}
 
@@ -49,7 +50,7 @@
 
   :aliases {"package" ["do" "clean" ["cljsbuild" "once" "release"]]}
 
-  :profiles {:dev {:source-paths ["src" "env/dev/clj"]
+  :profiles {:dev {:source-paths ["src" "env/dev/clj" "script"]
                    :dependencies [[binaryage/devtools "0.9.11"]
                                   [figwheel-sidecar "0.5.19"]
                                   [nrepl "0.6.0"]
