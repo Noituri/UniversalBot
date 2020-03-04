@@ -1,15 +1,17 @@
 use serenity::model::id::GuildId;
-use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction, NewTempBanMute};
+use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction, NewTempBanMute, NewSpecialEntity, SpecialEntityType, SpecialEntity};
 use crate::database::get_db_con;
-use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods};
+use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods, ExpressionMethods};
 use crate::database::schema::servers::columns::guildid;
-use crate::database::schema::{servers, roles, commands, actions, temp_bans_mutes};
+use crate::database::schema::{servers, roles, commands, actions, temp_bans_mutes, special_entities};
 use chrono::{DateTime, Utc};
+use diesel::associations::HasTable;
 
 pub struct ServerInfo {
     pub server: Option<Server>,
     pub commands: Option<Vec<DBCommand>>,
-    pub roles: Option<Vec<Role>>
+    pub roles: Option<Vec<Role>>,
+    pub special_entities: Option<Vec<SpecialEntity>>
 }
 
 impl ServerInfo {
@@ -17,15 +19,18 @@ impl ServerInfo {
         let server = get_db_server(guild_id);
         let mut commands = None;
         let mut roles = None;
+        let mut special_entities = None;
         if let Some(s) = server.to_owned() {
             commands = get_db_commands(&s);
             roles = get_db_roles(&s);
+            special_entities = get_special_entities(&s);
         }
 
         ServerInfo {
             server,
             commands,
-            roles
+            roles,
+            special_entities
         }
     }
 }
@@ -200,4 +205,63 @@ pub fn create_temp_ban_mute(info: &ServerInfo, user_id: String, end_date: DateTi
         .values(&new_entry)
         .execute(&get_db_con().get().expect("Could not get db pool!"))
         .expect("Error occurred while inserting new server");
+}
+
+pub fn get_special_entities(server: &Server) -> Option<Vec<SpecialEntity>> {
+    let db = get_db_con().get().expect("Could not get db pool!");
+    let query = SpecialEntity::belonging_to(server).load::<SpecialEntity>(&db);
+
+    if let Ok(result) = query {
+        return Some(result)
+    } else {
+        None
+    }
+}
+
+pub fn get_special_entity_by_type(info: &ServerInfo, kind: SpecialEntityType) -> Option<SpecialEntity> {
+    let server = match &info.server {
+        Some(s) => s,
+        None => return None
+    };
+
+    match &info.special_entities {
+        Some(entities) => {
+            for v in entities.iter() {
+                if v.entity_type == kind as i32 {
+                    return Some(v.clone())
+                }
+            }
+        },
+        None => {
+            let db = get_db_con().get().expect("Could not get db pool!");
+            let query = SpecialEntity::belonging_to(server)
+                .filter(special_entities::columns::entity_type.eq(kind as i32)).first(&db);
+
+            if let Ok(result) = query {
+                return Some(result)
+            }
+        }
+    }
+
+    None
+}
+
+pub fn create_special_entity(info: &ServerInfo, entity_id: String, kind: SpecialEntityType) {
+    let new_entity = NewSpecialEntity {
+        server_id: info.server.clone().unwrap().id,
+        entity_type: kind as i32,
+        entity_id: entity_id.to_owned()
+    };
+
+    let db = &get_db_con().get().expect("Could not get db pool!");
+    match get_special_entity_by_type(info, kind) {
+        Some(e) => diesel::update(special_entities::dsl::special_entities.find(e.id))
+            .set(special_entities::entity_id.eq(&entity_id))
+            .execute(db)
+            .expect("Could not update the server!"),
+        None => diesel::insert_into(special_entities::table)
+            .values(&new_entity)
+            .execute(db)
+            .expect("Error occurred while inserting new server")
+    };
 }

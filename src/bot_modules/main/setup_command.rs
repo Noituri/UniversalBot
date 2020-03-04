@@ -6,7 +6,7 @@ use crate::database::schema::*;
 use diesel::prelude::*;
 use serenity::model::channel::{Message, ChannelType, PermissionOverwrite, PermissionOverwriteType};
 use serenity::prelude::Context;
-use crate::utils::db::{ServerInfo, get_db_command_by_name, get_db_roles};
+use crate::utils::db::{ServerInfo, get_db_command_by_name, get_db_roles, create_special_entity};
 use crate::utils::object_finding::get_channel_from_id;
 use crate::bot_modules::BotModule;
 use serenity::model::Permissions;
@@ -40,7 +40,7 @@ impl SetupCommand {
             }).map(|v| PermissionOverwrite {
                 allow: Permissions::READ_MESSAGES,
                 deny: Permissions::SEND_MESSAGES,
-                kind: PermissionOverwriteType::Role((v.id as u64).into())
+                kind: PermissionOverwriteType::Role(v.role_id.parse::<u64>().unwrap().into())
             }).collect(),
             None => Vec::new()
         };
@@ -66,7 +66,8 @@ impl SetupCommand {
 
                 match result {
                     Ok(c) => {
-                        let _ = c.send_message(&ctx.http, |m| {
+                        create_special_entity(info, c.id.to_string(), SpecialEntityType::ModLogsChannel);
+                        let _ = c.send_message(ctx.clone().http, |m| {
                             m.embed(|e| {
                                 e.title("Mod Logs");
                                 e.description("Every moderation related stuff will be logged here!");

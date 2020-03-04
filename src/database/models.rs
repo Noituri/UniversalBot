@@ -1,4 +1,4 @@
-use super::schema::{roles, servers, commands, actions, temp_bans_mutes};
+use super::schema::{roles, servers, commands, actions, temp_bans_mutes, special_entities};
 use chrono::NaiveDateTime;
 
 #[derive(Identifiable, Queryable, Clone)]
@@ -99,4 +99,29 @@ pub struct NewTempBanMute {
     pub action_type: i32,
     pub user_id: String,
     pub end_date: NaiveDateTime
+}
+
+#[derive(Clone, Copy)]
+pub enum SpecialEntityType {
+    ModLogsChannel = 1,
+    MuteRole = 2,
+}
+
+#[derive(Identifiable, Queryable, Associations, Clone)]
+#[belongs_to(Server, foreign_key = "server_id")]
+#[table_name = "special_entities"]
+pub struct SpecialEntity {
+    pub id: i32,
+    pub server_id: i32,
+    pub entity_type: i32,
+    pub entity_id: String,
+}
+
+#[derive(Insertable, Associations)]
+#[belongs_to(Server, foreign_key = "server_id")]
+#[table_name = "special_entities"]
+pub struct NewSpecialEntity {
+    pub server_id: i32,
+    pub entity_type: i32,
+    pub entity_id: String,
 }

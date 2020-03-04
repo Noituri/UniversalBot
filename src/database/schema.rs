@@ -38,6 +38,15 @@ table! {
 }
 
 table! {
+    special_entities (id) {
+        id -> Int4,
+        server_id -> Int4,
+        entity_type -> Int4,
+        entity_id -> Varchar,
+    }
+}
+
+table! {
     temp_bans_mutes (id) {
         id -> Int4,
         server_id -> Int4,
@@ -52,5 +61,6 @@ allow_tables_to_appear_in_same_query!(
     commands,
     roles,
     servers,
+    special_entities,
     temp_bans_mutes,
 );
