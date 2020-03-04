@@ -3,6 +3,7 @@ use crate::command::Command;
 
 mod ban_command;
 mod unban_command;
+mod kick_command;
 
 pub struct ModerationModule;
 
@@ -19,6 +20,7 @@ impl BotModule for ModerationModule {
         vec![
             Box::new(ban_command::BanCommand {}),
             Box::new(unban_command::UnBanCommand {}),
+            Box::new(kick_command::KickCommand {}),
         ]
     }
 }
