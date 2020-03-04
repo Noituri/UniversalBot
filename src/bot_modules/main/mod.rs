@@ -4,6 +4,7 @@ pub mod help_command;
 mod modules_command;
 mod perms_command;
 mod prefix_command;
+mod setup_command;
 
 use super::BotModule;
 use crate::command::Command;
@@ -26,7 +27,8 @@ impl BotModule for MainModule {
             Box::new(modules_command::ModulesCommand {}),
             Box::new(prefix_command::PrefixCommand {}),
             Box::new(perms_command::PermsCommand {}),
-            Box::new(cmd_command::CmdCommand {})
+            Box::new(cmd_command::CmdCommand {}),
+            Box::new(setup_command::SetupCommand {}),
         ]
     }
 }
