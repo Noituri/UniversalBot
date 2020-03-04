@@ -4,15 +4,96 @@ use crate::database::models::*;
 use crate::database::schema::commands::enabled_channels;
 use crate::database::schema::*;
 use diesel::prelude::*;
-use serenity::model::channel::{Message, ChannelType};
+use serenity::model::channel::{Message, ChannelType, PermissionOverwrite, PermissionOverwriteType};
 use serenity::prelude::Context;
-use crate::utils::db::{ServerInfo, get_db_command_by_name};
+use crate::utils::db::{ServerInfo, get_db_command_by_name, get_db_roles};
 use crate::utils::object_finding::get_channel_from_id;
+use crate::bot_modules::BotModule;
+use serenity::model::Permissions;
+use crate::bot_modules::moderation::ModerationModule;
 
 pub struct SetupCommand;
 
 impl SetupCommand {
+    fn create_mod_logs(&self, ctx: &Context, msg: &Message, info: &ServerInfo, args: Vec<String>) -> Result<(), String> {
+        let name = if args.len() > 1 {
+            args[1].to_owned()
+        } else {
+          "mod-logs".to_string()
+        };
 
+        let mod_module = ModerationModule{};
+
+        let mut roles_perms = match get_db_roles(info.server.as_ref().unwrap()) {
+            Some(r) => r.iter().filter(|v| {
+                for p in v.perms.iter() {
+                    for c in mod_module.commands() {
+                        match c.perms() {
+                            Some(perms) => if perms.contains(p) {
+                                return true
+                            }
+                            None => {}
+                        }
+                    }
+                }
+                false
+            }).map(|v| PermissionOverwrite {
+                allow: Permissions::READ_MESSAGES,
+                deny: Permissions::SEND_MESSAGES,
+                kind: PermissionOverwriteType::Role((v.id as u64).into())
+            }).collect(),
+            None => Vec::new()
+        };
+
+        let mut deny_perm = Permissions::READ_MESSAGES;
+        deny_perm.insert(Permissions::SEND_MESSAGES);
+
+        roles_perms.push(PermissionOverwrite {
+            allow: Permissions::empty(),
+            deny: deny_perm,
+            kind: PermissionOverwriteType::Role(msg.guild_id.unwrap().0.into())
+        });
+
+        match msg.guild(&ctx.cache) {
+            Some(g) => {
+                let result = g.read().create_channel(ctx.http.clone(), |c| {
+                    c.name(name);
+                    c.kind(ChannelType::Text);
+                    c.topic("Mod Logs - UtterBot");
+                    c.permissions(roles_perms);
+                    c
+                });
+
+                match result {
+                    Ok(c) => {
+                        let _ = c.send_message(&ctx.http, |m| {
+                            m.embed(|e| {
+                                e.title("Mod Logs");
+                                e.description("Every moderation related stuff will be logged here!");
+                                e.color(EMBED_REGULAR_COLOR);
+                                e
+                            });
+                            m
+                        });
+                    },
+                    Err(_) => return Err("Could not create mod logs channel. Do I have needed permissions?".to_string())
+                }
+            },
+            None => return Err("Could not retrieve the guild from cache".to_string())
+        }
+
+        let _ = msg.channel_id.send_message(&ctx.http, |m| {
+            m.embed(|e| {
+                e.title("Setup - Done!");
+                e.description("Mod logs channel has been created!");
+                e.color(EMBED_REGULAR_COLOR);
+                e
+            });
+            m
+        });
+
+        Ok(())
+    }
 }
 
 impl Command for SetupCommand {
@@ -74,6 +155,11 @@ impl Command for SetupCommand {
         match parse_args(&self.args().unwrap(), &args) {
             Ok(routes) => match routes {
                 Some(path) => {
+                    match path[0].name.as_str() {
+                        "modlogs-channel" => self.create_mod_logs(ctx, msg, info, args)?,
+                        _ => return Err("Not implemented".to_string())
+                    }
+
                     Ok(())
                 }
                 None => {
