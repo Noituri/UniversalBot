@@ -10,6 +10,44 @@ use crate::bot_modules::moderation::ModerationModule;
 pub struct SetupCommand;
 
 impl SetupCommand {
+    fn create_mute_role(&self, ctx: &Context, msg: &Message, info: &ServerInfo, args: Vec<String>) -> Result<(), String> {
+        let name = if args.len() > 1 {
+            args[1].to_owned()
+        } else {
+            "muted".to_string()
+        };
+
+
+        match msg.guild(&ctx.cache) {
+            Some(g) => {
+                let result = g.read().create_role(ctx.http.clone(), |r| {
+                    r.name(name);
+                    r.mentionable(false);
+                    r.permissions(Permissions::READ_MESSAGES);
+                    r
+                });
+
+                match result {
+                    Ok(role) => create_special_entity(info, role.id.to_string(), SpecialEntityType::MuteRole),
+                    Err(_) => return Err("Could not create muted role. Do I have needed permissions?".to_string())
+                }
+            },
+            None => return Err("Could not retrieve the guild from cache".to_string())
+        }
+
+        let _ = msg.channel_id.send_message(&ctx.http, |m| {
+            m.embed(|e| {
+                e.title("Setup - Done!");
+                e.description("Muted role has been created!");
+                e.color(EMBED_REGULAR_COLOR);
+                e
+            });
+            m
+        });
+
+        Ok(())
+    }
+
     fn create_mod_logs(&self, ctx: &Context, msg: &Message, info: &ServerInfo, args: Vec<String>) -> Result<(), String> {
         let name = if args.len() > 1 {
             args[1].to_owned()
@@ -114,7 +152,7 @@ impl Command for SetupCommand {
     fn args(&self) -> Option<Vec<CommandArg>> {
         Some(vec![
             CommandArg {
-                name: String::from("mute-role"),
+                name: String::from("muted-role"),
                 desc: Some(String::from("creates role used for mute command.")),
                 option: Some(ArgOption::Any),
                 next: Some(Box::new(CommandArg {
@@ -159,6 +197,7 @@ impl Command for SetupCommand {
                 Some(path) => {
                     match path[0].name.as_str() {
                         "modlogs-channel" => self.create_mod_logs(ctx, msg, info, args)?,
+                        "muted-role" => self.create_mute_role(ctx, msg, info, args)?,
                         _ => return Err("Not implemented".to_string())
                     }
 
