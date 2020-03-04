@@ -101,6 +101,7 @@ pub struct NewTempBanMute {
     pub end_date: NaiveDateTime
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Copy)]
 pub enum SpecialEntityType {
     ModLogsChannel = 1,

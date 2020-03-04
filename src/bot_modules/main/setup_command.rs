@@ -1,13 +1,8 @@
-use crate::command::{get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR, find_command, is_command_protected};
-use crate::database::get_db_con;
+use crate::command::{get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR};
 use crate::database::models::*;
-use crate::database::schema::commands::enabled_channels;
-use crate::database::schema::*;
-use diesel::prelude::*;
 use serenity::model::channel::{Message, ChannelType, PermissionOverwrite, PermissionOverwriteType};
 use serenity::prelude::Context;
-use crate::utils::db::{ServerInfo, get_db_command_by_name, get_db_roles, create_special_entity};
-use crate::utils::object_finding::get_channel_from_id;
+use crate::utils::db::{ServerInfo, get_db_roles, create_special_entity};
 use crate::bot_modules::BotModule;
 use serenity::model::Permissions;
 use crate::bot_modules::moderation::ModerationModule;

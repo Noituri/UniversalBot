@@ -5,7 +5,6 @@ use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods, Expre
 use crate::database::schema::servers::columns::guildid;
 use crate::database::schema::{servers, roles, commands, actions, temp_bans_mutes, special_entities};
 use chrono::{DateTime, Utc};
-use diesel::associations::HasTable;
 
 pub struct ServerInfo {
     pub server: Option<Server>,
