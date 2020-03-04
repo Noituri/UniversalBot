@@ -17,11 +17,12 @@ use crate::database::schema::temp_bans_mutes::columns::{id, action_type};
 use crate::diesel::{RunQueryDsl, BelongingToDsl, ExpressionMethods, QueryDsl, GroupedBy};
 use chrono::Utc;
 use log::error;
+use crate::utils::special_entities_tools::send_to_mod_logs;
 
 pub struct MuteCommand;
 
 impl MuteCommand {
-    fn ban(&self, ctx: &Context, msg: &Message, path: Vec<CommandArg>, args: Vec<String>, info: &ServerInfo) -> Result<(), String> {
+    fn mute(&self, ctx: &Context, msg: &Message, path: Vec<CommandArg>, args: Vec<String>, info: &ServerInfo) -> Result<(), String> {
         let member = match get_member_from_id(ctx, msg, get_args(msg.to_owned(), true), 1)? {
             Some(m) => m,
             None => return Ok(())
@@ -31,9 +32,8 @@ impl MuteCommand {
             return Err("I thought we were friends!".to_string())
         }
 
-        // TODO check if mod-logs channel exist and send message there
 
-
+        send_to_mod_logs(ctx, info, "Mute", "TODO: message");
         Ok(())
     }
 }

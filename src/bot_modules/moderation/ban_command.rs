@@ -17,6 +17,7 @@ use crate::database::schema::temp_bans_mutes::columns::{id, action_type};
 use crate::diesel::{RunQueryDsl, BelongingToDsl, ExpressionMethods, QueryDsl, GroupedBy};
 use chrono::Utc;
 use log::error;
+use crate::utils::special_entities_tools::send_to_mod_logs;
 
 pub struct BanCommand;
 
@@ -31,7 +32,6 @@ impl BanCommand {
             return Err("What did I do to you?".to_string())
         }
 
-        // TODO check if mod-logs channel exist and send message there
         let mut reason = String::new();
         let mut is_temp = false;
 
@@ -92,6 +92,8 @@ impl BanCommand {
             });
             m
         });
+
+        send_to_mod_logs(ctx, info, "Ban", &action_message);
 
         Ok(())
     }

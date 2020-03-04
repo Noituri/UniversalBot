@@ -5,6 +5,7 @@ use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::utils::db::{ServerInfo, create_action, ActionType};
 use crate::bot_modules::main::help_command;
+use crate::utils::special_entities_tools::send_to_mod_logs;
 
 pub struct UnBanCommand;
 
@@ -19,8 +20,6 @@ impl UnBanCommand {
         if user_id == ctx.cache.read().user.id.0 {
             return Err("Hmmm?".to_string())
         }
-
-        // TODO check if mod-logs channel exist and send message there
 
         let user = match &ctx.http.get_user(user_id) {
             Ok(u) => u.clone(),
@@ -48,6 +47,8 @@ impl UnBanCommand {
             });
             m
         });
+
+        send_to_mod_logs(ctx, info, "Unban", &action_message);
 
         Ok(())
     }

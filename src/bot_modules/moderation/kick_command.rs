@@ -6,6 +6,7 @@ use serenity::prelude::Context;
 use crate::utils::db::{ServerInfo, create_action, ActionType};
 use crate::bot_modules::main::help_command;
 use crate::utils::object_finding::{get_member_from_id, FindObject};
+use crate::utils::special_entities_tools::send_to_mod_logs;
 
 pub struct KickCommand;
 
@@ -19,8 +20,6 @@ impl KickCommand {
         if member.user_id() == ctx.cache.read().user.id {
             return Err("Why me?".to_string())
         }
-
-        // TODO check if mod-logs channel exist and send message there
 
         let action_msg = if args.len() > 1 {
             format!("User has been kicked out! Reason {}.", args[1..].join(" "))
@@ -49,6 +48,7 @@ impl KickCommand {
             m
         });
 
+        send_to_mod_logs(ctx, info, "Kick", &action_msg);
         Ok(())
     }
 }
