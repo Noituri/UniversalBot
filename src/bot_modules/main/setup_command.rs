@@ -40,13 +40,19 @@ impl SetupCommand {
             None => Vec::new()
         };
 
-        let mut deny_perm = Permissions::READ_MESSAGES;
-        deny_perm.insert(Permissions::SEND_MESSAGES);
+        let mut read_send_perm = Permissions::READ_MESSAGES;
+        read_send_perm.insert(Permissions::SEND_MESSAGES);
 
         roles_perms.push(PermissionOverwrite {
             allow: Permissions::empty(),
-            deny: deny_perm,
+            deny: read_send_perm,
             kind: PermissionOverwriteType::Role(msg.guild_id.unwrap().0.into())
+        });
+
+        roles_perms.push(PermissionOverwrite {
+            allow: read_send_perm,
+            deny: Permissions::empty(),
+            kind: PermissionOverwriteType::Member(ctx.cache.read().user.id)
         });
 
         match msg.guild(&ctx.cache) {
