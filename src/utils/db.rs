@@ -174,7 +174,8 @@ pub enum ActionType {
     UnBan = 2,
     Kick = 3,
     Mute = 4,
-    UnMute = 5
+    UnMute = 5,
+    Warn = 6,
 }
 
 pub fn create_action(info: &ServerInfo, issuer: String, target: Option<String>, action_type: ActionType, message: String) {
