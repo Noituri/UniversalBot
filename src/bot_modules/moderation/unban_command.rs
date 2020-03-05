@@ -20,7 +20,7 @@ impl UnBanCommand {
         if user_id == ctx.cache.read().user.id.0 {
             return Err("Hmmm?".to_string())
         }
-        if member.user_id() == msg.author.id {
+        if user_id == msg.author.id.0 {
             return Err("Is that even possible?".to_string())
         }
 

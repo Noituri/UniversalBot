@@ -28,6 +28,7 @@ impl BotModule for ModerationModule {
             Box::new(mute_command::MuteCommand {}),
             Box::new(unmute_command::UnMuteCommand {}),
             Box::new(warn_command::WarnCommand {}),
+            Box::new(modtools_command::ModToolsCommand {}),
         ]
     }
 }

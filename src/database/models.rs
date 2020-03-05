@@ -55,7 +55,7 @@ pub struct NewDBCommand {
     pub enabled_channels: Vec<String>
 }
 
-#[derive(Identifiable, Queryable, Associations, Clone)]
+#[derive(Identifiable, Queryable, Associations, Clone, QueryableByName)]
 #[belongs_to(Server, foreign_key = "server_id")]
 #[table_name = "actions"]
 pub struct Action {

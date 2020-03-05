@@ -1,11 +1,11 @@
 use serenity::model::id::GuildId;
 use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction, NewTempBanMute, NewSpecialEntity, SpecialEntityType, SpecialEntity, Action};
 use crate::database::get_db_con;
-use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods, ExpressionMethods};
+use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods, ExpressionMethods, BoolExpressionMethods, Expression};
 use crate::database::schema::servers::columns::guildid;
 use crate::database::schema::{servers, roles, commands, actions, temp_bans_mutes, special_entities};
 use chrono::{DateTime, Utc};
-use crate::database::schema::actions::columns::{action_type, target};
+use crate::database::schema::actions::columns::{action_type, target, creation_date};
 
 pub struct ServerInfo {
     pub server: Option<Server>,
@@ -170,6 +170,7 @@ pub fn get_db_commands(server: &Server) -> Option<Vec<DBCommand>> {
 }
 
 #[allow(dead_code)]
+#[derive(Copy, Clone)]
 pub enum ActionType {
     Ban = 1,
     UnBan = 2,
@@ -180,34 +181,65 @@ pub enum ActionType {
     ReducedWarn = 7,
 }
 
-pub fn get_user_warn_lvl(info: &ServerInfo, user_id: &str) -> usize {
+pub fn get_user_warn_lvl(info: &ServerInfo, user_id: &str) -> i64 {
     let server = match &info.server {
         Some(s) => s,
         None => return 0
     };
 
-    let warns: Vec<_> = Action::belonging_to(server)
+    let db = get_db_con().get().expect("Could not get db pool!");
+    let warns: i64 = Action::belonging_to(server)
         .filter(action_type.eq(ActionType::Warn as i32))
         .filter(target.like(user_id))
-        .load::<Action>(&db)
+        .count()
+        .get_result(&db)
         .expect("Could not load warn actions");
 
-    let reduced_warns: Vec<_> = Action::belonging_to(server)
+    let reduced_warns: i64 = Action::belonging_to(server)
         .filter(action_type.eq(ActionType::ReducedWarn as i32))
         .filter(target.like(user_id))
-        .load::<Action>(&db)
+        .count()
+        .get_result(&db)
         .expect("Could not load reduced actions");
 
-    warns.len() - reduced_warns.len()
+    warns - reduced_warns
 }
 
-pub fn create_action(info: &ServerInfo, issuer: String, target: Option<String>, action_type: ActionType, message: String) {
+pub fn get_actions_by_kind(info: &ServerInfo, user_id: String, kinds: Vec<ActionType>,) -> Option<Vec<Action>> {
+    let server = match &info.server {
+        Some(s) => s,
+        None => return None
+    };
+    if kinds.len() == 0 {
+        return None
+    }
+
+    let db = get_db_con().get().expect("Could not get db pool!");
+    let mut query = format!(r#"action_type = {}"#, kinds[0] as i32);
+    if kinds.len() > 1 {
+        for k in kinds[1..].to_vec() {
+            query.push_str(&format!(r#"OR action_type = {}"#, k as i32));
+        }
+    }
+
+    Some(diesel::sql_query(format!(r#"SELECT * FROM actions
+        WHERE server_id = {}
+        AND
+        target = '{}'
+        AND
+        ({})
+        ORDER BY creation_date DESC;"#, server.id, user_id, query))
+        .load(&db)
+        .expect("Could not load actions"))
+}
+
+pub fn create_action(info: &ServerInfo, issuer: String, target_id: Option<String>, action_kind: ActionType, message: String) {
     let new_action = NewAction {
         server_id: info.server.clone().unwrap().id,
-        action_type: action_type as i32,
+        action_type: action_kind as i32,
         creation_date: Utc::now().naive_utc(),
+        target: target_id,
         issuer,
-        target,
         message
     };
 
@@ -217,10 +249,10 @@ pub fn create_action(info: &ServerInfo, issuer: String, target: Option<String>, 
         .expect("Error occurred while inserting new action");
 }
 
-pub fn create_temp_ban_mute(info: &ServerInfo, user_id: String, end_date: DateTime<Utc>, action_type: ActionType) {
+pub fn create_temp_ban_mute(info: &ServerInfo, user_id: String, end_date: DateTime<Utc>, action_kind: ActionType) {
     let new_entry = NewTempBanMute {
         server_id: info.server.clone().unwrap().id,
-        action_type: action_type as i32,
+        action_type: action_kind as i32,
         end_date: end_date.naive_utc(),
         user_id,
     };
