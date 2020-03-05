@@ -31,6 +31,9 @@ impl BanCommand {
         if member.user_id() == ctx.cache.read().user.id {
             return Err("What did I do to you?".to_string())
         }
+        if member.user_id() == msg.author.id {
+            return Err("I think not".to_string())
+        }
 
         let mut reason = String::new();
         let mut is_temp = false;

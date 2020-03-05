@@ -1,10 +1,11 @@
 use serenity::model::id::GuildId;
-use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction, NewTempBanMute, NewSpecialEntity, SpecialEntityType, SpecialEntity};
+use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction, NewTempBanMute, NewSpecialEntity, SpecialEntityType, SpecialEntity, Action};
 use crate::database::get_db_con;
 use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods, ExpressionMethods};
 use crate::database::schema::servers::columns::guildid;
 use crate::database::schema::{servers, roles, commands, actions, temp_bans_mutes, special_entities};
 use chrono::{DateTime, Utc};
+use crate::database::schema::actions::columns::{action_type, target};
 
 pub struct ServerInfo {
     pub server: Option<Server>,
@@ -76,7 +77,7 @@ pub fn create_db_role(server: &Server, role_id: String) -> Role {
     diesel::insert_into(roles::table)
         .values(&new_role)
         .get_result(&get_db_con().get().expect("Could not get db pool!"))
-        .expect("Error occurred while inserting new server")
+        .expect("Error occurred while inserting new role")
 }
 
 pub fn get_db_roles(server: &Server) -> Option<Vec<Role>> {
@@ -127,7 +128,7 @@ pub fn create_db_command(server: &Server, cmd_name: String) -> DBCommand {
     diesel::insert_into(commands::table)
         .values(&new_cmd)
         .get_result(&get_db_con().get().expect("Could not get db pool!"))
-        .expect("Error occurred while inserting new server")
+        .expect("Error occurred while inserting new command")
 }
 
 pub fn get_db_command_by_name(info: &ServerInfo, command_name: String) -> Option<DBCommand> {
@@ -176,6 +177,28 @@ pub enum ActionType {
     Mute = 4,
     UnMute = 5,
     Warn = 6,
+    ReducedWarn = 7,
+}
+
+pub fn get_user_warn_lvl(info: &ServerInfo, user_id: &str) -> usize {
+    let server = match &info.server {
+        Some(s) => s,
+        None => return 0
+    };
+
+    let warns: Vec<_> = Action::belonging_to(server)
+        .filter(action_type.eq(ActionType::Warn as i32))
+        .filter(target.like(user_id))
+        .load::<Action>(&db)
+        .expect("Could not load warn actions");
+
+    let reduced_warns: Vec<_> = Action::belonging_to(server)
+        .filter(action_type.eq(ActionType::ReducedWarn as i32))
+        .filter(target.like(user_id))
+        .load::<Action>(&db)
+        .expect("Could not load reduced actions");
+
+    warns.len() - reduced_warns.len()
 }
 
 pub fn create_action(info: &ServerInfo, issuer: String, target: Option<String>, action_type: ActionType, message: String) {
@@ -191,7 +214,7 @@ pub fn create_action(info: &ServerInfo, issuer: String, target: Option<String>, 
     diesel::insert_into(actions::table)
         .values(&new_action)
         .execute(&get_db_con().get().expect("Could not get db pool!"))
-        .expect("Error occurred while inserting new server");
+        .expect("Error occurred while inserting new action");
 }
 
 pub fn create_temp_ban_mute(info: &ServerInfo, user_id: String, end_date: DateTime<Utc>, action_type: ActionType) {
@@ -205,7 +228,7 @@ pub fn create_temp_ban_mute(info: &ServerInfo, user_id: String, end_date: DateTi
     diesel::insert_into(temp_bans_mutes::table)
         .values(&new_entry)
         .execute(&get_db_con().get().expect("Could not get db pool!"))
-        .expect("Error occurred while inserting new server");
+        .expect("Error occurred while inserting new temp ban/mute");
 }
 
 pub fn get_special_entities(server: &Server) -> Option<Vec<SpecialEntity>> {
@@ -263,6 +286,6 @@ pub fn create_special_entity(info: &ServerInfo, entity_id: String, kind: Special
         None => diesel::insert_into(special_entities::table)
             .values(&new_entity)
             .execute(db)
-            .expect("Error occurred while inserting new server")
+            .expect("Error occurred while inserting new special entity")
     };
 }

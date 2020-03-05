@@ -20,6 +20,9 @@ impl KickCommand {
         if member.user_id() == ctx.cache.read().user.id {
             return Err("Why me?".to_string())
         }
+        if member.user_id() == msg.author.id {
+            return Err("Really?".to_string())
+        }
 
         let action_msg = if args.len() > 1 {
             format!("User has been kicked out! Reason {}.", args[1..].join(" "))

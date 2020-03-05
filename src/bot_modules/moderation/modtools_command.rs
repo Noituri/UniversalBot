@@ -1,3 +1,4 @@
+// TODO: don't reduce warns if the length of user's warns is less than 1
 use crate::command::{get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR, EMBED_ERROR_COLOR};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
@@ -6,57 +7,29 @@ use crate::utils::object_finding::{get_member_from_id, FindObject};
 use crate::bot_modules::main::help_command;
 use crate::utils::special_entities_tools::send_to_mod_logs;
 
-pub struct WarnCommand;
+pub struct ModToolsCommand;
 
-impl WarnCommand {
-    fn warn(&self, ctx: &Context, msg: &Message, args: Vec<String>, info: &ServerInfo) -> Result<(), String> {
+impl ModToolsCommand {
+    fn reduce_warns(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
         let member = match get_member_from_id(ctx, msg, get_args(msg.to_owned(), true), 1)? {
             Some(m) => m,
             None => return Ok(())
         };
 
-        if member.user_id() == ctx.cache.read().user.id {
-            return Err("I did not do anything wrong sir. Did I?".to_string())
-        }
-        if member.user_id() == msg.author.id {
-            return Err(r#"¯\_(ツ)_/¯"#.to_string())
-        }
 
-        let reason = args[1..].join(" ");
-        let action_message = format!("User {} has been warned. Reason: {}!", member.display_name(), reason);
-        let _ = member.user.read().direct_message(ctx.clone().http, |m| {
-            m.embed(|e| {
-                e.title("Warn!");
-                e.description(format!("You have been warned! Reason: {}", reason));
-                e.color(EMBED_ERROR_COLOR);
-                e
-            });
-            m
-        });
+        Ok(())
+    }
+    fn show_report(&self, ctx: &Context, msg: &Message, args: Vec<String>, info: &ServerInfo) -> Result<(), String> {
+        let member = match get_member_from_id(ctx, msg, get_args(msg.to_owned(), true), 1)? {
+            Some(m) => m,
+            None => return Ok(())
+        };
 
-        let _ = msg.channel_id.send_message(&ctx.http, |m| {
-            m.embed(|e| {
-                e.title("Warned!");
-                e.description(&action_message);
-                e.color(EMBED_REGULAR_COLOR);
-                e
-            });
-            m
-        });
-
-        create_action(
-            info,
-            msg.author.id.to_string(),
-            Some(member.get_id().to_string()),
-            ActionType::Warn,
-            action_message.to_owned()
-        );
-        send_to_mod_logs(ctx, info, "Warn", &action_message);
         Ok(())
     }
 }
 
-impl Command for WarnCommand {
+impl Command for ModToolsCommand {
     fn name(&self) -> String {
         String::from("warn")
     }

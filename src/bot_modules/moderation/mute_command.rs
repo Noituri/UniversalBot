@@ -45,6 +45,10 @@ impl MuteCommand {
             return Err("I thought we were friends!".to_string())
         }
 
+        if member.user_id() == msg.author.id {
+            return Err("Let's keep talking!".to_string())
+        }
+
         let mut reason = String::new();
         let mut is_temp = false;
 

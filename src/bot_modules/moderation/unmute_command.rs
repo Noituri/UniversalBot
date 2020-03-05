@@ -33,6 +33,9 @@ impl UnMuteCommand {
         if member.user_id() == ctx.cache.read().user.id {
             return Err("Whaa?".to_string())
         }
+        if member.user_id() == msg.author.id {
+            return Err("???".to_string())
+        }
 
         let action_message = format!("User {} has been un-muted!", member.display_name());
 

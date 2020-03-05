@@ -7,6 +7,7 @@ mod kick_command;
 mod mute_command;
 mod unmute_command;
 mod warn_command;
+mod modtools_command;
 
 pub struct ModerationModule;
 

@@ -20,6 +20,9 @@ impl UnBanCommand {
         if user_id == ctx.cache.read().user.id.0 {
             return Err("Hmmm?".to_string())
         }
+        if member.user_id() == msg.author.id {
+            return Err("Is that even possible?".to_string())
+        }
 
         let user = match &ctx.http.get_user(user_id) {
             Ok(u) => u.clone(),
