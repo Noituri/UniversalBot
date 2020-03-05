@@ -17,6 +17,28 @@ impl ModToolsCommand {
             None => return Ok(())
         };
 
+        let lvl = get_user_warn_lvl(info, &member.get_id().to_string());
+        if lvl < 1 {
+            return Err("User already has the lowest possible warn level!".to_string())
+        }
+
+        create_action(
+            info,
+            msg.author.id.to_string(),
+            Some(member.get_id().to_string()),
+            ActionType::ReducedWarn,
+            format!("Warn level reduced by **{}**", msg.author.name)
+        );
+
+        let _ = msg.channel_id.send_message(&ctx.http, |m| {
+            m.embed(|e| {
+                e.title("Done!");
+                e.description("Successfully reduced the warn level!");
+                e.color(EMBED_REGULAR_COLOR);
+                e
+            });
+            m
+        });
 
         Ok(())
     }
@@ -51,7 +73,7 @@ impl ModToolsCommand {
         };
 
         let user_id = &member.get_id().to_string();
-        let report_message = format!("**Warns amount:** {}\n", get_user_warn_lvl(info, &member.get_id().to_string()));
+        let report_message = format!("**Warns level:** {}\n", get_user_warn_lvl(info, &member.get_id().to_string()));
         let mut fields: Vec<(&str, String)> = Vec::new();
         if args.len() == 2 {
             match args[1].as_str() {
@@ -149,9 +171,10 @@ impl Command for ModToolsCommand {
             Ok(routes) => {
                 match routes {
                     Some(path) => {
-                        match path[0].name.as_str() {
-                            "reduce-warns" => {},
-                            _ => self.show_report(ctx, msg, args, info)?
+                        if path.len() == 2 && path[1].name == "reduce-warns" {
+                            self.reduce_warns(ctx, msg, info)?;
+                        } else {
+                            self.show_report(ctx, msg, args, info)?;
                         }
                     },
                     None => {
