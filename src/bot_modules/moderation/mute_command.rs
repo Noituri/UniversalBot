@@ -3,7 +3,7 @@ use crate::command::{
 };
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::utils::db::{ServerInfo, create_action, ActionType, create_temp_ban_mute, get_special_entity_by_type, get_special_entities};
+use crate::utils::db::{ServerInfo, create_action, ActionType, create_temp_ban_mute, get_special_entity_by_type};
 use crate::utils::object_finding::get_member_from_id;
 use crate::bot_modules::main::help_command;
 use crate::utils::get_time;

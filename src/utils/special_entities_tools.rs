@@ -1,4 +1,3 @@
-use serenity::model::channel::Message;
 use crate::utils::db::{ServerInfo, get_special_entity_by_type};
 use serenity::prelude::Context;
 use crate::database::models::SpecialEntityType;

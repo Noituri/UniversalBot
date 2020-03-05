@@ -5,6 +5,7 @@ mod ban_command;
 mod unban_command;
 mod kick_command;
 mod mute_command;
+mod unmute_command;
 
 pub struct ModerationModule;
 
@@ -23,6 +24,7 @@ impl BotModule for ModerationModule {
             Box::new(unban_command::UnBanCommand {}),
             Box::new(kick_command::KickCommand {}),
             Box::new(mute_command::MuteCommand {}),
+            Box::new(unmute_command::UnMuteCommand {}),
         ]
     }
 }
