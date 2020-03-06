@@ -9,6 +9,7 @@ mod unmute_command;
 mod warn_command;
 mod modtools_command;
 mod lock_command;
+mod unlock_command;
 
 pub struct ModerationModule;
 
@@ -31,6 +32,7 @@ impl BotModule for ModerationModule {
             Box::new(warn_command::WarnCommand {}),
             Box::new(modtools_command::ModToolsCommand {}),
             Box::new(lock_command::LockCommand {}),
+            Box::new(unlock_command::UnLockCommand {}),
         ]
     }
 }

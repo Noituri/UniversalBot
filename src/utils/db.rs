@@ -180,6 +180,7 @@ pub enum ActionType {
     Warn = 6,
     ReducedWarn = 7,
     ChannelLock = 8,
+    ChannelUnLock = 9,
 }
 
 pub fn get_user_warn_lvl(info: &ServerInfo, user_id: &str) -> i64 {
