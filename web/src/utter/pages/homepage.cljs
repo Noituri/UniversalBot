@@ -8,4 +8,5 @@
 
 (defn home-page []
       [container {:title "UtterBot - Home"}
-       [:h1 "Utter - Univeral Bot" [:sup "(W.I.P)"]]])
+       [:h1 "Utter"]
+       [:h2 "Univeral Bot"]])

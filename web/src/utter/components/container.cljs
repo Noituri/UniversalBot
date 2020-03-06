@@ -4,7 +4,7 @@
    [utter.components.navbar :refer [navbar]]
    [reagent.core :as r]))
 
-(defn container [{:keys [title]} children]
+(defn container [{:keys [title]} & children]
   [:div
    [navbar]
    [style/container
