@@ -1,4 +1,3 @@
-// TODO: don't reduce warns if the length of user's warns is less than 1
 use crate::command::{get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
