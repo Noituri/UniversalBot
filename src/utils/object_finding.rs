@@ -34,7 +34,11 @@ impl FindObject for GuildChannel {
         self.id.0
     }
     fn get_name(&self) -> String {
-        self.name.to_owned()
+        match self.kind {
+            ChannelType::Text => format!("{} {}", "🗒️", self.name.to_owned()),
+            ChannelType::Voice => format!("{} {}", "🎙️", self.name.to_owned()),
+            _ => format!("{} {}", "📂", self.name.to_owned())
+        }
     }
 }
 impl FindObject for guild::Role {
