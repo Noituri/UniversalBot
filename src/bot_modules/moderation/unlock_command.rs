@@ -2,8 +2,7 @@ use crate::command::{get_args, parse_args, ArgOption, Command, CommandArg, Comma
 use serenity::model::channel::{Message, PermissionOverwrite, PermissionOverwriteType};
 use serenity::prelude::Context;
 use crate::utils::db::{ServerInfo, create_action, ActionType};
-use crate::bot_modules::main::help_command;
-use crate::utils::object_finding::{get_member_from_id, FindObject, get_channel_from_id};
+use crate::utils::object_finding::get_channel_from_id;
 use crate::utils::special_entities_tools::send_to_mod_logs;
 use serenity::model::Permissions;
 use serenity::model::misc::Mentionable;

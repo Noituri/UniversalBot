@@ -1,12 +1,10 @@
 // TODO: don't reduce warns if the length of user's warns is less than 1
-use crate::command::{get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR, EMBED_ERROR_COLOR};
+use crate::command::{get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
 use crate::utils::db::{ServerInfo, create_action, ActionType, get_actions_by_kind, get_user_warn_lvl};
 use crate::utils::object_finding::{get_member_from_id, FindObject};
 use crate::bot_modules::main::help_command;
-use crate::utils::special_entities_tools::send_to_mod_logs;
-use crate::database::models::Action;
 
 pub struct ModToolsCommand;
 
@@ -66,6 +64,7 @@ impl ModToolsCommand {
         Ok(())
     }
 
+    #[allow(unused_must_use)]
     fn show_report(&self, ctx: &Context, msg: &Message, args: Vec<String>, info: &ServerInfo) -> Result<(), String> {
         let member = match get_member_from_id(ctx, msg, get_args(msg.to_owned(), true), 1)? {
             Some(m) => m,

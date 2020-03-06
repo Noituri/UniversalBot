@@ -1,11 +1,11 @@
 use serenity::model::id::GuildId;
 use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction, NewTempBanMute, NewSpecialEntity, SpecialEntityType, SpecialEntity, Action};
 use crate::database::get_db_con;
-use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods, ExpressionMethods, BoolExpressionMethods, Expression};
+use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods, ExpressionMethods};
 use crate::database::schema::servers::columns::guildid;
 use crate::database::schema::{servers, roles, commands, actions, temp_bans_mutes, special_entities};
 use chrono::{DateTime, Utc};
-use crate::database::schema::actions::columns::{action_type, target, creation_date};
+use crate::database::schema::actions::columns::{action_type, target};
 
 pub struct ServerInfo {
     pub server: Option<Server>,
