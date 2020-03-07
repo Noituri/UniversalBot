@@ -9,4 +9,4 @@
    [navbar]
    [style/container
     [:title title]
-    (into [:div] (r/children (r/current-component)))]])
+    (into [:<>] (r/children (r/current-component)))]])

@@ -19,11 +19,6 @@
 
 (def initial-state
   {:user nil})
-;; (rf/reg-event-db
-;;  :initialize
-;;  [check-spec-interceptor]
-;;  (fn [_ _]
-;;    {:user nil}))
 
 (defn init [] 
   (rf/dispatch-sync [:initialize]))

@@ -2,17 +2,18 @@
   (:require
    [kee-frame.core :as k]
    [utter.store.db :as db]
-   [utter.pages.homepage :refer [home-page]]))
+   [utter.pages.homepage :refer [home-page]]
+   [utter.pages.panel :refer [panel]]))
 
 (def routes
   [["/"      :home]
    ["/panel" :panel]])
 
-(def debug? true)
+(def debug? false)
 
 (def router
   [k/switch-route (comp :name :data)
-   :panel [:div "NOT IMPLEMENTED"]
+   :panel [panel]
    :home  [home-page]
    nil [:div "Loading..."]])
 
