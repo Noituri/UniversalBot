@@ -46,7 +46,7 @@
 (defstyled nav-items-container :div
   {:display "flex"})
 
-(defstyled nav-item :p
+(defstyled nav-item :a
   {:cursor "pointer"
    :text-decoration "none"
    :padding "5px"

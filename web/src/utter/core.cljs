@@ -1,16 +1,14 @@
 (ns utter.core
   (:require
-   [reagent.core :as r]
-   [utter.store.db :as db]
-   [utter.pages.homepage :refer [home-page]]))
+   [utter.routing :refer [router]]
+   [reagent.core :as r]))
 
 ;; -------------------------
 ;; Initialize app
 
-
 (defn mount-root []
-  (db/init)
-  (r/render [home-page] (.getElementById js/document "app")))
+  (r/render router
+            (.getElementById js/document "app")))
 
 (defn init! []
   (mount-root))

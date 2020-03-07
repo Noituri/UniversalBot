@@ -9,7 +9,8 @@
                  [reagent "0.9.0-rc3"]
                  [clj-commons/cljss "1.6.4"]
                  [figwheel-sidecar "0.5.18"]
-                 [re-frame "0.11.0"]]
+                 [re-frame "0.11.0"]
+                 [kee-frame "0.3.4"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]]
 
