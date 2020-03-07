@@ -18,7 +18,8 @@
           :color "#fff"}
    "*" {:font-family "Open Sans"}
    :body {:margin 0}
-   "::placeholder" {:text-align "center"}})
+   "::placeholder" {:text-align "center"
+                    :color "#bfbfc0"}})
 
 
 (defstyled container :div
