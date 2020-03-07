@@ -11,4 +11,4 @@
   [container {:title "UtterBot - Panel"}
    [server-selector]
    [options-panel]
-   [server-settings]])
+   [actions-list]])

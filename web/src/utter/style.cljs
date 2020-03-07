@@ -115,12 +115,11 @@
                  :border-radius "10px"}})
 
 (defstyled list-entry :div
-  {:background-color "#2e2a66"
+  {:background-color (with-meta #(get {nil "#2e2a66" :dark "#2a265b"} %) :bg-color)
    :border-radius "10px"
    :padding "10px"
    :margin-bottom "10px"
    :width "inherit"
-   :&:hover {:background-color "#2a265b"}
    ".list-text>*" {:text-align "left"
                    :margin 0}})
 
