@@ -9,5 +9,5 @@
    [nav-logo {:href (k/path-for [:home])} "UtterBot"]
    [nav-items-container
     [nav-item "Invite"]
-    [nav-item "Commands"]
+    [nav-item {:href (k/path-for [:commands])} "Commands"]
     [nav-item {:href (k/path-for [:panel])} "Web Panel"]]])

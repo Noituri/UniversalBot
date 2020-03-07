@@ -1,4 +1,4 @@
-(ns utter.components.actionslist
+(ns utter.components.utterlist
   (:require
    [reagent.core :as r]
    [utter.style :as style]))
@@ -15,11 +15,12 @@
           [:div.list-text
            [:h5 "Creation Date: 00:00 00-00-000"]]])])))
 
-(defn actions-list []
+(defn utter-list [{:keys [title entries]}]
   [style/card
-   [:h2 "Actions"]
+   (when (some? title) [:h2 title])
    [:div
-    [list-entry {:kind "Ban" :description "User test has been banned by admin!"}]
-    [list-entry {:kind "Ban" :description "User test has been banned by admin!"}]
-    [list-entry {:kind "Ban" :description "User test has been banned by admin!"}]
-    [list-entry {:kind "Ban" :description "User test has been banned by admin!"}]]])
+    (->
+     (map-indexed #(vector list-entry {:key %1
+                                       :kind (%2 :name)
+                                       :description (%2 :description)}) entries)
+     (doall))]])
