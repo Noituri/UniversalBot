@@ -88,7 +88,9 @@
    :margin "10px 5px 10px 5px"
    :width "100%"
    :max-width "300px"
-   :height "130px"})
+   :height "130px"
+   ::css/media {[:only :screen :and [:min-width "750px"]]
+                {:max-width "500px"}}})
 
 (defstyled circle-img :img
   {:border-radius "100px"
@@ -120,6 +122,7 @@
    :padding "10px"
    :margin-bottom "10px"
    :width "inherit"
+   :cursor "pointer"
    ".list-text>*" {:text-align "left"
                    :margin 0}})
 
