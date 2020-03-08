@@ -5,18 +5,34 @@
    [utter.components.optionspanel :refer [options-panel]]
    [utter.components.utterlist :refer [utter-list]]
    [utter.components.serversettings :refer [server-settings]]
+   [reagent.core :as r]
    [utter.style :as style]))
 
-(defn panel-page []
-  [container {:title "UtterBot - Panel"}
-   [server-selector]
-   [options-panel {:options
-                   [{:name "1" :selected? true}
-                    {:name "2" :selected? false}]}]
+(defn actions-list []
    [utter-list {:name "Actions"
-                :entries [{:name "Ban"
+                :entries [{:id 2
+                           :name "Ban"
                            :description "User XXX has beeen banned by YYY"}
-                          {:name "Ban"
+                          {:id 1
+                           :name "Ban"
                            :description "User XXX has beeen banned by YYY"}
-                          {:name "Ban"
-                           :description "User XXX has beeen banned by YYY"}]}]])
+                          {:id 0
+                           :name "Ban"
+                           :description "User XXX has beeen banned by YYY"}]}])
+
+(defn panel-page []
+  (let [selected-option (r/atom 0)]
+    (fn []
+      [container {:title "UtterBot - Panel"}
+       [server-selector]
+       [options-panel {:options
+                       [{:name "1"
+                         :selected? (= @selected-option 0)
+                         :on-click #(reset! selected-option 0)}
+                        {:name "2"
+                         :selected? (= @selected-option 1)
+                         :on-click #(reset! selected-option 1)}
+                        ]}]
+       (case @selected-option
+         0 [actions-list]
+         1 [server-settings])])))

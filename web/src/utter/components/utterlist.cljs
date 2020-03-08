@@ -20,7 +20,7 @@
    (when (some? title) [:h2 title])
    [:div
     (->
-     (map-indexed #(vector list-entry {:key %1
+     (map-indexed #(vector list-entry {:key (%2 :id)
                                        :kind (%2 :name)
                                        :description (%2 :description)}) entries)
      (doall))]])

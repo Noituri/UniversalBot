@@ -6,9 +6,9 @@
    [utter.components.utterlist :refer [utter-list]]))
 
 (def commands
-  [{:kind 1 :name ".help" :description "Shows infromations about commands"}
-   {:kind 1 :name ".prefix" :description "Changes prefix"}
-   {:kind 2 :name ".ban" :description "Bans users from your server"}])
+  [{:id 0 :kind 1 :name ".help" :description "Shows infromations about commands"}
+   {:id 1 :kind 1 :name ".prefix" :description "Changes prefix"}
+   {:id 2 :kind 2 :name ".ban" :description "Bans users from your server"}])
 
 (def categories
   [{:name "All Commands" :icon "A"}
@@ -21,8 +21,10 @@
     (fn []
       [container {:title "UtterBot - Commands"}
        [options-panel {:title (categories @selected-category)
-                       :options (map-indexed #(hash-map :name (%2 :icon)
-                                                        :selected? (= @selected-category %1))
+                       :options (map-indexed #(hash-map
+                                               :name (%2 :icon)
+                                               :selected? (= @selected-category %1)
+                                               :on-click (fn [] (reset! selected-category %1)))
                                              categories)}]
        [utter-list {:entries 
                     (if (= @selected-category 0)
