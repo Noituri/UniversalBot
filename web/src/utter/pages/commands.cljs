@@ -13,10 +13,10 @@
    {:id 2 :kind 2 :name ".ban" :description "Bans users from your server"}])
 
 (def categories
-  [{:id 0 :name "All Commands" :icon "A"}
-   {:id 1 :name "Main Commands" :icon "M"}
-   {:id 2 :name "Moderation Commands" :icon "M"}
-   {:id 3 :name "Ticket Commands" :icon "T"}])
+  [{:id 0 :name "All Commands" :icon "fa-border-all"}
+   {:id 1 :name "Main Commands" :icon "fa-star"}
+   {:id 2 :name "Moderation Commands" :icon "fa-gavel"}
+   {:id 3 :name "Ticket Commands" :icon "fa-ticket-alt"}])
 
 (defn commands-page []
   (let [selected-category (r/atom 0)
@@ -25,7 +25,7 @@
       [container {:title "UtterBot - Commands"}
        [options-panel {:title ((categories @selected-category) :name)
                        :options (map-indexed #(hash-map
-                                               :name (%2 :icon)
+                                               :icon (%2 :icon)
                                                :selected? (= @selected-category %1)
                                                :on-click (fn []
                                                            (reset! selected-category %1)
