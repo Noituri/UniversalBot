@@ -15,5 +15,5 @@
      (map-indexed #(vector option {:key %1 
                                    :selected? (%2 :selected?)
                                    :on-click (when-some [f (%2 :on-click)] f)}
-                           [:h2 (%2 :name)]) options)
+                           [:i {:class ["option-el" "fas" (%2 :icon)]}]) options)
      (doall))]]) ; TODO: instead of number use icons

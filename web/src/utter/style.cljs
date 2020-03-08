@@ -19,7 +19,8 @@
    "*" {:font-family "Open Sans"}
    :body {:margin 0}
    "::placeholder" {:text-align "center"
-                    :color "#bfbfc0"}})
+                    :color "#bfbfc0"}
+   ".option-el" {:margin-top "5px"}})
 
 
 (defstyled container :div
@@ -103,7 +104,7 @@
    :width "30px"
    :height "30px"
    :padding "10px !important"
-   ">*" {:margin 0}})
+   ">*" {:font-size "20px"}})
 
 (defstyled horizontal-view :div
   {:overflow "auto"

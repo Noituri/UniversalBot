@@ -26,13 +26,12 @@
       [container {:title "UtterBot - Panel"}
        [server-selector]
        [options-panel {:options
-                       [{:name "1"
+                       [{:icon "fa-newspaper"
                          :selected? (= @selected-option 0)
                          :on-click #(reset! selected-option 0)}
-                        {:name "2"
+                        {:icon "fa-wrench"
                          :selected? (= @selected-option 1)
-                         :on-click #(reset! selected-option 1)}
-                        ]}]
+                         :on-click #(reset! selected-option 1)}]}]
        (case @selected-option
          0 [actions-list]
          1 [server-settings])])))
