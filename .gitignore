@@ -1,6 +1,6 @@
 /target
 **/*.rs.bk
 config.toml
-/.idea
+**/.idea
 output.log
 .env
