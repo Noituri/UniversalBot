@@ -1,6 +1,7 @@
 package main
 
 import (
+	"api/common"
 	"context"
 	"errors"
 	"fmt"
@@ -53,10 +54,12 @@ func handle(ctx context.Context, event LoginEvent) (string, error) {
 		return "", errors.New(err.Error())
 	}
 
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"token": token.AccessToken,
-		"refreshToken": token.RefreshToken,
-		"exp": time.Now().UTC().Add(730 * time.Hour).UnixNano(),
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, common.Claims{
+		Token:          token.AccessToken,
+		RefreshToken:   token.RefreshToken,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().UTC().Add(730 * time.Hour).UnixNano(),
+		},
 	})
 
 	finalToken, err := jwtToken.SignedString(secret)

@@ -5,12 +5,31 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"log"
 	"os"
 )
 
-type DBConnector struct {}
+var db *gorm.DB
 
-func (d *DBConnector) Connection() (*gorm.DB, error) {
+func init() {
+	_ = GetConnection()
+}
+
+func GetConnection() *gorm.DB {
+	if db != nil {
+		return db
+	}
+
+	con, err := Connection()
+	if err != nil {
+		log.Fatalf("Could not connect to db. Error: %s", err)
+	}
+
+	db = con
+	return db
+}
+
+func Connection() (*gorm.DB, error) {
 	dbHost, ok := os.LookupEnv("db_host")
 	if !ok {
 		return nil, errors.New("empty-db-host")
