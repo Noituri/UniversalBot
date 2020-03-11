@@ -15,3 +15,8 @@ type DiscordGuild struct {
 	Owner       bool   `json:"owner"`
 	Permissions int    `json:"permissions"`
 }
+
+type DiscordUser struct {
+	Username string `json:"username"`
+	Avatar   string `json:"avatar"`
+}

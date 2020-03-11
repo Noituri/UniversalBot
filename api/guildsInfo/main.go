@@ -21,22 +21,22 @@ type GuildInfoResponse struct {
 	Guilds []Guild `json:"guilds"`
 }
 
-func handle(ctx context.Context, event GuildInfoEvent) (GuildInfoResponse, error) {
-	guildsResponse := GuildInfoResponse{Guilds: nil}
+func handle(ctx context.Context, event GuildInfoEvent) (*GuildInfoResponse, error) {
 	claims, err := common.GetJWTClaims(event.Token)
 	if err != nil {
-		return guildsResponse, err
+		return nil, err
 	}
 
 	discordGuilds, err := common.GetDiscordGuilds(claims.Token)
 	if err != nil {
-		return guildsResponse, err
+		return nil, err
 	}
 
 	db := common.GetConnection()
 	var servers []common.Server
 	db.Find(&servers)
 
+	var guildsResponse GuildInfoResponse
 	for _, v := range discordGuilds {
 		for _, s := range servers {
 			if s.Guildid == v.ID {
@@ -49,7 +49,7 @@ func handle(ctx context.Context, event GuildInfoEvent) (GuildInfoResponse, error
 			}
 		}
 	}
-	return guildsResponse, nil
+	return &guildsResponse, nil
 }
 func main() {
 	lambda.Start(handle)

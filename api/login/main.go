@@ -4,7 +4,6 @@ import (
 	"api/common"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/oauth2"
@@ -16,25 +15,31 @@ type LoginEvent struct {
 	Code string `json:"code"`
 }
 
-func handle(ctx context.Context, event LoginEvent) (string, error) {
+type LoginResponse struct {
+	Username string `json:"username"`
+	Avatar   string `json:"avatar"`
+	Token    string `json:"token"`
+}
+
+func handle(ctx context.Context, event LoginEvent) (*LoginResponse, error) {
 	secret, ok := os.LookupEnv("jwt_secret")
 	if !ok {
-		return "", errors.New("empty-secret")
+		return nil, errors.New("empty-secret")
 	}
 
 	redirectUrl, ok := os.LookupEnv("oauth_redirect")
 	if !ok {
-		return "", errors.New("empty-oauth-redirect")
+		return nil, errors.New("empty-oauth-redirect")
 	}
 
 	clientID, ok := os.LookupEnv("oauth_client_id")
 	if !ok {
-		return "", errors.New("empty-oauth-client-id")
+		return nil, errors.New("empty-oauth-client-id")
 	}
 
 	clientSecret, ok := os.LookupEnv("oauth_client_secret")
 	if !ok {
-		return "", errors.New("empty-oauth-client-secret")
+		return nil, errors.New("empty-oauth-client-secret")
 	}
 
 	oauth := &oauth2.Config{
@@ -51,7 +56,7 @@ func handle(ctx context.Context, event LoginEvent) (string, error) {
 
 	token, err := oauth.Exchange(ctx, event.Code)
 	if err != nil {
-		return "", errors.New(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, common.Claims{
@@ -64,9 +69,18 @@ func handle(ctx context.Context, event LoginEvent) (string, error) {
 
 	finalToken, err := jwtToken.SignedString([]byte(secret))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return fmt.Sprintf(`{"token": %s}`, finalToken), nil
+	user, err := common.GetDiscordCurrentUser(token.AccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginResponse{
+		Username: user.Username,
+		Avatar:   user.Avatar,
+		Token:    finalToken,
+	}, nil
 }
 
 func main() {

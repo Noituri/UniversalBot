@@ -10,7 +10,11 @@ import (
 	"os"
 )
 
-const DiscordGuildsEndpoint = "https://discordapp.com/api/users/@me/guilds"
+const (
+	DiscordEndpoint = "https://discordapp.com/api"
+	DiscordGuildsEndpoint = DiscordEndpoint + "/users/@me/guilds"
+	DiscordCurrentUserEndpoint = DiscordEndpoint + "/users/@me"
+)
 
 func GetDiscordGuilds(token string) ([]DiscordGuild, error) {
 	client := http.Client{}
@@ -32,6 +36,29 @@ func GetDiscordGuilds(token string) ([]DiscordGuild, error) {
 	}
 
 	return discordGuilds, nil
+}
+
+func GetDiscordCurrentUser(token string) (*DiscordUser, error) {
+	client := http.Client{}
+	req, _ := http.NewRequest("GET", DiscordCurrentUserEndpoint, nil)
+	req.Header.Set("authorization", "Bearer " + token)
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.New("read-body")
+	}
+
+	var discordUser DiscordUser
+	if json.Unmarshal(body, &discordUser) != nil {
+		return nil, errors.New("body-unmarshal")
+	}
+
+	return &discordUser, nil
 }
 
 func GetJWTClaims(token string) (*Claims, error) {
