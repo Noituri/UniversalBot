@@ -3,13 +3,10 @@ package main
 import (
 	"api/common"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/dgrijalva/jwt-go"
-	"io/ioutil"
-	"net/http"
 	"os"
 )
 
@@ -51,22 +48,9 @@ func handle(ctx context.Context, event GuildInfoEvent) (GuildInfoResponse, error
 		return guildsResponse, errors.New("invalid-token")
 	}
 
-	client := http.Client{}
-	req, _ := http.NewRequest("GET", "https://discordapp.com/api/users/@me/guilds", nil)
-	req.Header.Set("authorization", "Bearer "+claims.Token)
-	res, err := client.Do(req)
+	discordGuilds, err := common.GetDiscordGuilds(claims.Token)
 	if err != nil {
 		return guildsResponse, err
-	}
-
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return guildsResponse, errors.New("read-body")
-	}
-	var discordGuilds []common.DiscordGuild
-	if json.Unmarshal(body, &discordGuilds) != nil {
-		return guildsResponse, errors.New("body-unmarshal")
 	}
 
 	db := common.GetConnection()
@@ -87,7 +71,6 @@ func handle(ctx context.Context, event GuildInfoEvent) (GuildInfoResponse, error
 	}
 	return guildsResponse, nil
 }
-
 func main() {
 	lambda.Start(handle)
 }

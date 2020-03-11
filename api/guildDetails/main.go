@@ -3,25 +3,31 @@ package main
 import (
 	"api/common"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/dgrijalva/jwt-go"
-	"io/ioutil"
-	"net/http"
 	"os"
 )
 
-type GuildDetailEvent struct {
-	Token   string `json:"token"`
-	GuildID string `json:"guild_id"`
+type GuildDetailsEvent struct {
+	Token       string `json:"token"`
+	GuildID     string `json:"guild_id"`
+	ActionsFrom int    `json:"actions_from"`
 }
 
-func handle(ctx context.Context, event GuildDetailEvent) (string, error) {
+type GuildDetailsResponse struct {
+	GuildId        string          `json:"guild_id"`
+	Actions        []common.Action `json:"actions"`
+	Prefix         string          `json:"prefix"`
+	MutedRole      string          `json:"muted_role"`
+	ModLogsChannel string          `json:"mod_logs_channel"`
+}
+
+func handle(ctx context.Context, event GuildDetailsEvent) (*GuildDetailsResponse, error) {
 	secret, ok := os.LookupEnv("jwt_secret")
 	if !ok {
-		return "", errors.New("empty-secret")
+		return nil, errors.New("empty-secret")
 	}
 
 	token, err := jwt.ParseWithClaims(event.Token, &common.Claims{}, func(token *jwt.Token) (i interface{}, err error) {
@@ -32,37 +38,57 @@ func handle(ctx context.Context, event GuildDetailEvent) (string, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
-		return "", errors.New("wrong-token")
+		return nil, errors.New("wrong-token")
 	}
 
 	claims, ok := token.Claims.(*common.Claims)
 	if !ok || !token.Valid {
-		return "", errors.New("invalid-token")
+		return nil, errors.New("invalid-token")
 	}
 
-	client := http.Client{}
-	req, _ := http.NewRequest("GET", "https://discordapp.com/api/users/@me/guilds", nil)
-	req.Header.Set("authorization", "Bearer "+claims.Token)
-	res, err := client.Do(req)
+	discordGuilds, err := common.GetDiscordGuilds(claims.Token)
 	if err != nil {
-		return "", err
-	}
-
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return "", errors.New("read-body")
-	}
-	var discordGuilds []common.DiscordGuild
-	if json.Unmarshal(body, &discordGuilds) != nil {
-		return "", errors.New("body-unmarshal")
+		return nil, err
 	}
 
 	db := common.GetConnection()
-	var servers []common.Server
-	db.Find(&servers) // TODO: "WHERE guildid = '<event.guildid>'
+	var server common.Server
+	db.Where("guildid LIKE ?", event.GuildID).First(&server)
+	if server.Guildid == "" {
+		return nil, errors.New("guild-not-found-db")
+	}
 
-	return "OK", nil
+	for _, v := range discordGuilds {
+		if v.ID == event.GuildID {
+			if v.Permissions&8 != 0 || v.Permissions&32 != 0 {
+				model := GuildDetailsResponse{
+					GuildId:        v.ID,
+					Actions:        nil,
+					Prefix:         server.Prefix,
+					MutedRole:      "",
+					ModLogsChannel: "",
+				}
+
+				db.Model(&server).Related(&model.Actions)
+				var specialEntities []common.SpecialEntity
+				db.Model(&server).Order("creation_date").Offset(event.ActionsFrom).Limit(10).Related(&specialEntities)
+				for _, se := range specialEntities {
+					switch se.EntityType {
+					case 1:
+						model.ModLogsChannel = se.EntityId
+					case 2:
+						model.MutedRole = se.EntityId
+					}
+				}
+
+				return &model, nil
+			} else {
+				return nil, errors.New("permissions")
+			}
+		}
+	}
+
+	return nil, errors.New("guild-not-found")
 }
 
 func main() {
