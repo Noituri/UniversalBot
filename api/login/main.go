@@ -62,9 +62,9 @@ func handle(ctx context.Context, event LoginEvent) (string, error) {
 		},
 	})
 
-	finalToken, err := jwtToken.SignedString(secret)
+	finalToken, err := jwtToken.SignedString([]byte(secret))
 	if err != nil {
-		return "", errors.New("token-signing")
+		return "", err
 	}
 	return fmt.Sprintf(`{"token": %s}`, finalToken), nil
 }
