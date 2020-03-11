@@ -38,10 +38,10 @@ func handle(ctx context.Context, event LoginEvent) (string, error) {
 	}
 
 	oauth := &oauth2.Config{
-		RedirectURL: redirectUrl,
-		ClientID: clientID,
+		RedirectURL:  redirectUrl,
+		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		Scopes: []string{"email", "identify", "guilds"},
+		Scopes:       []string{"email", "identify", "guilds"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:   "https://discordapp.com/api/oauth2/authorize",
 			TokenURL:  "https://discordapp.com/api/oauth2/token",
@@ -55,8 +55,8 @@ func handle(ctx context.Context, event LoginEvent) (string, error) {
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, common.Claims{
-		Token:          token.AccessToken,
-		RefreshToken:   token.RefreshToken,
+		Token:        token.AccessToken,
+		RefreshToken: token.RefreshToken,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().UTC().Add(730 * time.Hour).UnixNano(),
 		},
@@ -72,4 +72,3 @@ func handle(ctx context.Context, event LoginEvent) (string, error) {
 func main() {
 	lambda.Start(handle)
 }
-

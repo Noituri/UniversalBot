@@ -13,26 +13,15 @@ import (
 	"os"
 )
 
-type GuildInfoEvent struct {
-	Token string `json:"token"`
+type GuildDetailEvent struct {
+	Token   string `json:"token"`
+	GuildID string `json:"guild_id"`
 }
 
-type Guild struct {
-	Id     string `json:"id"`
-	Name   string `json:"name"`
-	Icon   string `json:"icon"`
-	Access bool   `json:"name"` // The user has permissions to modify the guild
-}
-
-type GuildInfoResponse struct {
-	Guilds []Guild `json:"guilds"`
-}
-
-func handle(ctx context.Context, event GuildInfoEvent) (GuildInfoResponse, error) {
-	guildsResponse := GuildInfoResponse{Guilds: nil}
+func handle(ctx context.Context, event GuildDetailEvent) (string, error) {
 	secret, ok := os.LookupEnv("jwt_secret")
 	if !ok {
-		return guildsResponse, errors.New("empty-secret")
+		return "", errors.New("empty-secret")
 	}
 
 	token, err := jwt.ParseWithClaims(event.Token, &common.Claims{}, func(token *jwt.Token) (i interface{}, err error) {
@@ -43,12 +32,12 @@ func handle(ctx context.Context, event GuildInfoEvent) (GuildInfoResponse, error
 		return []byte(secret), nil
 	})
 	if err != nil {
-		return guildsResponse, errors.New("wrong-token")
+		return "", errors.New("wrong-token")
 	}
 
 	claims, ok := token.Claims.(*common.Claims)
 	if !ok || !token.Valid {
-		return guildsResponse, errors.New("invalid-token")
+		return "", errors.New("invalid-token")
 	}
 
 	client := http.Client{}
@@ -56,36 +45,24 @@ func handle(ctx context.Context, event GuildInfoEvent) (GuildInfoResponse, error
 	req.Header.Set("authorization", "Bearer "+claims.Token)
 	res, err := client.Do(req)
 	if err != nil {
-		return guildsResponse, err
+		return "", err
 	}
 
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return guildsResponse, errors.New("read-body")
+		return "", errors.New("read-body")
 	}
 	var discordGuilds []common.DiscordGuild
 	if json.Unmarshal(body, &discordGuilds) != nil {
-		return guildsResponse, errors.New("body-unmarshal")
+		return "", errors.New("body-unmarshal")
 	}
 
 	db := common.GetConnection()
 	var servers []common.Server
-	db.Find(&servers)
+	db.Find(&servers) // TODO: "WHERE guildid = '<event.guildid>'
 
-	for _, v := range discordGuilds {
-		for _, s := range servers {
-			if s.Guildid == v.ID {
-				guildsResponse.Guilds = append(guildsResponse.Guilds, Guild{
-					Id:     v.ID,
-					Name:   v.Name,
-					Icon:   v.Icon,
-					Access: v.Permissions&8 != 0 || v.Permissions&32 != 0,
-				})
-			}
-		}
-	}
-	return guildsResponse, nil
+	return "OK", nil
 }
 
 func main() {
