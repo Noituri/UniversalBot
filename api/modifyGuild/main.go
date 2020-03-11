@@ -4,7 +4,6 @@ import (
 	"api/common"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
@@ -88,19 +87,5 @@ func handle(ctx context.Context, event ModifyGuildEvent) (string, error) {
 }
 
 func main() {
-	resp, err := handle(context.Background(), ModifyGuildEvent{
-		Token:       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6Ikc3Z25YUlYyQ2pndE9IUVV1RnN0NDFvVHJzbkwybiIsInJlZnJlc2hUb2tlbiI6Ikk5MzRNSlgxZGRiRVZwbHp3WlhGT1h3RlhEek5sVCIsImV4cCI6MTU4NjU3NzMwOTAzMzg0MjgzMH0.Tsl5uh3e8lfpKjxocejopBBa0fEWb5RdnFOCgDT7PJ8",
-		GuildID:     "567768634735198209",
-		Prefix:         "!",
-		MutedRole:      "1212123123123",
-		ModLogsChannel: "1232133355555",
-	})
-	if err != nil {
-		println(err.Error())
-		return
-	}
-
-	fmt.Printf("%v", resp)
-	return
 	lambda.Start(handle)
 }
