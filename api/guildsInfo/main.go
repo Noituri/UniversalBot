@@ -59,8 +59,6 @@ func handle(ctx context.Context, event GuildInfoEvent) (GuildInfoResponse, error
 		return guildsResponse, errors.New("invalid-token")
 	}
 
-	fmt.Printf("%v", claims)
-
 	client := http.Client{}
 	req, _ := http.NewRequest("GET", "https://discordapp.com/api/users/@me/guilds", nil)
 	req.Header.Set("authorization", "Bearer " + claims.Token)
@@ -74,22 +72,27 @@ func handle(ctx context.Context, event GuildInfoEvent) (GuildInfoResponse, error
 	if err != nil {
 		return guildsResponse, errors.New("read-body")
 	}
-
 	var discordGuilds []DiscordGuild
 	if json.Unmarshal(body, &discordGuilds) != nil {
 		return guildsResponse, errors.New("body-unmarshal")
 	}
 
+	db := common.GetConnection()
+	var servers []common.Server
+	db.Find(&servers)
+
 	for _, v := range discordGuilds {
-		// Filter guilds where utterbot is not in
-		guildsResponse.Guilds = append(guildsResponse.Guilds, Guild{
-			Id:     v.ID,
-			Name:   v.Name,
-			Icon:   v.Icon,
-			Access: v.Permissions&8 != 0 || v.Permissions&32 != 0,
-		})
+		for _, s := range servers {
+			if s.Guildid == v.ID {
+				guildsResponse.Guilds = append(guildsResponse.Guilds, Guild{
+					Id:     v.ID,
+					Name:   v.Name,
+					Icon:   v.Icon,
+					Access: v.Permissions&8 != 0 || v.Permissions&32 != 0,
+				})
+			}
+		}
 	}
-	fmt.Printf("%v", discordGuilds)
 	return guildsResponse, nil
 }
 

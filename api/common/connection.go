@@ -20,7 +20,7 @@ func GetConnection() *gorm.DB {
 		return db
 	}
 
-	con, err := Connection()
+	con, err := connection()
 	if err != nil {
 		log.Fatalf("Could not connect to db. Error: %s", err)
 	}
@@ -29,7 +29,7 @@ func GetConnection() *gorm.DB {
 	return db
 }
 
-func Connection() (*gorm.DB, error) {
+func connection() (*gorm.DB, error) {
 	dbHost, ok := os.LookupEnv("db_host")
 	if !ok {
 		return nil, errors.New("empty-db-host")
