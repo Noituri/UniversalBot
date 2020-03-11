@@ -29,11 +29,12 @@
 
 (k/reg-chain :redirect/load
              (fn [ctx [code]]
+               (println (str "JSON: " (.stringify js/JSON (clj->js {:code code}))))
                {:http-xhrio {:method          :post
                              :uri             (code-exchange)
                              :timeout         8000
                              :format          (ajax/json-request-format)
-                             :body            (str "{\"code\":\"" code "\"}")
+                             :body            (.stringify js/JSON (clj->js {:code code}))
                              :response-format (ajax/json-response-format {:keywords? true})
                              :on-failure      [:login-request-failed]}})
 
