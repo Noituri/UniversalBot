@@ -3,11 +3,7 @@ package main
 import (
 	"api/common"
 	"context"
-	"errors"
-	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/dgrijalva/jwt-go"
-	"os"
 )
 
 type GuildInfoEvent struct {
@@ -27,25 +23,9 @@ type GuildInfoResponse struct {
 
 func handle(ctx context.Context, event GuildInfoEvent) (GuildInfoResponse, error) {
 	guildsResponse := GuildInfoResponse{Guilds: nil}
-	secret, ok := os.LookupEnv("jwt_secret")
-	if !ok {
-		return guildsResponse, errors.New("empty-secret")
-	}
-
-	token, err := jwt.ParseWithClaims(event.Token, &common.Claims{}, func(token *jwt.Token) (i interface{}, err error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-
-		return []byte(secret), nil
-	})
+	claims, err := common.GetJWTClaims(event.Token)
 	if err != nil {
-		return guildsResponse, errors.New("wrong-token")
-	}
-
-	claims, ok := token.Claims.(*common.Claims)
-	if !ok || !token.Valid {
-		return guildsResponse, errors.New("invalid-token")
+		return guildsResponse, err
 	}
 
 	discordGuilds, err := common.GetDiscordGuilds(claims.Token)
