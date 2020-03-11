@@ -2,21 +2,24 @@
   (:require
    [kee-frame.core :as k]
    [utter.store.db :as db]
+   [utter.constants :refer [debug?]]
    [utter.pages.homepage :refer [home-page]]
+   [utter.pages.loginredirect :refer [login-redirect]]
    [utter.pages.panel :refer [panel-page]]
    [utter.pages.commands :refer [commands-page]]))
 
-(def routes
-  [["/"         :home]
-   ["/panel"    :panel]
-   ["/commands" :commands]])
 
-(def debug? false)
+(def routes
+  [["/"               :home]
+   ["/redirect/:code" :redirect]
+   ["/panel"          :panel]
+   ["/commands"       :commands]])
 
 (def router
   [k/switch-route (comp :name :data)
-   :panel    [panel-page]
    :home     [home-page]
+   :redirect [login-redirect]
+   :panel    [panel-page]
    :commands [commands-page]
    nil [:div "Loading..."]])
 
@@ -24,4 +27,4 @@
            :routes         routes
            :hash-routing?  debug?
            :initial-db     db/initial-state
-           :app-db-spec    ::db-spec})
+           :app-db-spec    ::db/db-spec})

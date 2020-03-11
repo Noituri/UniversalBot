@@ -1,8 +1,9 @@
 (ns utter.components.navbar
   (:require
    [utter.style :refer [nav-bar nav-item nav-logo nav-items-container]]
+   [utter.constants :as c]
    [kee-frame.core :as k]
-   [reagent.core :as r]))
+   [re-frame.core :as rf]))
 
 (defn navbar []
   [nav-bar
@@ -10,4 +11,6 @@
    [nav-items-container
     [nav-item "Invite"]
     [nav-item {:href (k/path-for [:commands])} "Commands"]
-    [nav-item {:href (k/path-for [:panel])} "Web Panel"]]])
+    (if (nil? @(rf/subscribe [:user]))
+      [nav-item {:href c/login-redirect} "Login"]
+      [nav-item {:href (k/path-for [:panel])} "Web Panel"])]])

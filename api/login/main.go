@@ -3,10 +3,15 @@ package main
 import (
 	"api/common"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/oauth2"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 	"time"
 )
@@ -56,7 +61,7 @@ func handle(ctx context.Context, event LoginEvent) (*LoginResponse, error) {
 
 	token, err := oauth.Exchange(ctx, event.Code)
 	if err != nil {
-		return nil, errors.New(err.Error())
+		return nil, errors.New("cannot-fetch-token")
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, common.Claims{
@@ -84,5 +89,24 @@ func handle(ctx context.Context, event LoginEvent) (*LoginResponse, error) {
 }
 
 func main() {
-	lambda.Start(handle)
+	if common.IsDebug() {
+		http.HandleFunc("/login", func(writer http.ResponseWriter, request *http.Request) {
+			writer.Header().Set("Access-Control-Allow-Origin", "*")
+			var event LoginEvent
+			body, _ := ioutil.ReadAll(request.Body)
+			defer request.Body.Close()
+			json.Unmarshal(body, &event)
+			resp, err := handle(context.Background(), event)
+			if err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(writer, `{"error": "%s"}`, err.Error())
+			} else {
+				result, _ := json.Marshal(resp)
+				fmt.Fprintf(writer, string(result))
+			}
+		})
+		log.Fatal(http.ListenAndServe(":8080", nil))
+	} else {
+		lambda.Start(handle)
+	}
 }

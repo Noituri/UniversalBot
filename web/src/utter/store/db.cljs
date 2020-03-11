@@ -3,9 +3,11 @@
    [cljs.spec.alpha :as s]
    [re-frame.core :as rf]))
 
-(s/def ::name string?)
+(s/def ::username string?)
+(s/def ::avatar string?)
+(s/def ::token string?)
 (s/def ::user (s/or 
-               :signed-in (s/keys :req-un [::name])
+               :signed-in (s/keys :req-un [::username ::avatar ::token])
                :signed-out nil?))
 
 (s/def ::db-spec (s/keys :req-un [::user]))

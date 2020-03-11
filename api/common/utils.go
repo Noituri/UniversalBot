@@ -85,3 +85,7 @@ func GetJWTClaims(token string) (*Claims, error) {
 
 	return claims, nil
 }
+
+func IsDebug() bool {
+	return os.Getenv("DEBUG") == "true"
+}
