@@ -3,7 +3,12 @@ package main
 import (
 	"api/common"
 	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
+	"io/ioutil"
+	"log"
+	"net/http"
 )
 
 type GuildInfoEvent struct {
@@ -14,14 +19,14 @@ type Guild struct {
 	Id     string `json:"id"`
 	Name   string `json:"name"`
 	Icon   string `json:"icon"`
-	Access bool   `json:"name"` // The user has permissions to modify the guild
+	Access bool   `json:"access"` // The user has permissions to modify the guild
 }
 
 type GuildInfoResponse struct {
 	Guilds []Guild `json:"guilds"`
 }
 
-func handle(ctx context.Context, event GuildInfoEvent) (*GuildInfoResponse, error) {
+func handle(ctx context.Context, event GuildInfoEvent) ([]Guild, error) {
 	claims, err := common.GetJWTClaims(event.Token)
 	if err != nil {
 		return nil, err
@@ -36,11 +41,11 @@ func handle(ctx context.Context, event GuildInfoEvent) (*GuildInfoResponse, erro
 	var servers []common.Server
 	db.Find(&servers)
 
-	var guildsResponse GuildInfoResponse
+	var guildsResponse []Guild
 	for _, v := range discordGuilds {
 		for _, s := range servers {
 			if s.Guildid == v.ID {
-				guildsResponse.Guilds = append(guildsResponse.Guilds, Guild{
+				guildsResponse = append(guildsResponse, Guild{
 					Id:     v.ID,
 					Name:   v.Name,
 					Icon:   v.Icon,
@@ -49,8 +54,27 @@ func handle(ctx context.Context, event GuildInfoEvent) (*GuildInfoResponse, erro
 			}
 		}
 	}
-	return &guildsResponse, nil
+	return guildsResponse, nil
 }
 func main() {
-	lambda.Start(handle)
+	if common.IsDebug() {
+		http.HandleFunc("/guilds", func(writer http.ResponseWriter, request *http.Request) {
+			writer.Header().Set("Access-Control-Allow-Origin", "*")
+			var event GuildInfoEvent
+			body, _ := ioutil.ReadAll(request.Body)
+			defer request.Body.Close()
+			json.Unmarshal(body, &event)
+			resp, err := handle(context.Background(), event)
+			if err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(writer, `{"error": "%s"}`, err.Error())
+			} else {
+				result, _ := json.Marshal(resp)
+				fmt.Fprintf(writer, string(result))
+			}
+		})
+		log.Fatal(http.ListenAndServe(":8090", nil))
+	} else {
+		lambda.Start(handle)
+	}
 }

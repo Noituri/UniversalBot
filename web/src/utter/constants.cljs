@@ -8,3 +8,8 @@
   (if debug?
     "http://localhost:8080/login"
     "NO URL YET"))
+
+(defn get-guilds []
+  (if debug?
+    "http://localhost:8090/guilds"
+    "NO URL YET"))

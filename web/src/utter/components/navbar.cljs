@@ -13,4 +13,4 @@
     [nav-item {:href (k/path-for [:commands])} "Commands"]
     (if (nil? @(rf/subscribe [:user]))
       [nav-item {:href c/login-redirect} "Login"]
-      [nav-item {:href (k/path-for [:panel])} "Web Panel"])]])
+      [nav-item {:href (k/path-for [:panel {:id 0}])} "Web Panel"])]])

@@ -18,7 +18,7 @@
 (def routes
   [["/"               :home]
    ["/redirect/:code" :redirect]
-   ["/panel"          :panel]
+   ["/panel/:id"      :panel]
    ["/commands"       :commands]])
 
 (defn protected-route [view]

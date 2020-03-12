@@ -20,7 +20,8 @@
 (def check-spec-interceptor (rf/after (partial check-spec ::db-spec)))
 
 (def initial-state
-  {:user nil})
+  {:user nil
+   :guilds nil})
 
 (defn init [] 
   (rf/dispatch-sync [:initialize]))
