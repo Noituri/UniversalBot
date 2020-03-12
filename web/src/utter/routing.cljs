@@ -22,6 +22,7 @@
    ["/commands"       :commands]])
 
 (defn protected-route [view]
+  (rf/dispatch-sync [:load-user (c/get :user)])
   (if @(rf/subscribe [:user]) 
     [view]
     [home-page (rf/dispatch [:go-home])]))
