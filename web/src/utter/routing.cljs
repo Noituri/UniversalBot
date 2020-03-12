@@ -1,6 +1,8 @@
 (ns utter.routing
   (:require
    [kee-frame.core :as k]
+   [re-frame.core :as rf]
+   [reagent.cookies :as c]
    [utter.store.db :as db]
    [utter.constants :refer [debug?]]
    [utter.pages.homepage :refer [home-page]]
@@ -15,7 +17,8 @@
    ["/panel"          :panel]
    ["/commands"       :commands]])
 
-(def router
+(defn router []
+  (rf/dispatch [:load-user (c/get :user)])
   [k/switch-route (comp :name :data)
    :home     [home-page]
    :redirect [login-redirect]

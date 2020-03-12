@@ -5,6 +5,7 @@
    [utter.components.container :refer [container]]
    [day8.re-frame.http-fx]
    [ajax.core :as ajax]
+   [reagent.cookies :as c]
    [utter.constants :refer [code-exchange]]
    [re-frame.core :as rf]))
 
@@ -29,7 +30,6 @@
 
 (k/reg-chain :redirect/load
              (fn [ctx [code]]
-               (println (str "JSON: " (.stringify js/JSON (clj->js {:code code}))))
                {:http-xhrio {:method          :post
                              :uri             (code-exchange)
                              :timeout         8000
@@ -39,6 +39,7 @@
                              :on-failure      [:login-request-failed]}})
 
              (fn [{:keys [db]} [_ result]]
+               (c/set! :user result)
                {:db (assoc db :user result)}))
 
 (rf/reg-event-fx :go-home

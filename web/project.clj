@@ -10,6 +10,7 @@
                  [clj-commons/cljss "1.6.4"]
                  [figwheel-sidecar "0.5.18"]
                  [re-frame "0.11.0"]
+                 [reagent-utils "0.3.3"]
                  [kee-frame "0.3.4"]
                  [day8.re-frame/http-fx "v0.2.0"]]
 
