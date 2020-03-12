@@ -43,7 +43,6 @@
 (rf/reg-event-fx
  :select-guild
  (fn [_ [_ server]]
-   (println server)
    {:navigate-to [:panel {:id server}]}))
 
 (k/reg-chain :panel/load
