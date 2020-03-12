@@ -23,15 +23,15 @@
 
 (defn protected-route [view]
   (if @(rf/subscribe [:user]) 
-    [panel-page]
-    ((set! (. js/window -location) constants/login-redirect) [home-page])))
+    [view]
+    [home-page (rf/dispatch [:go-home])]))
 
 (defn router []
   (rf/dispatch-sync [:load-user (c/get :user)])
   [k/switch-route (comp :name :data)
+   :panel    (protected-route panel-page)
    :home     [home-page]
    :redirect [login-redirect]
-   :panel    (protected-route panel-page)
    :commands [commands-page]
    nil [:div "Loading..."]])
 

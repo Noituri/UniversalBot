@@ -1,6 +1,5 @@
 (ns utter.pages.panel
   (:require
-   [kee-frame.core :as k]
    [re-frame.core :as rf]
    [utter.components.container :refer [container]]
    [utter.components.serverselector :refer [server-selector]]
@@ -37,4 +36,5 @@
        (case @selected-option
          0 [actions-list]
          1 [server-settings])
-       [style/gradient-btn "Logout"]])))
+       [:div
+        [style/gradient-btn {:bg :red :on-click #(rf/dispatch [:logout])} "Logout"]]])))
