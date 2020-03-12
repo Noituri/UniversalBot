@@ -1,5 +1,7 @@
 (ns utter.pages.panel
   (:require
+   [kee-frame.core :as k]
+   [re-frame.core :as rf]
    [utter.components.container :refer [container]]
    [utter.components.serverselector :refer [server-selector]]
    [utter.components.optionspanel :refer [options-panel]]
@@ -34,4 +36,5 @@
                          :on-click #(reset! selected-option 1)}]}]
        (case @selected-option
          0 [actions-list]
-         1 [server-settings])])))
+         1 [server-settings])
+       [style/gradient-btn "Logout"]])))

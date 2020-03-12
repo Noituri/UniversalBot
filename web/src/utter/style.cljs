@@ -65,7 +65,7 @@
 (defstyled gradient-btn :p
   {:display "inline-flex"
    :cursor "pointer"
-   :background "linear-gradient(45deg, #2d266b, #a59bff 80%)"
+   :background (str "linear-gradient(45deg," (with-meta #(get {nil "#2d266b, #a59bff" :red "#ee0e0e, dc8181"} %) :bg-color) " 80%)")
    :border-radius "15px"
    :font-size "24px"
    :padding "5px"

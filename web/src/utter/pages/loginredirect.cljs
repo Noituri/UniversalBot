@@ -42,10 +42,6 @@
                (c/set! :user result)
                {:db (assoc db :user result)}))
 
-(rf/reg-event-fx :go-home
-              (fn [_ _]
-                {:navigate-to [:home]}))
-
 (defn login-redirect []
   (let [user (rf/subscribe [:user])]
     (fn []

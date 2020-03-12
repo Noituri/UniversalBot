@@ -3,6 +3,7 @@
    [kee-frame.core :as k]
    [re-frame.core :as rf]
    [reagent.cookies :as c]
+   [utter.constants :as constants]
    [utter.store.db :as db]
    [utter.constants :refer [debug?]]
    [utter.pages.homepage :refer [home-page]]
@@ -10,6 +11,9 @@
    [utter.pages.panel :refer [panel-page]]
    [utter.pages.commands :refer [commands-page]]))
 
+(rf/reg-event-fx :go-home
+                 (fn [_ _]
+                   {:navigate-to [:home]}))
 
 (def routes
   [["/"               :home]
@@ -17,12 +21,17 @@
    ["/panel"          :panel]
    ["/commands"       :commands]])
 
+(defn protected-route [view]
+  (if @(rf/subscribe [:user]) 
+    [panel-page]
+    ((set! (. js/window -location) constants/login-redirect) [home-page])))
+
 (defn router []
-  (rf/dispatch [:load-user (c/get :user)])
+  (rf/dispatch-sync [:load-user (c/get :user)])
   [k/switch-route (comp :name :data)
    :home     [home-page]
    :redirect [login-redirect]
-   :panel    [panel-page]
+   :panel    (protected-route panel-page)
    :commands [commands-page]
    nil [:div "Loading..."]])
 
