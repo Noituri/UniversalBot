@@ -5,7 +5,7 @@
    [reagent.cookies :as c]
    [day8.re-frame.http-fx]
    [ajax.core :as ajax]
-   [utter.constants :refer [get-guilds]]
+   [utter.constants :refer [get-guilds get-guild-details get-action-name]]
    [utter.components.container :refer [container]]
    [utter.components.serverselector :refer [server-selector]]
    [utter.components.optionspanel :refer [options-panel]]
@@ -56,29 +56,48 @@
                              :on-failure      [:guild-retrieve-failed]}})
 
              (fn [{:keys [db]} [result _]]
+               (rf/dispatch [:panel/get-guild result 0])
                {:db (assoc db :guilds result)}))
+
+(k/reg-chain :panel/get-guild
+             (fn [ctx [guilds actions-from]]
+               {:http-xhrio {:method          :post
+                             :uri             (get-guild-details)
+                             :timeout         8000
+                             :format          (ajax/json-request-format)
+                             :body            (.stringify js/JSON (clj->js {:token ((c/get :user) :token)
+                                                                            :guild_id ((guilds @(rf/subscribe [:selected-guild])) :id)
+                                                                            :actions_from actions-from}))
+                             :response-format (ajax/json-response-format {:keywords? true})
+                             :on-failure      [:guild-retrieve-failed]}})
+
+             (fn [{:keys [db]} [_ _ result]]
+               {:db (assoc db :current-guild result)}))
 
 (rf/reg-sub
  :guilds
  (fn [db _]
    (:guilds db)))
 
-(defn actions-list []
+(rf/reg-sub
+ :current-guild
+ (fn [db _]
+   (:current-guild db)))
+
+(defn actions-list [{:keys [actions]}]
    [utter-list {:name "Actions"
-                :entries [{:id 2
-                           :name "Ban"
-                           :description "User XXX has beeen banned by YYY"}
-                          {:id 1
-                           :name "Ban"
-                           :description "User XXX has beeen banned by YYY"}
-                          {:id 0
-                           :name "Ban"
-                           :description "User XXX has beeen banned by YYY"}]}])
+                :entries (map-indexed #(assoc %2
+                                              :id %1
+                                              :name (-> (%2 :action_type) get-action-name)
+                                              :details (str "Issuer ID: " (%2 :issuer) "\n"
+                                                            "Targeted User ID: " (%2 :target) "\n"
+                                                            "Creation Date: " (%2 :creation_date))) actions)}])
 
 (defn panel-page []
   (let [selected-option (r/atom 0)
         guilds (rf/subscribe [:guilds])
-        selected-guild (rf/subscribe [:selected-guild])]
+        selected-guild (rf/subscribe [:selected-guild])
+        data (rf/subscribe [:current-guild])]
     (fn []
        (if (-> @guilds count (> 0))
          [container {:title "UtterBot - Panel"}
@@ -90,9 +109,9 @@
                            {:icon "fa-wrench"
                             :selected? (= @selected-option 1)
                             :on-click #(reset! selected-option 1)}]}]
-          (case @selected-option
-            0 [actions-list]
-            1 [server-settings])
+          (when @data (case @selected-option
+             0 [actions-list {:actions (@data :actions)}]
+             1 [server-settings]))
           [:div
            [style/gradient-btn {:bg :red :on-click #(rf/dispatch [:logout])} "Logout"]]]
          [container {:title "UtterBot - Panel"}

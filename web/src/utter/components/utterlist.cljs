@@ -3,7 +3,7 @@
    [reagent.core :as r]
    [utter.style :as style]))
 
-(defn list-entry [{:keys [kind description]}]
+(defn list-entry [{:keys [kind description details]}]
   (let [show-details? (r/atom false)]
     (fn []
       [style/list-entry {:on-click #(swap! show-details? not)}
@@ -11,9 +11,9 @@
         [:h3 kind]
         [:h5 description]]
        (when @show-details?
-         [style/list-entry {:bg-color :dark :style {:marginTop "15px"}}
+         [style/list-entry {:bg-color :dark :style {:marginTop "15px" :whiteSpace "pre-wrap"}}
           [:div.list-text
-           [:h5 "Creation Date: 00:00 00-00-000"]]])])))
+           [:h5 details]]])])))
 
 (defn utter-list [{:keys [title entries]}]
   [style/card
@@ -22,5 +22,6 @@
     (->
      (map-indexed #(vector list-entry {:key (%2 :id)
                                        :kind (%2 :name)
-                                       :description (%2 :description)}) entries)
+                                       :description (%2 :message)
+                                       :details (%2 :details)}) entries)
      (doall))]])

@@ -8,9 +8,9 @@
    [utter.components.utterlist :refer [utter-list]]))
 
 (def commands
-  [{:id 0 :kind 1 :name ".help" :description "Shows infromations about commands"}
-   {:id 1 :kind 1 :name ".prefix" :description "Changes prefix"}
-   {:id 2 :kind 2 :name ".ban" :description "Bans users from your server"}])
+  [{:id 0 :kind 1 :name ".help" :message "Shows infromations about commands"}
+   {:id 1 :kind 1 :name ".prefix" :message "Changes prefix"}
+   {:id 2 :kind 2 :name ".ban" :message "Bans users from your server"}])
 
 (def categories
   [{:id 0 :name "All Commands" :icon "fa-border-all"}
