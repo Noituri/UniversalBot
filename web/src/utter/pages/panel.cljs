@@ -87,7 +87,7 @@
 (defn actions-list [{:keys [actions]}]
    [utter-list {:name "Actions"
                 :entries (map-indexed #(assoc %2
-                                              :id %1
+                                              :id (rand)
                                               :name (-> (%2 :action_type) get-action-name)
                                               :details (str "Issuer ID: " (%2 :issuer) "\n"
                                                             "Targeted User ID: " (%2 :target) "\n"
@@ -111,7 +111,7 @@
                             :on-click #(reset! selected-option 1)}]}]
           (when @data (case @selected-option
              0 [actions-list {:actions (@data :actions)}]
-             1 [server-settings]))
+             1 [server-settings @data]))
           [:div
            [style/gradient-btn {:bg :red :on-click #(rf/dispatch [:logout])} "Logout"]]]
          [container {:title "UtterBot - Panel"}
