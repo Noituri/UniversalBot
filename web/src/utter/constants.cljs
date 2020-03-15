@@ -19,6 +19,11 @@
     "http://localhost:8100/guild-details"
     "NO URL YET"))
 
+(defn modify-guild []
+  (if debug?
+    "http://localhost:8110/modify-guild"
+    "NO URL YET"))
+
 (defn get-action-name [id]
   (case id
     1 "Ban"

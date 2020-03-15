@@ -3,8 +3,13 @@ package main
 import (
 	"api/common"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
+	"io/ioutil"
+	"log"
+	"net/http"
 )
 
 type ModifyGuildEvent struct {
@@ -87,5 +92,24 @@ func handle(ctx context.Context, event ModifyGuildEvent) (string, error) {
 }
 
 func main() {
-	lambda.Start(handle)
+	if common.IsDebug() {
+		http.HandleFunc("/modify-guild", func(writer http.ResponseWriter, request *http.Request) {
+			writer.Header().Set("Access-Control-Allow-Origin", "*")
+			var event ModifyGuildEvent
+			body, _ := ioutil.ReadAll(request.Body)
+			defer request.Body.Close()
+			json.Unmarshal(body, &event)
+			resp, err := handle(context.Background(), event)
+			if err != nil {
+				writer.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(writer, `{"error": "%s"}`, err.Error())
+			} else {
+				result, _ := json.Marshal(resp)
+				fmt.Fprintf(writer, string(result))
+			}
+		})
+		log.Fatal(http.ListenAndServe(":8110", nil))
+	} else {
+		lambda.Start(handle)
+	}
 }
