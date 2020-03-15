@@ -19,6 +19,7 @@ pub enum FindType {
 #[derive(Clone)]
 pub struct FindsAwaitingAnswer {
     pub who: u64,
+    pub channel: u64,
     pub when: DateTime<Utc>,
     pub finds: Vec<(u64, String)>,
     pub args: Vec<String>,
@@ -94,6 +95,7 @@ pub fn find_object<T>(ctx: &Context, msg: &Message, objects: Vec<T>, args: &Vec<
                 let mut state = STATE.lock().unwrap();
                 let tmp_find = FindsAwaitingAnswer{
                     who: msg.author.id.0,
+                    channel: msg.channel_id.0,
                     when: Utc::now(),
                     finds: matched_objects,
                     args: args.clone(),

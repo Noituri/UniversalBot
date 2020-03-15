@@ -56,6 +56,7 @@ impl Handler {
 
         let mut picked = FindsAwaitingAnswer {
             who: 0,
+            channel: 0,
             when: Utc::now(),
             finds: vec![],
             args: vec![],
@@ -65,7 +66,7 @@ impl Handler {
         {
             let mut state = STATE.lock().unwrap();
             for (i, v) in state.role_finds_awaiting.iter().enumerate() {
-                if v.who == msg.author.id.0 {
+                if v.who == msg.author.id.0 && v.channel == msg.channel_id.0 {
                     if answer > v.finds.len() {
                         self.send_error(ctx, msg.to_owned(), "Your answer does not match any found options!");
                         return true;
@@ -99,6 +100,8 @@ impl EventHandler for Handler {
         if self.check_awaiting_answers(ctx.to_owned(), &mut msg) {
             return;
         }
+
+        println!("{}", &msg.content);
 
         let info = ServerInfo::new(msg.guild_id);
         let prefix = if msg.content.starts_with(&format!("<@{}> ", ctx.cache.read().user.id)) {
