@@ -101,8 +101,6 @@ impl EventHandler for Handler {
             return;
         }
 
-        println!("{}", &msg.content);
-
         let info = ServerInfo::new(msg.guild_id);
         let prefix = if msg.content.starts_with(&format!("<@{}> ", ctx.cache.read().user.id)) {
             format!("<@{}> ", ctx.cache.read().user.id)

@@ -106,6 +106,7 @@ pub struct NewTempBanMute {
 pub enum SpecialEntityType {
     ModLogsChannel = 1,
     MuteRole = 2,
+    TicketsCategory = 3,
 }
 
 #[derive(Identifiable, Queryable, Associations, Clone)]

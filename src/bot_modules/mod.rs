@@ -1,6 +1,7 @@
 mod dev;
 pub mod main;
 mod moderation;
+mod tickets;
 
 use crate::command::Command;
 use crate::config::DEV_MODULE;
@@ -28,6 +29,7 @@ pub fn get_modules() -> Vec<Box<dyn BotModule>> {
     vec![
         Box::new(main::MainModule {}),
         Box::new(moderation::ModerationModule {}),
+        Box::new(tickets::TicketsModule {}),
         Box::new(dev::DevModule {}),
     ]
 }
