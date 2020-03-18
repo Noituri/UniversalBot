@@ -5,18 +5,79 @@ use serenity::prelude::Context;
 use crate::utils::db::{ServerInfo, get_db_roles, create_special_entity};
 use crate::bot_modules::BotModule;
 use serenity::model::Permissions;
+use crate::utils::object_finding::get_role_from_id;
 use crate::bot_modules::moderation::ModerationModule;
 
 pub struct SetupCommand;
 
 impl SetupCommand {
+    fn create_tickets(&self, ctx: &Context, msg: &Message, info: &ServerInfo, args: Vec<String>) -> Result<(), String> {
+        let role_id = if args.len() > 1 {
+            match get_role_from_id(ctx, msg, get_args(msg.clone(), true), 2)? {
+                Some(r) => r.id,
+                None => return Ok(())
+            }
+        } else {
+            // create role
+            let result = msg.guild_id.unwrap().create_role(ctx.http.clone(), |r| {
+                r.name("Support");
+                r.mentionable(true);
+                r.colour(2682408);
+                r.hoist(true);
+                r
+            });
+
+            match result {
+                Ok(r) => r.id,
+                Err(_) => return Err("Could not create a new role!".to_string())
+            }
+        };
+
+        let result = msg.guild_id.unwrap().create_channel(ctx.http.clone(), |ch| {
+            ch.name("Tickets");
+            ch.topic("Tickets category. Made with UtterBot!");
+            ch.kind(ChannelType::Category);
+            let mut perms = Permissions::SEND_MESSAGES;
+            perms.insert(Permissions::READ_MESSAGES);
+            perms.insert(Permissions::ADD_REACTIONS);
+            ch.permissions(vec![
+                PermissionOverwrite {
+                    allow: perms,
+                    deny: Permissions::empty(),
+                    kind: PermissionOverwriteType::Role(role_id),
+                },
+                PermissionOverwrite {
+                    allow: Permissions::empty(),
+                    deny: perms,
+                    kind: PermissionOverwriteType::Role(msg.guild_id.unwrap().0.into())
+                }
+            ]);
+            ch
+        });
+
+        match result {
+            Ok(c) => create_special_entity(info, c.id.to_string(), SpecialEntityType::TicketsCategory),
+            Err(_) => return Err("Could not create tickets category!".to_string())
+        }
+
+        let _ = msg.channel_id.send_message(ctx.http.clone(), |m| {
+            m.embed(|e| {
+                e.title("Setup - Done!");
+                e.description("Tickets has been created!");
+                e.color(EMBED_REGULAR_COLOR);
+                e
+            });
+            m
+        });
+        Ok(())
+    }
+
     fn create_mute_role(&self, ctx: &Context, msg: &Message, info: &ServerInfo, args: Vec<String>) -> Result<(), String> {
         let name = if args.len() > 1 {
             args[1].to_owned()
         } else {
             "muted".to_string()
         };
-
 
         match msg.guild(&ctx.cache) {
             Some(g) => {
@@ -174,6 +235,17 @@ impl Command for SetupCommand {
                 })),
             },
             CommandArg {
+                name: String::from("tickets"),
+                desc: Some(String::from("creates tickets category and support role (unless provided)")),
+                option: Some(ArgOption::Any),
+                next: Some(Box::new(CommandArg {
+                    name: String::from("[support-role]"),
+                    desc: None,
+                    option: Some(ArgOption::Role),
+                    next: None
+                })),
+            },
+            CommandArg {
                 name: String::from(""),
                 desc: Some(String::from("shows usage information.")),
                 option: None,
@@ -198,6 +270,7 @@ impl Command for SetupCommand {
                     match path[0].name.as_str() {
                         "modlogs-channel" => self.create_mod_logs(ctx, msg, info, args)?,
                         "muted-role" => self.create_mute_role(ctx, msg, info, args)?,
+                        "tickets" => self.create_tickets(ctx, msg, info, args)?,
                         _ => return Err("Not implemented".to_string())
                     }
 

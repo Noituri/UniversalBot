@@ -74,8 +74,8 @@ impl Command for NewTicketCommand {
                 let result = c.send_message(ctx.http.clone(), |m| {
                     m.embed(|e| {
                         e.title("Ticket has been created!");
-                        e.description(format!("Someone from support team will help you out soon! \
-                                               Type `{}solved` or react with ✅ to mark this ticket as solved.", prefix));
+                        e.description(format!("Hi <@{}>! Someone from support team will help you out soon! \
+                                               Type `{}solved` or react with ✅ to mark this ticket as solved.", msg.author.id.0, prefix));
                         e.color(EMBED_REGULAR_COLOR);
                         e
                     });
@@ -88,6 +88,16 @@ impl Command for NewTicketCommand {
                     },
                     Err(_) => {}
                 }
+
+                let _ = msg.channel_id.send_message(ctx.http.clone(), |m| {
+                    m.embed(|e| {
+                        e.title("Created a new ticket!");
+                        e.description(format!("Your ticket: <#{}>", c.id.0));
+                        e.color(EMBED_REGULAR_COLOR);
+                        e
+                    });
+                    m
+                });
             }
             Err(_) => return Err("Could not create a new ticket. Check permissions!".to_string())
         }
