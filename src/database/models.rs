@@ -1,4 +1,4 @@
-use super::schema::{roles, servers, commands, actions, temp_bans_mutes, special_entities};
+use super::schema::{roles, servers, commands, actions, temp_operations, special_entities};
 use chrono::NaiveDateTime;
 
 #[derive(Identifiable, Queryable, Clone)]
@@ -82,22 +82,22 @@ pub struct NewAction {
 
 #[derive(Identifiable, Queryable, Associations, Clone)]
 #[belongs_to(Server, foreign_key = "server_id")]
-#[table_name = "temp_bans_mutes"]
-pub struct TempBanMute {
+#[table_name = "temp_operations"]
+pub struct TempOperation {
     pub id: i32,
     pub server_id: i32,
     pub action_type: i32,
-    pub user_id: String,
+    pub target_id: String,
     pub end_date: NaiveDateTime
 }
 
 #[derive(Insertable, Associations)]
 #[belongs_to(Server, foreign_key = "server_id")]
-#[table_name = "temp_bans_mutes"]
-pub struct NewTempBanMute {
+#[table_name = "temp_operations"]
+pub struct NewTempOperation {
     pub server_id: i32,
     pub action_type: i32,
-    pub user_id: String,
+    pub target_id: String,
     pub end_date: NaiveDateTime
 }
 

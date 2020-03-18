@@ -1,9 +1,9 @@
 use serenity::model::id::GuildId;
-use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction, NewTempBanMute, NewSpecialEntity, SpecialEntityType, SpecialEntity, Action};
+use crate::database::models::{Role, Server, NewRole, NewServer, NewDBCommand, DBCommand, NewAction, NewTempOperation, NewSpecialEntity, SpecialEntityType, SpecialEntity, Action};
 use crate::database::get_db_con;
 use diesel::{RunQueryDsl, QueryDsl, BelongingToDsl, TextExpressionMethods, ExpressionMethods};
 use crate::database::schema::servers::columns::guildid;
-use crate::database::schema::{servers, roles, commands, actions, temp_bans_mutes, special_entities};
+use crate::database::schema::{servers, roles, commands, actions, temp_operations, special_entities};
 use chrono::{DateTime, Utc};
 use crate::database::schema::actions::columns::{action_type, target};
 
@@ -182,6 +182,8 @@ pub enum ActionType {
     ChannelLock = 8,
     ChannelUnLock = 9,
     NewTicket = 10,
+    SolvedTicket = 11,
+    UnSolvedTicket = 12
 }
 
 pub fn get_user_warn_lvl(info: &ServerInfo, user_id: &str) -> i64 {
@@ -252,18 +254,18 @@ pub fn create_action(info: &ServerInfo, issuer: String, target_id: Option<String
         .expect("Error occurred while inserting new action");
 }
 
-pub fn create_temp_ban_mute(info: &ServerInfo, user_id: String, end_date: DateTime<Utc>, action_kind: ActionType) {
-    let new_entry = NewTempBanMute {
+pub fn create_temp_operation(info: &ServerInfo, target_id: String, end_date: DateTime<Utc>, action_kind: ActionType) {
+    let new_entry = NewTempOperation {
         server_id: info.server.clone().unwrap().id,
         action_type: action_kind as i32,
         end_date: end_date.naive_utc(),
-        user_id,
+        target_id,
     };
 
-    diesel::insert_into(temp_bans_mutes::table)
+    diesel::insert_into(temp_operations::table)
         .values(&new_entry)
         .execute(&get_db_con().get().expect("Could not get db pool!"))
-        .expect("Error occurred while inserting new temp ban/mute");
+        .expect("Error occurred while inserting new temp operation");
 }
 
 pub fn get_special_entities(server: &Server) -> Option<Vec<SpecialEntity>> {

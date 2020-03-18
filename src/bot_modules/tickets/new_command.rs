@@ -36,9 +36,10 @@ impl Command for NewTicketCommand {
 
     // TODO: Spam protection. Block creating multiple tickets.
     fn exe(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
+        let prefix = &info.server.as_ref().unwrap().prefix;
         let ticket_category = match get_special_entity_by_type(info, SpecialEntityType::TicketsCategory) {
             Some(id) => id.entity_id,
-            None => return Err(String::from("Tickets' category does not exist. Please use `!setup tickets`!"))
+            None => return Err(format!("Tickets' category does not exist. Please use `{}setup tickets`!", prefix))
         };
 
         let mut rng = rand::thread_rng();
@@ -70,7 +71,6 @@ impl Command for NewTicketCommand {
                     format!("User {} created a ticket-{}.", msg.author.name, ticket_id)
                 );
 
-                let prefix = &info.server.as_ref().unwrap().prefix;
                 let result = c.send_message(ctx.http.clone(), |m| {
                     m.embed(|e| {
                         e.title("Ticket has been created!");

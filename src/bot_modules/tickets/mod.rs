@@ -2,6 +2,7 @@ use super::BotModule;
 use crate::command::Command;
 
 mod new_command;
+mod solved_command;
 
 pub struct TicketsModule;
 
@@ -17,6 +18,7 @@ impl BotModule for TicketsModule {
     fn commands(&self) -> Vec<Box<dyn Command>> {
         vec![
             Box::new(new_command::NewTicketCommand {}),
+            Box::new(solved_command::SolvedTicketCommand {}),
         ]
     }
 }

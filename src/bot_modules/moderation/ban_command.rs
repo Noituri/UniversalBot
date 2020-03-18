@@ -3,7 +3,7 @@ use crate::command::{
 };
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::utils::db::{ServerInfo, create_action, ActionType, create_temp_ban_mute};
+use crate::utils::db::{ServerInfo, create_action, ActionType, create_temp_operation};
 use crate::utils::object_finding::get_member_from_id;
 use crate::bot_modules::main::help_command;
 use crate::utils::get_time;
@@ -11,9 +11,9 @@ use std::thread;
 use crate::database::get_db_con;
 use std::sync::Mutex;
 use std::time::Duration;
-use crate::database::models::{Server, TempBanMute};
-use crate::database::schema::{servers, temp_bans_mutes};
-use crate::database::schema::temp_bans_mutes::columns::{id, action_type};
+use crate::database::models::{Server, TempOperation};
+use crate::database::schema::{servers, temp_operations};
+use crate::database::schema::temp_operations::columns::{id, action_type};
 use crate::diesel::{RunQueryDsl, BelongingToDsl, ExpressionMethods, QueryDsl, GroupedBy};
 use chrono::Utc;
 use log::error;
@@ -78,7 +78,7 @@ impl BanCommand {
         }
 
         if is_temp {
-            create_temp_ban_mute(
+            create_temp_operation(
                 info,
                 member.user_id().to_string(),
                 get_time(&args[1])?,
@@ -179,9 +179,9 @@ impl Command for BanCommand {
                     .load::<Server>(&db)
                     .expect("Could not load servers!");
 
-                let unbans = TempBanMute::belonging_to(&servers)
+                let unbans = TempOperation::belonging_to(&servers)
                     .filter(action_type.eq(ActionType::Ban as i32))
-                    .load::<TempBanMute>(&db)
+                    .load::<TempOperation>(&db)
                     .expect("Could not load temp bans and mutes")
                     .grouped_by(&servers);
 
@@ -191,12 +191,12 @@ impl Command for BanCommand {
                     for ub in v.1 {
                         if ub.end_date < Utc::now().naive_utc() {
                             let guild_id = v.0.guildid.parse::<u64>().unwrap();
-                            let user_id = ub.user_id.parse::<u64>().unwrap();
+                            let user_id = ub.target_id.parse::<u64>().unwrap();
                             match &ctx.lock().unwrap().http.remove_ban(guild_id, user_id) {
                                 Ok(_) => {/* send dm */},
                                 Err(_) => error!("Could not unban user")
                             }
-                            let _ = diesel::delete(temp_bans_mutes::table.filter(id.eq(ub.id)))
+                            let _ = diesel::delete(temp_operations::table.filter(id.eq(ub.id)))
                                 .execute(&db);
                         }
                     }

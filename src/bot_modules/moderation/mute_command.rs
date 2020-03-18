@@ -3,7 +3,7 @@ use crate::command::{
 };
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use crate::utils::db::{ServerInfo, create_action, ActionType, create_temp_ban_mute, get_special_entity_by_type};
+use crate::utils::db::{ServerInfo, create_action, ActionType, create_temp_operation, get_special_entity_by_type};
 use crate::utils::object_finding::get_member_from_id;
 use crate::bot_modules::main::help_command;
 use crate::utils::get_time;
@@ -11,9 +11,9 @@ use std::thread;
 use crate::database::get_db_con;
 use std::sync::Mutex;
 use std::time::Duration;
-use crate::database::models::{Server, TempBanMute, SpecialEntityType, SpecialEntity};
-use crate::database::schema::{servers, temp_bans_mutes};
-use crate::database::schema::temp_bans_mutes::columns::{id, action_type};
+use crate::database::models::{Server, TempOperation, SpecialEntityType, SpecialEntity};
+use crate::database::schema::{servers, temp_operations};
+use crate::database::schema::temp_operations::columns::{id, action_type};
 use crate::diesel::{RunQueryDsl, BelongingToDsl, ExpressionMethods, QueryDsl, GroupedBy};
 use chrono::Utc;
 use log::error;
@@ -91,7 +91,7 @@ impl MuteCommand {
         }
 
         if is_temp {
-            create_temp_ban_mute(
+            create_temp_operation(
                 info,
                 member.user_id().to_string(),
                 get_time(&args[1])?,
@@ -191,9 +191,9 @@ impl Command for MuteCommand {
                     .load::<Server>(&db)
                     .expect("Could not load servers!");
 
-                let unmutes = TempBanMute::belonging_to(&servers)
+                let unmutes = TempOperation::belonging_to(&servers)
                     .filter(action_type.eq(ActionType::Mute as i32))
-                    .load::<TempBanMute>(&db)
+                    .load::<TempOperation>(&db)
                     .expect("Could not load temp bans and mutes")
                     .grouped_by(&servers);
 
@@ -208,7 +208,7 @@ impl Command for MuteCommand {
                     for m in v.1.iter() {
                         if m.end_date < Utc::now().naive_utc() {
                             let guild_id = v.0.guildid.parse::<u64>().unwrap();
-                            let user_id = m.user_id.parse::<u64>().unwrap();
+                            let user_id = m.target_id.parse::<u64>().unwrap();
                             let role_id = muted_roles.iter().find(|r| r.server_id == v.0.id);
                             match role_id {
                                 Some (r) => {
@@ -220,7 +220,7 @@ impl Command for MuteCommand {
                                 }
                                 None => {}
                             }
-                            let _ = diesel::delete(temp_bans_mutes::table.filter(id.eq(m.id)))
+                            let _ = diesel::delete(temp_operations::table.filter(id.eq(m.id)))
                                 .execute(&db);
                         }
                     }

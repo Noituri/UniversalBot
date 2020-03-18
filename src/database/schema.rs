@@ -47,11 +47,11 @@ table! {
 }
 
 table! {
-    temp_bans_mutes (id) {
+    temp_operations (id) {
         id -> Int4,
         server_id -> Int4,
         action_type -> Int4,
-        user_id -> Varchar,
+        target_id -> Varchar,
         end_date -> Timestamp,
     }
 }
@@ -62,5 +62,5 @@ allow_tables_to_appear_in_same_query!(
     roles,
     servers,
     special_entities,
-    temp_bans_mutes,
+    temp_operations,
 );
