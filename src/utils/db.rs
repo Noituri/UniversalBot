@@ -9,7 +9,7 @@ use crate::database::schema::actions::columns::{action_type, target};
 
 pub struct ServerInfo {
     pub server: Option<Server>,
-    pub commands: Option<Vec<DBCommand>>,
+    pub disabled_commands: Option<Vec<DBCommand>>,
     pub roles: Option<Vec<Role>>,
     pub special_entities: Option<Vec<SpecialEntity>>
 }
@@ -17,18 +17,18 @@ pub struct ServerInfo {
 impl ServerInfo {
     pub fn new(guild_id: Option<GuildId>) -> ServerInfo {
         let server = get_db_server(guild_id);
-        let mut commands = None;
+        let mut disabled_commands = None;
         let mut roles = None;
         let mut special_entities = None;
         if let Some(s) = server.to_owned() {
-            commands = get_db_commands(&s);
+            disabled_commands = get_db_commands(&s);
             roles = get_db_roles(&s);
             special_entities = get_special_entities(&s);
         }
 
         ServerInfo {
             server,
-            commands,
+            disabled_commands,
             roles,
             special_entities
         }
@@ -122,7 +122,7 @@ pub fn create_db_command(server: &Server, cmd_name: String) -> DBCommand {
     let new_cmd = NewDBCommand {
         server_id: server.id,
         command_name: cmd_name,
-        enabled_channels: Vec::new()
+        disabled_channels: Vec::new()
     };
 
     diesel::insert_into(commands::table)
@@ -137,7 +137,7 @@ pub fn get_db_command_by_name(info: &ServerInfo, command_name: String) -> Option
         None => return None
     };
 
-    match &info.commands {
+    match &info.disabled_commands {
         Some(commands) => {
             for v in commands.iter() {
                 if v.command_name == command_name {

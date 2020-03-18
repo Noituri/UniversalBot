@@ -126,7 +126,7 @@ impl EventHandler for Handler {
             }
 
             for c in m.commands().iter() {
-                if !c.enabled(&info) {
+                if c.disabled(&info, msg.channel_id.to_string()) {
                     continue;
                 }
 

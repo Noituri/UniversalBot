@@ -47,7 +47,7 @@ impl HelpCommand {
 
             for c in m.commands() {
                 let first_cond = c.use_in_dm() && info.server.is_none();
-                let second_cond = info.server.is_some() && has_perms(ctx, msg, info, &c.perms()) && m.enabled(info) && c.enabled(info);
+                let second_cond = info.server.is_some() && has_perms(ctx, msg, info, &c.perms()) && m.enabled(info) && !c.disabled(info, msg.channel_id.to_string());
                 if all || first_cond || second_cond {
                     commands.push(c);
                     continue;
@@ -144,14 +144,12 @@ impl HelpCommand {
                             e.description(format!(
                                 "**Name: ** {}\n\
                                  **Description:** {}\n\
-                                 **Enabled:** {} \n\
                                  **Can be used in DM:** {}\n\n\
                                  {}\n\
                                  {}\
                                  ",
                                 c.name(),
                                 c.desc(),
-                                c.enabled(info),
                                 c.use_in_dm(),
                                 args_message,
                                 perms_message

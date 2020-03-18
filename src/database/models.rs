@@ -43,7 +43,7 @@ pub struct DBCommand {
     pub id: i32,
     pub server_id: i32,
     pub command_name: String,
-    pub enabled_channels: Vec<String>
+    pub disabled_channels: Vec<String>
 }
 
 #[derive(Insertable, Associations)]
@@ -52,7 +52,7 @@ pub struct DBCommand {
 pub struct NewDBCommand {
     pub server_id: i32,
     pub command_name: String,
-    pub enabled_channels: Vec<String>
+    pub disabled_channels: Vec<String>
 }
 
 #[derive(Identifiable, Queryable, Associations, Clone, QueryableByName)]

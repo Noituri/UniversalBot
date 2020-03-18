@@ -46,18 +46,18 @@ pub trait Command {
 }
 
 impl dyn Command {
-    pub fn enabled(&self, info: &ServerInfo) -> bool {
+    pub fn disabled(&self, info: &ServerInfo, channel_id: String) -> bool {
         let mut exists = false;
-        if let Some(commands) = &info.commands {
+        if let Some(commands) = &info.disabled_commands {
             for v in commands.iter() {
-                if v.command_name == self.name() {
+                if v.command_name == self.name() && v.disabled_channels.contains(&channel_id) {
                     exists = true;
                     break
                 }
             }
         }
-
-        exists || is_command_protected(&self.name()).unwrap()
+        println!("name: {} -> {}", self.name(), exists && !is_command_protected(&self.name()).unwrap());
+        exists && !is_command_protected(&self.name()).unwrap()
     }
 }
 

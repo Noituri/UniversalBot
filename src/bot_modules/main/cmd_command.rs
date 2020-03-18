@@ -1,7 +1,7 @@
 use crate::command::{get_args, parse_args, ArgOption, Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR, find_command, is_command_protected};
 use crate::database::get_db_con;
 use crate::database::models::*;
-use crate::database::schema::commands::enabled_channels;
+use crate::database::schema::commands::disabled_channels;
 use crate::database::schema::*;
 use diesel::prelude::*;
 use serenity::model::channel::{Message, ChannelType};
@@ -40,24 +40,24 @@ impl CmdCommand {
        if channel.is_empty() {
            match ctx.http.get_channels(msg.guild_id.unwrap().0) {
                Ok(ch) => {
-                   if args[1] == "enable" {
-                       cmd.enabled_channels = ch.iter()
+                   if args[1] == "disable" {
+                       cmd.disabled_channels = ch.iter()
                            .filter(|c| c.kind == ChannelType::Text)
                            .map(|c| c.id.to_string())
                            .collect();
                    } else {
-                       cmd.enabled_channels = Vec::new();
+                       cmd.disabled_channels = Vec::new();
                    }
                },
                Err(_) => return Err("Could not retrieve guild channels!".to_string())
            };
        } else {
-           if args[1] == "enable" && !cmd.enabled_channels.contains(&channel) {
-               cmd.enabled_channels.push(channel)
-           } else if args[1] == "disable" {
-               for (i, c) in cmd.enabled_channels.iter().enumerate() {
+           if args[1] == "disable" && !cmd.disabled_channels.contains(&channel) {
+               cmd.disabled_channels.push(channel)
+           } else if args[1] == "enable" {
+               for (i, c) in cmd.disabled_channels.iter().enumerate() {
                    if c == &channel {
-                       cmd.enabled_channels.remove(i);
+                       cmd.disabled_channels.remove(i);
                        break;
                    }
                }
@@ -65,7 +65,7 @@ impl CmdCommand {
        }
 
        diesel::update(commands::dsl::commands.find(cmd.id))
-           .set(enabled_channels.eq(cmd.enabled_channels))
+           .set(disabled_channels.eq(cmd.disabled_channels))
            .get_result::<DBCommand>(&get_db_con().get().expect("Could not get db pool!"))
            .expect("Could not update the server!");
 
@@ -92,12 +92,12 @@ impl CmdCommand {
         };
 
         let mut channels_message = String::new();
-        cmd.enabled_channels.iter().for_each(|c| channels_message.push_str(&format!("- <#{}>\n", c)));
+        cmd.disabled_channels.iter().for_each(|c| channels_message.push_str(&format!("- <#{}>\n", c)));
 
         let _ = msg.channel_id.send_message(&ctx.http, |m| {
            m.embed(|e| {
                e.title(format!("{} details", cmd.command_name));
-               e.description(format!("Command enabled in those channels:\n{}", channels_message));
+               e.description(format!("Command is disabled in those channels:\n{}", channels_message));
                e.color(EMBED_REGULAR_COLOR);
                e
            });

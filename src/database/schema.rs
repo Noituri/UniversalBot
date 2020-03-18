@@ -15,7 +15,7 @@ table! {
         id -> Int4,
         server_id -> Int4,
         command_name -> Varchar,
-        enabled_channels -> Array<Text>,
+        disabled_channels -> Array<Text>,
     }
 }
 

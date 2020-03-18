@@ -99,7 +99,7 @@ impl Command for NewTicketCommand {
                     m
                 });
             }
-            Err(_) => return Err("Could not create a new ticket. Check permissions!".to_string())
+            Err(_) => return Err(format!("Could not create a new ticket. Check if tickets category is properly setup or use `{}setup tickets`!", prefix))
         }
 
         Ok(())
