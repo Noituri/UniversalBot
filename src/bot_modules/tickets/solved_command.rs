@@ -61,7 +61,7 @@ impl SolvedTicketCommand {
         let final_msg = channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Marked as solved!");
-                e.description("Ticket will be removed after 1 hour! If you wish to reopen the ticket react with ✅.");
+                e.description("Ticket will be removed after 1 hour! If you wish to reopen the ticket react with ❎.");
                 e.color(EMBED_REGULAR_COLOR);
                 e
             });
@@ -70,7 +70,7 @@ impl SolvedTicketCommand {
 
         match final_msg {
             Ok(m) => {
-                let _ = m.react(ctx.http.clone(), ReactionType::Unicode(String::from("✅")));
+                let _ = m.react(ctx.http.clone(), ReactionType::Unicode(String::from("❎")));
             },
             Err(_) => return Err("Could not create a message.".to_string())
         }
