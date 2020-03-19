@@ -56,6 +56,9 @@ impl Command for SolvedTicketCommand {
         let mut user_id = msg.author.id;
         for p in channel.permission_overwrites.iter() {
             if let PermissionOverwriteType::Member(m) = p.kind {
+                if p.deny == Permissions::SEND_MESSAGES {
+                    return Err("Channel is already marked as solved!".to_string())
+                }
                 user_id = m;
             }
         }
@@ -76,6 +79,7 @@ impl Command for SolvedTicketCommand {
             format!("{} has been solved by {}.", channel.name, msg.author.name)
         );
         create_temp_operation(info, msg.channel_id.to_string(), Utc::now() + Duration::hours(1), ActionType::SolvedTicket);
+        let _ = msg.delete(ctx.http.clone());
         let final_msg = msg.channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
                 e.title("Marked as solved!");

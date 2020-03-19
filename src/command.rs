@@ -56,7 +56,6 @@ impl dyn Command {
                 }
             }
         }
-        println!("name: {} -> {}", self.name(), exists && !is_command_protected(&self.name()).unwrap());
         exists && !is_command_protected(&self.name()).unwrap()
     }
 }
