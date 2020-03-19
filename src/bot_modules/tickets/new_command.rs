@@ -34,13 +34,32 @@ impl Command for NewTicketCommand {
         None
     }
 
-    // TODO: Spam protection. Block creating multiple tickets.
     fn exe(&self, ctx: &Context, msg: &Message, info: &ServerInfo) -> Result<(), String> {
         let prefix = &info.server.as_ref().unwrap().prefix;
         let ticket_category = match get_special_entity_by_type(info, SpecialEntityType::TicketsCategory) {
             Some(id) => id.entity_id,
             None => return Err(format!("Tickets' category does not exist. Please use `{}setup tickets`!", prefix))
         };
+
+        {
+            let guild = &msg.guild(&ctx.cache).unwrap();
+            let guild = guild.read();
+            for (_, channel) in &guild.channels {
+                let channel = channel.read();
+                if let Some(c) = channel.category_id {
+                    if c.to_string() != ticket_category {
+                        continue
+                    }
+                } else {
+                    continue
+                }
+
+                let found_perms = channel.permission_overwrites.iter().find(|v| v.kind == PermissionOverwriteType::Member(msg.author.id));
+                if found_perms.is_some() {
+                    return Err(format!("You already have an active ticket. It's here <#{}>.", channel.id.0))
+                }
+            }
+        }
 
         let mut rng = rand::thread_rng();
         let ticket_id = rng.gen_range(1000, 10000);
