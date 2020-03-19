@@ -1,7 +1,7 @@
 mod dev;
 pub mod main;
 mod moderation;
-mod tickets;
+pub mod tickets;
 
 use crate::command::Command;
 use crate::config::DEV_MODULE;

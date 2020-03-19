@@ -2,7 +2,7 @@ use super::BotModule;
 use crate::command::Command;
 
 mod new_command;
-mod solved_command;
+pub mod solved_command;
 
 pub struct TicketsModule;
 

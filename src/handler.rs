@@ -2,8 +2,10 @@ use crate::command::Command;
 use log::{error, info};
 use lazy_static::lazy_static;
 use std::sync::Mutex;
+use serenity::model::channel::{Message, Reaction, ReactionType};
 use serenity::{
-    model::{channel::Message, gateway::Ready},
+    model::gateway::Ready,
+    model::id::ChannelId,
     prelude::*,
 };
 use chrono::{Utc, Duration};
@@ -11,6 +13,8 @@ use crate::utils::object_finding::FindsAwaitingAnswer;
 use crate::utils::perms::has_perms;
 use crate::utils::db::ServerInfo;
 use crate::bot_modules::get_modules;
+use super::bot_modules::main::help_command::HelpCommand;
+use super::bot_modules::tickets::solved_command::SolvedTicketCommand;
 
 pub struct Handler;
 
@@ -24,8 +28,8 @@ lazy_static! {
 }
 
 impl Handler {
-    fn send_error(&self, ctx: Context, msg: Message, why: &str) {
-        let _ = msg.channel_id.send_message(ctx.http, |m| {
+    fn send_error(&self, ctx: Context, channel_id: ChannelId, why: &str) {
+        let _ = channel_id.send_message(ctx.http, |m| {
             m.embed(|e| {
                 e.title("Error");
                 e.color(super::command::EMBED_ERROR_COLOR);
@@ -68,7 +72,7 @@ impl Handler {
             for (i, v) in state.role_finds_awaiting.iter().enumerate() {
                 if v.who == msg.author.id.0 && v.channel == msg.channel_id.0 {
                     if answer > v.finds.len() {
-                        self.send_error(ctx, msg.to_owned(), "Your answer does not match any found options!");
+                        self.send_error(ctx, msg.channel_id, "Your answer does not match any found options!");
                         return true;
                     }
 
@@ -115,7 +119,7 @@ impl EventHandler for Handler {
         if msg.content.trim() == format!("<@{}>", ctx.cache.read().user.id)
             || msg.content.trim() == format!("<@!{}>", ctx.cache.read().user.id)
         {
-            let _ = super::bot_modules::main::help_command::HelpCommand {}.exe(&ctx, &msg, &info);
+            let _ = HelpCommand {}.exe(&ctx, &msg, &info);
             return;
         }
 
@@ -134,7 +138,7 @@ impl EventHandler for Handler {
                     if !c.use_in_dm() && msg.is_private() {
                         self.send_error(
                             ctx.clone(),
-                            msg.clone(),
+                            msg.channel_id,
                             "This command is disabled in DM chat!",
                         );
                         return;
@@ -151,7 +155,7 @@ impl EventHandler for Handler {
 
                             self.send_error(
                                 ctx.clone(),
-                                msg.clone(),
+                                msg.channel_id,
                                 &format!(
                                     "**Missing permissions:**\n\
                                      This command requires this permissions: {}\n\
@@ -167,11 +171,39 @@ impl EventHandler for Handler {
 
                     if let Err(why) = c.exe(&ctx, &msg, &info) {
                         error!("Command '{}' failed. Reason: {}", c.name(), why.to_owned());
-                        self.send_error(ctx.clone(), msg.clone(), &why);
+                        self.send_error(ctx.clone(), msg.channel_id, &why);
                     }
 
                     break;
                 }
+            }
+        }
+    }
+
+    fn reaction_add(&self, ctx: Context, reaction: Reaction) {
+        if let ReactionType::Unicode(emoji) = &reaction.emoji {
+            match emoji.as_str() {
+                "✅" => {
+                    match reaction.guild_id {
+                        Some (guild) => {
+                            let user = match reaction.user(ctx.http.clone()) {
+                                Ok(u) => u,
+                                Err(_) => return
+                            };
+                            if user.bot {
+                                return
+                            }
+                            let cmd = SolvedTicketCommand{};
+                            if let Err(why) = cmd.solve(&ctx, reaction.channel_id, &user, &ServerInfo::new(Some(guild))) {
+                                error!("Reaction Callback '✅' failed. Reason: {}", why.to_owned());
+                            } else {
+                                let _ = reaction.delete(ctx.http);
+                            }
+                        },
+                        None => {}
+                    }
+                },
+                _ => {}
             }
         }
     }
