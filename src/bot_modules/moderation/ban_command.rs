@@ -174,7 +174,7 @@ impl Command for BanCommand {
         thread::spawn(move || {
             let db = get_db_con().get().expect("Could not get db pool!");
             loop {
-                thread::sleep(Duration::from_secs(5));
+                thread::sleep(Duration::from_secs(20));
                 let servers = servers::dsl::servers
                     .load::<Server>(&db)
                     .expect("Could not load servers!");
@@ -182,7 +182,7 @@ impl Command for BanCommand {
                 let unbans = TempOperation::belonging_to(&servers)
                     .filter(action_type.eq(ActionType::Ban as i32))
                     .load::<TempOperation>(&db)
-                    .expect("Could not load temp bans and mutes")
+                    .expect("Could not load temp operations")
                     .grouped_by(&servers);
 
                 let data = servers.into_iter().zip(unbans).collect::<Vec<_>>();

@@ -3,17 +3,25 @@ use serenity::model::user::User;
 use serenity::model::id::ChannelId;
 use serenity::model::Permissions;
 use serenity::prelude::Context;
-use crate::database::models::SpecialEntityType;
+use crate::database::models::{Server, SpecialEntityType, TempOperation};
+use crate::database::schema::{servers, temp_operations};
+use crate::database::schema::temp_operations::columns::{id, action_type};
+use crate::diesel::{RunQueryDsl, BelongingToDsl, ExpressionMethods, QueryDsl, GroupedBy};
 use crate::utils::db::{ServerInfo, ActionType, create_action, get_special_entity_by_type, create_temp_operation};
 use crate::command::{Command, CommandArg, CommandConfig, EMBED_REGULAR_COLOR};
+use crate::database::get_db_con;
 use chrono::{Utc, Duration};
+use std::thread;
+use std::sync::Mutex;
+use std::time::Duration as StdDuration;
+use log::error;
 
 pub struct SolvedTicketCommand;
 
 impl SolvedTicketCommand {
     pub fn solve(&self, ctx: &Context, channel_id: ChannelId, user: &User, info: &ServerInfo) -> Result<(), String> {
         let ticket_category = match get_special_entity_by_type(info, SpecialEntityType::TicketsCategory) {
-            Some(id) => id.entity_id,
+            Some(cat_id) => cat_id.entity_id,
             None => return Err(String::from("Tickets' category does not exist. Please use `!setup tickets`!"))
         };
 
@@ -108,5 +116,40 @@ impl Command for SolvedTicketCommand {
         self.solve(ctx, msg.channel_id, &msg.author, info)?;
         let _ = msg.delete(ctx.http.clone());
         Ok(())
+    }
+
+    fn init(&self, ctx: &Context) {
+ let ctx = Mutex::new(ctx.clone());
+        thread::spawn(move || {
+            let db = get_db_con().get().expect("Could not get db pool!");
+            loop {
+                thread::sleep(StdDuration::from_secs(60));
+                let servers = servers::dsl::servers
+                    .load::<Server>(&db)
+                    .expect("Could not load servers!");
+
+                let tickets = TempOperation::belonging_to(&servers)
+                    .filter(action_type.eq(ActionType::SolvedTicket as i32))
+                    .load::<TempOperation>(&db)
+                    .expect("Could not load temp operations")
+                    .grouped_by(&servers);
+
+                let data = servers.into_iter().zip(tickets).collect::<Vec<_>>();
+
+                for v in data {
+                    for t in v.1 {
+                        if t.end_date < Utc::now().naive_utc() {
+                            let channel_id = t.target_id.parse::<u64>().unwrap();
+                            match &ctx.lock().unwrap().http.delete_channel(channel_id) {
+                                Ok(_) => {/* send dm */},
+                                Err(_) => error!("Could not close the ticket")
+                            }
+                            let _ = diesel::delete(temp_operations::table.filter(id.eq(t.id)))
+                                .execute(&db);
+                        }
+                    }
+                }
+            }
+        });
     }
 }
