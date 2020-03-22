@@ -2,19 +2,24 @@ use crate::command::Command;
 use log::{error, info};
 use lazy_static::lazy_static;
 use std::sync::Mutex;
-use serenity::model::channel::{Message, Reaction, ReactionType};
+use serenity::model::channel::{Message, Reaction, ReactionType, PermissionOverwrite, PermissionOverwriteType};
 use serenity::{
     model::gateway::Ready,
     model::id::ChannelId,
+    model::Permissions,
     prelude::*,
 };
 use chrono::{Utc, Duration};
 use crate::utils::object_finding::FindsAwaitingAnswer;
 use crate::utils::perms::has_perms;
-use crate::utils::db::ServerInfo;
+use crate::utils::db::{ServerInfo, ActionType};
 use crate::bot_modules::get_modules;
 use super::bot_modules::main::help_command::HelpCommand;
 use super::bot_modules::tickets::solved_command::SolvedTicketCommand;
+use crate::database::schema::{servers, temp_operations};
+use crate::database::schema::temp_operations::columns::{id, action_type, target_id};
+use crate::diesel::{RunQueryDsl, BelongingToDsl, ExpressionMethods, QueryDsl, BoolExpressionMethods, TextExpressionMethods};
+use crate::database::get_db_con;
 
 pub struct Handler;
 
@@ -181,18 +186,19 @@ impl EventHandler for Handler {
     }
 
     fn reaction_add(&self, ctx: Context, reaction: Reaction) {
+        if ctx.cache.read().user.id == reaction.user_id {
+            return
+        }
+
         if let ReactionType::Unicode(emoji) = &reaction.emoji {
             match emoji.as_str() {
                 "✅" => {
                     match reaction.guild_id {
-                        Some (guild) => {
+                        Some(guild) => {
                             let user = match reaction.user(ctx.http.clone()) {
                                 Ok(u) => u,
                                 Err(_) => return
                             };
-                            if user.bot {
-                                return
-                            }
                             let cmd = SolvedTicketCommand{};
                             if let Err(why) = cmd.solve(&ctx, reaction.channel_id, &user, &ServerInfo::new(Some(guild))) {
                                 error!("Reaction Callback '✅' failed. Reason: {}", why.to_owned());
@@ -203,6 +209,37 @@ impl EventHandler for Handler {
                         None => {}
                     }
                 },
+                "❎" => {
+                    match reaction.guild_id {
+                        Some(guild) => {
+                            let result = diesel::delete(temp_operations::table.filter(
+                                action_type.eq(ActionType::SolvedTicket as i32)
+                                .and(target_id.like(reaction.channel_id.to_string()))
+                            )).execute(&get_db_con().get().expect("Could not get db pool"));
+                            match result {
+                                Ok(removed) => {
+                                    if removed == 0 {
+                                        return
+                                    }
+                                },
+                                Err(_) => return
+                            }
+
+                            let mut perms = Permissions::READ_MESSAGES;
+                            perms.insert(Permissions::SEND_MESSAGES);
+                            perms.insert(Permissions::ADD_REACTIONS);
+
+                            let _ = reaction.channel_id.create_permission(&ctx.http, &PermissionOverwrite {
+                                allow: perms,
+                                deny: Permissions::empty(),
+                                kind: PermissionOverwriteType::Member(reaction.user_id)
+                            });
+
+                            let _ = ctx.http.delete_message(reaction.channel_id.into(), reaction.message_id.into());
+                        },
+                        None => {}
+                    }
+                }
                 _ => {}
             }
         }

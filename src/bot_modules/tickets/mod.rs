@@ -12,7 +12,7 @@ impl BotModule for TicketsModule {
     }
 
     fn desc(&self) -> String {
-        String::from("Tickets commands")
+        String::from("Tickets commands.")
     }
 
     fn commands(&self) -> Vec<Box<dyn Command>> {

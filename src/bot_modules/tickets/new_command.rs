@@ -56,7 +56,7 @@ impl Command for NewTicketCommand {
 
                 let found_perms = channel.permission_overwrites.iter().find(|v| v.kind == PermissionOverwriteType::Member(msg.author.id));
                 if found_perms.is_some() {
-                    return Err(format!("You already have an active ticket. It's here <#{}>.", channel.id.0))
+                   return Err(format!("You already have an active ticket. It's here <#{}>.", channel.id.0))
                 }
             }
         }
