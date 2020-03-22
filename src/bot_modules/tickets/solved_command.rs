@@ -64,7 +64,7 @@ impl SolvedTicketCommand {
             ActionType::SolvedTicket,
             format!("{} has been solved by {}.", channel.name, user.name)
         );
-        create_temp_operation(info, channel_id.to_string(), Utc::now() + Duration::hours(1), ActionType::SolvedTicket);
+        create_temp_operation(info, channel_id.to_string(), Utc::now() + Duration::minutes(1), ActionType::SolvedTicket);
 
         let final_msg = channel_id.send_message(&ctx.http, |m| {
             m.embed(|e| {
