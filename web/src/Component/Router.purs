@@ -65,7 +65,7 @@ component = Wrapper.component $ H.mkComponent
   handleAction = case _ of
     Initialize -> do
       initialRoute <- hush <<< (RD.parse routeDuplex) <$> H.liftEffect getHash
-      navigate $ fromMaybe NotFound initialRoute -- TODO: not found page
+      navigate $ fromMaybe NotFound initialRoute
 
     Receive { user } ->
       H.modify_ _ { user = user }

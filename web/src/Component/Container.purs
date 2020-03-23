@@ -10,7 +10,6 @@ import Utter.Component.Navbar as Navbar
 import Utter.Component.Utils (cssClass)
 import Utter.Data.User (User)
 
--- TODO: Navbar 
 component :: forall i p. Maybe User -> String -> Array (HH.HTML i p) -> HH.HTML i p
 component user title inner =
   HH.div [ cssClass "container" ] ((Navbar.component user) : titleHTML : inner)
