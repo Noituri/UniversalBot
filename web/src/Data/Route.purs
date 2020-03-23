@@ -14,6 +14,7 @@ data Route
   = Home
   | Panel
   | EditPanel Int
+  | NotFound
 --   | Redirect Int
 --   | Commands
 
@@ -29,6 +30,7 @@ routeDuplex = root $ sum
   { "Home": noArgs
   , "Panel": "panel" / noArgs
   , "EditPanel": "panel" / int segment
+  , "NotFound": "not-found" / noArgs
   }
 
 int :: RouteDuplex' String -> RouteDuplex' Int

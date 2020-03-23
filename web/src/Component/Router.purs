@@ -14,6 +14,7 @@ import Halogen.HTML.Properties as HP
 import Routing.Hash (getHash)
 import Routing.PushState (matches)
 import Utter.Capability.Navigate (class Navigate, navigate)
+import Utter.Capability.Logger (class Logger, log)
 import Utter.Component.Utils (ChildSlot)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.Route (Route(..), routeDuplex)
@@ -22,6 +23,7 @@ import Utter.Env (UserEnv)
 import Routing.Duplex as RD
 import Utter.Page.Home as Home
 import Utter.Page.Panel as Panel
+import Utter.Page.NotFound as NotFound
 
 type State =
   { route :: Maybe Route
@@ -38,6 +40,7 @@ data Action
 type ChildSlots =
   ( home :: ChildSlot Unit
   , panel :: ChildSlot Unit
+  , notFound :: ChildSlot Unit
   )
 
 component
@@ -45,6 +48,7 @@ component
    . MonadAff m
   => MonadAsk { userEnv :: UserEnv | r } m
   => Navigate m
+  => Logger m
   => H.Component HH.HTML Query {} Void m
 component = Wrapper.component $ H.mkComponent
   { initialState: \{ user } -> { route: Nothing, user }
@@ -61,7 +65,7 @@ component = Wrapper.component $ H.mkComponent
   handleAction = case _ of
     Initialize -> do
       initialRoute <- hush <<< (RD.parse routeDuplex) <$> H.liftEffect getHash
-      navigate $ fromMaybe Home initialRoute -- TODO: not found page
+      navigate $ fromMaybe NotFound initialRoute -- TODO: not found page
 
     Receive { user } ->
       H.modify_ _ { user = user }
@@ -93,5 +97,7 @@ component = Wrapper.component $ H.mkComponent
       EditPanel guild ->
         HH.slot (SProxy :: _ "panel") unit Panel.component {} absurd
           # authorize user
+      NotFound ->
+        HH.slot (SProxy :: _ "notFound") unit NotFound.component {} absurd
     Nothing ->
       HH.div_ [ HH.text "Page not found!" ]

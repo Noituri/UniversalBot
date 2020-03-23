@@ -13,9 +13,11 @@ body {
 
 .container {
     display: flex;
+    margin: 0 auto;
     text-align: center;
     flex-direction: column;
     width: 100%;
+    max-width: 1500px;
     flex-wrap: wrap;
     align-content: center;
     justify-content: center;
@@ -33,9 +35,9 @@ body {
     background: linear-gradient(45deg, #2d266b, #a59bff 80%);
     border-radius: 15px;
     font-size: 24px;
-    padding: 4px;
+    padding: 6px 15px;
     justify-content: center;
-    width: 100px;
+    width: fit-content;
     user-select: none;
 }
 
@@ -45,19 +47,6 @@ body {
 
 .top-margin {
     margin-top: 30px;
-}
-
-.features { }
-
-.card {
-    border-radius: 10px;
-    background-color: rgb(41, 46, 82);
-    padding: 5px;
-    flex: 1 0 40%;
-    margin: 10px 5px;
-    width: 100%;
-    max-width: 300px;
-    height: 150px;
 }
 
 nav {
@@ -90,9 +79,24 @@ nav {
     padding: 0;
 }
 
+.features {
+
+}
+
+.card {
+    border-radius: 10px;
+    background-color: rgb(41, 46, 82);
+    padding: 5px;
+    flex: 1 0 40%;
+    margin: 10px 5px;
+    width: 100%;
+    max-width: 300px;
+    height: 150px;
+}
+
 @media only screen and (min-width: 750px) {
     .features {
-        display: flex;
+        display: inline-flex;
         flex-direction: row;
         flex-wrap: wrap;
         max-width: 700px;

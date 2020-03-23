@@ -24,7 +24,7 @@ component user =
     ]
     where
       logo :: String -> HH.HTML i p
-      logo name = HH.a [ cssClass "nav-item nav-logo", HP.href "/" ]
+      logo name = HH.a [ cssClass "nav-item nav-logo", HP.href $ getLink Home ]
                     [ HH.text name ]
       item :: String -> String -> HH.HTML i p
       item name path = HH.a [ cssClass "nav-item", HP.href path ]
