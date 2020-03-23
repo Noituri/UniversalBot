@@ -13,6 +13,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Utter.Capability.Navigate (class Navigate)
 import Utter.Component.Container as Container
+import Utter.Component.FeatureCard as FeatureCard
 import Utter.Component.Utils (cssClass)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Env (UserEnv)
@@ -41,11 +42,30 @@ component = Wrapper.component $ H.mkComponent
 render :: forall slots m. {} -> H.ComponentHTML Action slots m
 render state =
   Container.component "Home" $
-    [HH.div_
-      [ HH.h1 [ cssClass "heading" ]
+    [ HH.div_
+        [ HH.h1 [ cssClass "heading" ]
           [ HH.text "Utter" ]
-      , HH.h1_
+        , HH.h1_
           [ HH.text "The Universal Bot" ]
-      , HH.p [ cssClass "gradient-btn" ]
+        , HH.p [ cssClass "gradient-btn" ]
           [ HH.text "Try it!" ]
-      ]]
+        ]
+    , HH.div [ cssClass "top-margin" ]
+        [ HH.h2_
+            [ HH.text "Features" ]
+        , HH.div [ cssClass "features" ]
+            [ FeatureCard.component
+                "Powerful"
+                "Need moderation, utilities or tickets? We've got you covered! UtterBot offers many commands categorised into modules."
+            , FeatureCard.component
+                "Configurable"
+                "Don't need some commands? Disable them!\nNeed only ticket commands? Just enable ticket module!"
+            , FeatureCard.component
+                "Web Panel"
+                "Configure UtterBot from your web browser. Check the moderation logs!"
+            , FeatureCard.component
+                "Open Source"
+                "Want to check the code out? Or contribute to the project? Everything is open-source. Feel free to dive in to the project!"
+            ]
+        ]
+    ]

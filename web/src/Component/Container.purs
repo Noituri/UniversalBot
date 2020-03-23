@@ -7,6 +7,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Utter.Component.Utils (cssClass)
 
+-- TODO: Navbar 
 component :: forall i p. String -> Array (HH.HTML i p) -> HH.HTML i p
 component title inner =
   HH.div [ cssClass "container" ] (titleHTML : inner)
