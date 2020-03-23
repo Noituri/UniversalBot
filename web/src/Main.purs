@@ -29,10 +29,10 @@ main = HA.runHalogenAff do
     environ :: Env
     environ = { baseUrl, userEnv }
       where
-        baseUrl = BaseURL "https://utter.now.sh"
+        baseUrl = BaseURL "http://localhost:8080"
         userEnv :: UserEnv
         userEnv = { user, userBus }
-
+ 
   hIO <- runUI (H.hoist (runAppM environ) Router.component) {} body
 
   void $ H.liftEffect $ matchesWith (parse routeDuplex) \old new ->

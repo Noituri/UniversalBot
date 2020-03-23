@@ -1,0 +1,50 @@
+html {
+    background-color: rgb(24, 26, 37);
+}
+
+body {
+    margin: 0;
+}
+
+* {
+    font-family: 'Baloo 2', cursive;
+    color: white;
+}
+
+ .container {
+     display: flex;
+     text-align: center;
+     flex-direction: column;
+     width: 100%;
+     flex-wrap: wrap;
+     align-content: center;
+     justify-content: center;
+ }
+
+ .heading {
+    font-size: 72px;
+    margin: 40px 0 0 0;
+    font-weight: bold;
+ }
+
+ /* :display "inline-flex"
+   :cursor "pointer"
+   :background (with-meta #(str "linear-gradient(45deg," (get {nil "#2d266b, #a59bff" :red "#8e0404, #cf4848"} %) " 80%)") :bg)
+   :border-radius "15px"
+   :font-size "24px"
+   :padding "5px"
+   :justify-content "center"
+   :width "100px"
+ */
+
+ .gradient-btn {
+     display: inline-flex;
+     cursor: pointer;
+     background: linear-gradient(45deg, #2d266b, #a59bff 80%);
+     border-radius: 15px;
+     font-size: 24px;
+     padding: 4px;
+     justify-content: center;
+     width: 100px;
+     user-select: none;
+ }

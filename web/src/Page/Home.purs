@@ -12,6 +12,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Utter.Capability.Navigate (class Navigate)
+import Utter.Component.Container as Container
+import Utter.Component.Utils (cssClass)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Env (UserEnv)
 import Web.Event.Event (preventDefault)
@@ -38,7 +40,12 @@ component = Wrapper.component $ H.mkComponent
 
 render :: forall slots m. {} -> H.ComponentHTML Action slots m
 render state =
-  HH.div_
-    [ HH.h1_
-      [ HH.text "Welcome" ]
-    ]
+  Container.component "Home" $
+    [HH.div_
+      [ HH.h1 [ cssClass "heading" ]
+          [ HH.text "Utter" ]
+      , HH.h1_
+          [ HH.text "The Universal Bot" ]
+      , HH.p [ cssClass "gradient-btn" ]
+          [ HH.text "Try it!" ]
+      ]]

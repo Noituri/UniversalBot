@@ -2,8 +2,6 @@ module Utter.Component.Wrapper (component) where
 
 import Prelude
 
-import Utter.Component.Utils (busEventSource)
-import Utter.Env (UserEnv)
 import Control.Monad.Reader (class MonadAsk, asks)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
@@ -14,6 +12,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Prim.Row as Row
 import Record as Record
+import Utter.Component.Utils (busEventSource)
+import Utter.Env (UserEnv)
 
 data Action input output
   = Initialize
@@ -65,5 +65,4 @@ component innerComponent =
   handleQuery :: forall a. query a -> H.HalogenM _ _ _ _ _ (Maybe a)
   handleQuery = H.query _inner unit
 
-  render state =
-    HH.slot _inner unit innerComponent state (Just <<< Emit)
+  render state = HH.slot _inner unit innerComponent state (Just <<< Emit)
