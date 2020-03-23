@@ -4,6 +4,7 @@ import Data.Maybe (Maybe)
 import Effect.Ref (Ref)
 import Effect.Aff.Bus (BusRW)
 import Utter.Api.Request (BaseURL)
+import Utter.Data.User (User)
 
 type Env =
     { baseUrl :: BaseURL
@@ -11,6 +12,6 @@ type Env =
     }
 
 type UserEnv =
-    { user :: Ref (Maybe String) -- String just for now
-    , userBus :: BusRW (Maybe String) -- ^^^^^^^^^
+    { user :: Ref (Maybe User)
+    , userBus :: BusRW (Maybe User)
     }

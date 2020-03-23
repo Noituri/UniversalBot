@@ -17,24 +17,27 @@ import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Component.Utils (ChildSlot)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.Route (Route(..), routeDuplex)
+import Utter.Data.User (User)
 import Utter.Env (UserEnv)
 import Routing.Duplex as RD
 import Utter.Page.Home as Home
+import Utter.Page.Panel as Panel
 
 type State =
   { route :: Maybe Route
-  , user :: Maybe String
+  , user :: Maybe User
   }
 
 data Query a = Navigate Route a
 
 data Action
   = Initialize
-  | Receive { | ( user :: Maybe String | ()) }
+  | Receive { | ( user :: Maybe User | ()) }
 
 
 type ChildSlots =
   ( home :: ChildSlot Unit
+  , panel :: ChildSlot Unit
   )
 
 component
@@ -72,11 +75,23 @@ component = Wrapper.component $ H.mkComponent
           _ -> pure unit
       pure (Just a)
 
+  authorize :: Maybe User -> H.ComponentHTML Action ChildSlots m -> H.ComponentHTML Action ChildSlots m
+  authorize user html = case user of
+    Nothing ->
+      HH.slot (SProxy :: _ "home") unit Home.component {} absurd -- TODO: Redirect to discord login
+    Just _ ->
+      html
 
   render :: State -> H.ComponentHTML Action ChildSlots m
   render { route, user } = case route of
     Just r -> case r of
       Home ->
         HH.slot (SProxy :: _ "home") unit Home.component {} absurd
+      Panel ->
+        HH.slot (SProxy :: _ "panel") unit Panel.component {} absurd
+          # authorize user
+      EditPanel guild ->
+        HH.slot (SProxy :: _ "panel") unit Panel.component {} absurd
+          # authorize user
     Nothing ->
       HH.div_ [ HH.text "Page not found!" ]

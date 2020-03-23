@@ -1,4 +1,4 @@
-module Utter.Page.Home (component) where
+module Utter.Page.Panel (component) where
 
 import Prelude
 
@@ -45,31 +45,7 @@ component = Wrapper.component $ H.mkComponent
 
 render :: forall slots m. State -> H.ComponentHTML Action slots m
 render state =
-  Container.component state "Home" $
+  Container.component state "Panel" $
     [ HH.div_
-        [ HH.h1 [ cssClass "heading" ]
-          [ HH.text "Utter" ]
-        , HH.h1_
-          [ HH.text "The Universal Bot" ]
-        , HH.p [ cssClass "gradient-btn" ]
-          [ HH.text "Try it!" ]
-        ]
-    , HH.div [ cssClass "top-margin" ]
-        [ HH.h2_
-            [ HH.text "Features" ]
-        , HH.div [ cssClass "features" ]
-            [ FeatureCard.component
-                "Powerful"
-                "Need moderation, utilities or tickets? We've got you covered! UtterBot offers many commands categorised into modules."
-            , FeatureCard.component
-                "Configurable"
-                "Don't need some commands? Disable them!\nNeed only ticket commands? Just enable ticket module!"
-            , FeatureCard.component
-                "Web Panel"
-                "Configure UtterBot from your web browser. Check the moderation logs!"
-            , FeatureCard.component
-                "Open Source"
-                "Want to check the code out? Or contribute to the project? Everything is open-source. Feel free to dive in to the project!"
-            ]
-        ]
+       []
     ]

@@ -7,9 +7,11 @@ import Effect.Aff (forkAff, killFiber, error)
 import Effect.Aff.Bus as Bus
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
-import Halogen.HTML (ClassName(..), IProp)
+import Halogen.HTML (ClassName(..), IProp, HTML, text)
 import Halogen.HTML.Properties (class_)
 import Halogen.Query.EventSource as ES
+import Routing.Duplex (print)
+import Utter.Data.Route (Route, routeDuplex)
 
 type ChildSlot a = forall q. H.Slot q Void a
 
@@ -21,3 +23,9 @@ busEventSource bus =
 
 cssClass :: forall r i. String -> IProp (class :: String | r) i
 cssClass name = class_ $ ClassName name
+
+getLink :: Route -> String
+getLink = append "#" <<< print routeDuplex
+
+whenElem :: forall p i. Boolean -> (Unit -> HTML p i) -> HTML p i
+whenElem cond f = if cond then f unit else text ""

@@ -14,10 +14,11 @@ import Prim.Row as Row
 import Record as Record
 import Utter.Component.Utils (busEventSource)
 import Utter.Env (UserEnv)
+import Utter.Data.User (User)
 
 data Action input output
   = Initialize
-  | HandleUserBus (Maybe String)
+  | HandleUserBus (Maybe User)
   | Receive input
   | Emit output
 
@@ -31,7 +32,7 @@ component
    . MonadAff m
   => MonadAsk { userEnv :: UserEnv | r } m
   => Row.Lacks "user" input
-  => H.Component HH.HTML query { | (user :: Maybe String | input) } output m
+  => H.Component HH.HTML query { | (user :: Maybe User | input) } output m
   -> H.Component HH.HTML query { | input } output m
 component innerComponent =
   H.mkComponent

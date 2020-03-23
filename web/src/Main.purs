@@ -4,12 +4,11 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Effect.Aff.Bus as Bus
 import Effect.Ref as Ref
 import Halogen as H
 import Halogen.Aff as HA
-import Halogen.HTML as HH
 import Halogen.VDom.Driver (runUI)
 import Routing.Duplex (parse)
 import Routing.Hash (matchesWith)
@@ -18,8 +17,8 @@ import Utter.AppM (runAppM)
 import Utter.Component.Router as Router
 import Utter.Data.Route (routeDuplex)
 import Utter.Env (Env, UserEnv)
-import Utter.Page.Home as Home
   
+main :: Effect Unit
 main = HA.runHalogenAff do
   body <- HA.awaitBody
   user <- H.liftEffect $ Ref.new Nothing

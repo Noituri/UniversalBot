@@ -60,6 +60,36 @@ body {
     height: 150px;
 }
 
+nav {
+    display: flex;
+    margin: 5px 10px 0 10px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-items-container {
+    display: flex;
+}
+
+.nav-item {
+    cursor: pointer;
+    text-decoration: none;
+    padding: 5px;
+}
+
+.nav-item:link .nav-item:visited {
+    color: #fff;
+}
+
+.nav-item:hover {
+    color: #a59bff;
+}
+
+.nav-logo {
+    font-weight: bold;
+    padding: 0;
+}
+
 @media only screen and (min-width: 750px) {
     .features {
         display: flex;

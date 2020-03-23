@@ -10,6 +10,7 @@ You can edit this file as you like.
   , "foreign"
   , "generics-rep"
   , "halogen"
+  , "integers"
   , "psci-support"
   , "record"
   , "routing"

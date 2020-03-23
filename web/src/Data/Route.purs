@@ -2,15 +2,19 @@ module Utter.Data.Route where
 
 import Prelude hiding ((/))
 
+import Data.Either (note)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.Int (decimal, fromString, toStringAs)
 import Routing.Duplex (RouteDuplex', as, root, segment)
 import Routing.Duplex.Generic (noArgs, sum)
+import Routing.Duplex.Generic.Syntax ((/))
 
 data Route
   = Home
+  | Panel
+  | EditPanel Int
 --   | Redirect Int
---   | Panel Int
 --   | Commands
 
 derive instance genericRoute :: Generic Route _
@@ -23,4 +27,9 @@ instance showRoute :: Show Route where
 routeDuplex :: RouteDuplex' Route
 routeDuplex = root $ sum
   { "Home": noArgs
+  , "Panel": "panel" / noArgs
+  , "EditPanel": "panel" / int segment
   }
+
+int :: RouteDuplex' String -> RouteDuplex' Int
+int = as (toStringAs decimal) (fromString >>> note "Expected an integer value")
