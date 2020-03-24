@@ -74,7 +74,7 @@ component = Wrapper.component $ H.mkComponent
     Navigate dest a -> do
       { route, user } <- H.get
       when (route /= Just dest) do
-        case (isJust user) of -- TODO: && dest `elem` [ Redirect ]
+        case (isJust user && false) of -- TODO: && dest `elem` [ Redirect ]
           false -> H.modify_ _ { route = Just dest }
           _ -> pure unit
       pure (Just a)

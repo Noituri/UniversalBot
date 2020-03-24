@@ -14,6 +14,7 @@ import Halogen.HTML.Properties as HP
 import Utter.Capability.Navigate (class Navigate)
 import Utter.Component.Container as Container
 import Utter.Component.FeatureCard as FeatureCard
+import Utter.Component.ServerSelector as ServerSelector
 import Utter.Component.Utils (cssClass)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.User (User)
@@ -46,6 +47,7 @@ component = Wrapper.component $ H.mkComponent
 render :: forall slots m. State -> H.ComponentHTML Action slots m
 render state =
   Container.component state "Panel" $
-    [ HH.div_
-       []
+    [ ServerSelector.component  [ { id: "1", icon: "", name: "Test1" }
+                                , { id: "2", icon: "", name: "Test2" }
+                                ] 0
     ]

@@ -94,6 +94,30 @@ nav {
     height: 150px;
 }
 
+.horizontal-view {
+    overflow: auto;
+    white-space: nowrap;
+    padding: 0 repeat(3, 20px);
+}
+
+.horizontal-view > * {
+    display: inline-block;
+    margin: 0 10px;
+    cursor: pointer;
+}
+
+.horizontal-view > .selected {
+    background-color: #363178;
+    padding: 10px 10px 0 10px;
+    border-radius: 10px;
+}
+
+.circle {
+    border-radius: 100px;
+    width: 80px;
+    height: 80px;
+}
+
 @media only screen and (min-width: 750px) {
     .features {
         display: inline-flex;

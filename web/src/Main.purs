@@ -21,7 +21,7 @@ import Utter.Env (Env, UserEnv)
 main :: Effect Unit
 main = HA.runHalogenAff do
   body <- HA.awaitBody
-  user <- H.liftEffect $ Ref.new Nothing
+  user <- H.liftEffect $ Ref.new $ Just { username: "Test", token: "TestToken" }
   userBus <- H.liftEffect Bus.make
 
   let
