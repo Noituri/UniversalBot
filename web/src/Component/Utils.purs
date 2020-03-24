@@ -3,6 +3,7 @@ module Utter.Component.Utils where
 import Prelude
 
 import Control.Monad.Rec.Class (forever)
+import Data.Maybe (Maybe(..))
 import Effect.Aff (forkAff, killFiber, error)
 import Effect.Aff.Bus as Bus
 import Effect.Aff.Class (class MonadAff)
@@ -29,3 +30,7 @@ getLink = append "#" <<< print routeDuplex
 
 whenElem :: forall p i. Boolean -> (Unit -> HTML p i) -> HTML p i
 whenElem cond f = if cond then f unit else text ""
+
+maybeElem :: forall p i a. Maybe a -> (a -> HTML p i) -> HTML p i
+maybeElem (Just x) f = f x
+maybeElem _ _ = text ""

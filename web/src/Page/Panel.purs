@@ -14,6 +14,7 @@ import Halogen.HTML.Properties as HP
 import Utter.Capability.Navigate (class Navigate)
 import Utter.Component.Container as Container
 import Utter.Component.FeatureCard as FeatureCard
+import Utter.Component.OptionsPanel as OptionsPanel
 import Utter.Component.ServerSelector as ServerSelector
 import Utter.Component.Utils (cssClass)
 import Utter.Component.Wrapper as Wrapper
@@ -47,7 +48,9 @@ component = Wrapper.component $ H.mkComponent
 render :: forall slots m. State -> H.ComponentHTML Action slots m
 render state =
   Container.component state "Panel" $
-    [ ServerSelector.component  [ { id: "1", icon: "", name: "Test1" }
-                                , { id: "2", icon: "", name: "Test2" }
-                                ] 0
+    [ ServerSelector.component 
+        [ { id: "1", icon: "", name: "Test1" }
+        , { id: "2", icon: "", name: "Test2" }
+        ] 0
+    , OptionsPanel.component Nothing [ "fa-newspaper", "fa-wrench" ] 0
     ]

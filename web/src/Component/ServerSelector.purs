@@ -12,7 +12,7 @@ component :: forall i p. Array Server -> Int -> HH.HTML i p
 component servers selected =
   HH.div [ cssClass "card" ]
     [ HH.h2_ [ HH.text "Server Selector" ]
-    , HH.div [ cssClass "horizontal-view" ]
+    , HH.div [ cssClass "horizontal-view small" ]
         (mapWithIndex entry servers)
     ]
   where

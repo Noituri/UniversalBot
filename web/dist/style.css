@@ -97,7 +97,7 @@ nav {
 .horizontal-view {
     overflow: auto;
     white-space: nowrap;
-    padding: 0 repeat(3, 20px);
+    padding: 10px;
 }
 
 .horizontal-view > * {
@@ -108,14 +108,38 @@ nav {
 
 .horizontal-view > .selected {
     background-color: #363178;
-    padding: 10px 10px 0 10px;
+    padding: 10px;
     border-radius: 10px;
+}
+
+.horizontal-view > * > p {
+    margin: 10px 0;
+}
+
+.horizontal-view, .small {
+    padding: 5px;
 }
 
 .circle {
     border-radius: 100px;
     width: 80px;
     height: 80px;
+}
+
+.panel-option {
+    background-color: "#2e2a66";
+    border-radius: 10px;
+    width: 30px;
+    height: 30px;
+    padding: 10px;
+}
+
+.panel-option > * {
+    font-size: 20px;
+}
+
+.option-el {
+    margin-top: 5px;
 }
 
 @media only screen and (min-width: 750px) {
