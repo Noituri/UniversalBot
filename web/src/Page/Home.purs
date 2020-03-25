@@ -32,9 +32,10 @@ component
 component = Wrapper.component $ H.mkComponent
   { initialState
   , render
-  , eval: H.mkEval $ H.defaultEval { handleAction = handleAction
-                                   , receive = Just <<< Receive
-                                   }
+  , eval: H.mkEval $ H.defaultEval
+      { handleAction = handleAction
+      , receive = Just <<< Receive
+      }
   }
   where
     initialState { user } = user

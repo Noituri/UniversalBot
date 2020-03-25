@@ -9,12 +9,9 @@ import Data.Symbol (SProxy(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties as HP
 import Routing.Hash (getHash)
-import Routing.PushState (matches)
 import Utter.Capability.Navigate (class Navigate, navigate)
-import Utter.Capability.Logger (class Logger, log)
+import Utter.Capability.Logger (class Logger)
 import Utter.Component.Utils (ChildSlot)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.Route (Route(..), routeDuplex)

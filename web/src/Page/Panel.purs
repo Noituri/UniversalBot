@@ -48,9 +48,9 @@ component = Wrapper.component $ H.mkComponent
 render :: forall slots m. State -> H.ComponentHTML Action slots m
 render state =
   Container.component state "Panel" $
-    [ ServerSelector.component 
-        [ { id: "1", icon: "", name: "Test1" }
-        , { id: "2", icon: "", name: "Test2" }
-        ] 0
-    , OptionsPanel.component Nothing [ "fa-newspaper", "fa-wrench" ] 0
+    [ -- ServerSelector.component 
+        -- [ { id: "1", icon: "", name: "Test1" }
+        -- , { id: "2", icon: "", name: "Test2" }
+        -- ] 0
+     OptionsPanel.component Nothing [ "fa-newspaper", "fa-wrench" ] 0
     ]
