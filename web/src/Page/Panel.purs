@@ -51,6 +51,6 @@ render state =
     [ -- ServerSelector.component 
         -- [ { id: "1", icon: "", name: "Test1" }
         -- , { id: "2", icon: "", name: "Test2" }
-        -- ] 0
+        -- ] 0 TODO: use HH.slots because it's a component with state now
      OptionsPanel.component Nothing [ "fa-newspaper", "fa-wrench" ] 0
     ]
