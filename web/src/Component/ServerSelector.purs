@@ -7,7 +7,9 @@ import Data.Maybe (Maybe(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Utter.Capability.Logger (class Logger, log)
 import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Component.Utils (cssClass)
 import Utter.Data.Route (Route(..))
@@ -24,16 +26,13 @@ data Action
 
 component
   :: forall q o m
-   . MonadAff m
-  => Navigate m
+   . Navigate m
+  => Logger m
   => H.Component HH.HTML q Input o m
 component = H.mkComponent
   { initialState: identity
   , render
-  , eval: H.mkEval $ H.defaultEval
-      { handleAction = handleAction
-      , receive = Just <<< HandleInput
-      }
+  , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
   }
   where
     handleAction :: forall slots. Action -> H.HalogenM State Action slots o m Unit
@@ -55,9 +54,11 @@ render { servers, selected } =
     getIcon :: String -> String -> String
     getIcon _ "" = "https://cdn.discordapp.com/embed/avatars/0.png"
     getIcon id hash = "https://cdn.discordapp.com/icons/" <> id <> "/" <> hash <> ".png"
-    entry :: forall i p. Int -> Server -> HH.HTML i p
+    entry :: forall i. Int -> Server -> HH.HTML i Action
     entry ix { id, icon, name } =
-      HH.div [ cssClass (if (ix == selected) then "selected" else "") ]
+      HH.div [ cssClass (if (ix == selected) then "selected" else "")
+             , HE.onClick \_ -> Just $ SelectServer ix
+             ]
         [ HH.img [ cssClass "circle", HP.src $ getIcon id icon ]
         , HH.p_ [ HH.text name ]
         ]

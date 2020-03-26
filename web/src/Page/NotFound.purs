@@ -56,7 +56,7 @@ render state =
     [ HH.div_
       [ HH.h1 [ cssClass "top-margin" ]
           [ HH.text "Not sure what you were looking for. But it's not here :/" ]    
-      , HH.p [ cssClass "gradient-btn", HE.onClick \_ -> Just GoBack  ]
+      , HH.p [ cssClass "gradient-btn", HE.onClick \_ -> Just GoBack ]
           [ HH.text "Take me back!" ]
       ]
     ]

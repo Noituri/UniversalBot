@@ -4,23 +4,24 @@ import Prelude
 
 import Control.Monad.Reader (class MonadAsk)
 import Data.Either (hush)
+import Data.String (null)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Symbol (SProxy(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
+import Routing.Duplex as RD
 import Routing.Hash (getHash)
-import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Capability.Logger (class Logger)
+import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Component.Utils (ChildSlot)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.Route (Route(..), routeDuplex)
 import Utter.Data.User (User)
 import Utter.Env (UserEnv)
-import Routing.Duplex as RD
 import Utter.Page.Home as Home
-import Utter.Page.Panel as Panel
 import Utter.Page.NotFound as NotFound
+import Utter.Page.Panel as Panel
 
 type State =
   { route :: Maybe Route
@@ -58,43 +59,45 @@ component = Wrapper.component $ H.mkComponent
       }
   }
   where
-  handleAction :: Action -> H.HalogenM State Action ChildSlots Void m Unit
-  handleAction = case _ of
-    Initialize -> do
-      initialRoute <- hush <<< (RD.parse routeDuplex) <$> H.liftEffect getHash
-      navigate $ fromMaybe NotFound initialRoute
+    handleAction :: Action -> H.HalogenM State Action ChildSlots Void m Unit
+    handleAction = case _ of
+      Initialize -> do
+        hashRoute <- H.lift $ H.liftEffect getHash
+        initialRoute <- hush <<< (RD.parse routeDuplex) <$> H.liftEffect getHash
+        if null hashRoute
+        then navigate Home
+        else navigate $ fromMaybe NotFound initialRoute
+      Receive { user } ->
+        H.modify_ _ { user = user }
+    handleQuery :: forall a. Query a -> H.HalogenM State Action ChildSlots Void m (Maybe a)
+    handleQuery = case _ of
+      Navigate dest a -> do
+        { route, user } <- H.get
+        when (route /= Just dest) do
+          case (isJust user && false) of -- TODO: && dest `elem` [ Redirect ]
+            false -> H.modify_ _ { route = Just dest }
+            _ -> pure unit
+        pure (Just a)
 
-    Receive { user } ->
-      H.modify_ _ { user = user }
-  handleQuery :: forall a. Query a -> H.HalogenM State Action ChildSlots Void m (Maybe a)
-  handleQuery = case _ of
-    Navigate dest a -> do
-      { route, user } <- H.get
-      when (route /= Just dest) do
-        case (isJust user && false) of -- TODO: && dest `elem` [ Redirect ]
-          false -> H.modify_ _ { route = Just dest }
-          _ -> pure unit
-      pure (Just a)
+    authorize :: Maybe User -> H.ComponentHTML Action ChildSlots m -> H.ComponentHTML Action ChildSlots m
+    authorize user html = case user of
+      Nothing ->
+        HH.slot (SProxy :: _ "home") unit Home.component {} absurd -- TODO: Redirect to discord login
+      Just _ ->
+        html
 
-  authorize :: Maybe User -> H.ComponentHTML Action ChildSlots m -> H.ComponentHTML Action ChildSlots m
-  authorize user html = case user of
-    Nothing ->
-      HH.slot (SProxy :: _ "home") unit Home.component {} absurd -- TODO: Redirect to discord login
-    Just _ ->
-      html
-
-  render :: State -> H.ComponentHTML Action ChildSlots m
-  render { route, user } = case route of
-    Just r -> case r of
-      Home ->
-        HH.slot (SProxy :: _ "home") unit Home.component {} absurd
-      Panel ->
-        HH.slot (SProxy :: _ "panel") unit Panel.component {} absurd
-          # authorize user
-      EditPanel guild ->
-        HH.slot (SProxy :: _ "panel") unit Panel.component {} absurd
-          # authorize user
-      NotFound ->
-        HH.slot (SProxy :: _ "notFound") unit NotFound.component {} absurd
-    Nothing ->
-      HH.div_ [ HH.text "Page not found!" ]
+    render :: State -> H.ComponentHTML Action ChildSlots m
+    render { route, user } = case route of
+      Just r -> case r of
+        Home ->
+          HH.slot (SProxy :: _ "home") unit Home.component {} absurd
+        Panel ->
+          HH.slot (SProxy :: _ "panel") unit Panel.component {} absurd
+            # authorize user
+        EditPanel guild ->
+          HH.slot (SProxy :: _ "panel") unit Panel.component {} absurd
+            # authorize user
+        NotFound ->
+          HH.slot (SProxy :: _ "notFound") unit NotFound.component {} absurd
+      Nothing ->
+        HH.div_ [ HH.text "Page not found!" ]
