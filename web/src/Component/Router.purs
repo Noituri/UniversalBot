@@ -66,7 +66,7 @@ component = Wrapper.component $ H.mkComponent
         initialRoute <- hush <<< (RD.parse routeDuplex) <$> H.liftEffect getHash
         if null hashRoute
         then navigate Home
-        else navigate $ fromMaybe NotFound initialRoute
+        else navigate $ fromMaybe NotFound (hush $ RD.parse routeDuplex hashRoute)
       Receive { user } ->
         H.modify_ _ { user = user }
     handleQuery :: forall a. Query a -> H.HalogenM State Action ChildSlots Void m (Maybe a)
