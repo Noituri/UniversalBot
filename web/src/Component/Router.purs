@@ -63,7 +63,6 @@ component = Wrapper.component $ H.mkComponent
     handleAction = case _ of
       Initialize -> do
         hashRoute <- H.lift $ H.liftEffect getHash
-        initialRoute <- hush <<< (RD.parse routeDuplex) <$> H.liftEffect getHash
         if null hashRoute
         then navigate Home
         else navigate $ fromMaybe NotFound (hush $ RD.parse routeDuplex hashRoute)

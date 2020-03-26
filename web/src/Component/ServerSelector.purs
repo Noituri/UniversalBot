@@ -25,7 +25,7 @@ data Action
   | SelectServer Int
 
 component
-  :: forall q o m
+  :: ∀ q o m
    . Navigate m
   => Logger m
   => H.Component HH.HTML q Input o m
@@ -35,7 +35,7 @@ component = H.mkComponent
   , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
   }
   where
-    handleAction :: forall slots. Action -> H.HalogenM State Action slots o m Unit
+    handleAction :: ∀ slots. Action -> H.HalogenM State Action slots o m Unit
     handleAction = case _ of
       HandleInput n -> do
         oldN <- H.get
@@ -43,7 +43,7 @@ component = H.mkComponent
       SelectServer n -> do
         navigate $ EditPanel n
 
-render :: forall slots m. State -> H.ComponentHTML Action slots m
+render :: ∀ slots m. State -> H.ComponentHTML Action slots m
 render { servers, selected } =
   HH.div [ cssClass "card" ]
     [ HH.h2_ [ HH.text "Server Selector" ]
@@ -54,7 +54,7 @@ render { servers, selected } =
     getIcon :: String -> String -> String
     getIcon _ "" = "https://cdn.discordapp.com/embed/avatars/0.png"
     getIcon id hash = "https://cdn.discordapp.com/icons/" <> id <> "/" <> hash <> ".png"
-    entry :: forall i. Int -> Server -> HH.HTML i Action
+    entry :: ∀ i. Int -> Server -> HH.HTML i Action
     entry ix { id, icon, name } =
       HH.div [ cssClass (if (ix == selected) then "selected" else "")
              , HE.onClick \_ -> Just $ SelectServer ix
