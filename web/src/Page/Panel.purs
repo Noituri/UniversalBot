@@ -14,7 +14,7 @@ import Halogen.HTML.Properties as HP
 import Utter.Capability.Logger (class Logger, log)
 import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Component.Container as Container
-import Utter.Component.FeatureCard as FeatureCard
+import Utter.Component.ItemsList as ItemsList
 import Utter.Component.OptionsPanel as OptionsPanel
 import Utter.Component.ServerSelector as ServerSelector
 import Utter.Component.Utils (ChildSlot, cssClass)
@@ -31,6 +31,7 @@ data Action
 type ChildSlots =
   ( serverSelector :: ChildSlot Unit
   , optionsPanel :: OptionsPanel.Slot Unit
+  , itemsList :: ChildSlot Unit
   )
 
 component
@@ -43,9 +44,10 @@ component
 component = Wrapper.component $ H.mkComponent
   { initialState
   , render
-  , eval: H.mkEval $ H.defaultEval { handleAction = handleAction
-                                   , receive = Just <<< Receive
-                                   }
+  , eval: H.mkEval $ H.defaultEval
+      { handleAction = handleAction
+      , receive = Just <<< Receive
+      }
   }
   where
     initialState { user } = user
@@ -65,8 +67,15 @@ component = Wrapper.component $ H.mkComponent
             , selected: 0
             } absurd
         , HH.slot (SProxy :: _ "optionsPanel") unit OptionsPanel.component
-          { title: Nothing
-          , options: [ "fa-newspaper", "fa-wrench" ]
-          , selected: 0
-          } (Just <<< HandleOptionMessage)
+            { title: Nothing
+            , options: [ "fa-newspaper", "fa-wrench" ]
+            , selected: 0
+            } (Just <<< HandleOptionMessage)
+        , HH.slot (SProxy :: _ "itemsList") unit ItemsList.component
+            { title: Just "Actions"
+            , entries:
+                [ { name: "Ban", description: "User xxx has been banned by yyy!", details: "Banned for breaking 'z' rule." }
+                , { name: "Ban", description: "User xyx has been banned by yxy!", details: "Banned for breaking 'w' rule." }
+                ]
+            } absurd
         ]

@@ -34,3 +34,7 @@ whenElem cond f = if cond then f unit else text ""
 maybeElem :: forall p i a. Maybe a -> (a -> HTML p i) -> HTML p i
 maybeElem (Just x) f = f x
 maybeElem _ _ = text ""
+
+isMaybeTrue :: Maybe Boolean -> Boolean
+isMaybeTrue Nothing = false
+isMaybeTrue (Just b) = b

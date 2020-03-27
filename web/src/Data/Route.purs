@@ -16,7 +16,7 @@ data Route
   | EditPanel Int
   | NotFound
 --   | Redirect Int
---   | Commands
+--   | Commands String
 
 derive instance genericRoute :: Generic Route _
 derive instance eqRoute :: Eq Route
