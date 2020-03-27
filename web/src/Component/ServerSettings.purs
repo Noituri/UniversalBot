@@ -5,6 +5,7 @@ import Prelude
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties as HP
 import Utter.Capability.Navigate (class Navigate)
 import Utter.Component.Utils (cssClass)
 
@@ -37,6 +38,17 @@ component = H.mkComponent
         when (st /= n) $ H.put n
 
 render :: ∀ slots m. State -> H.ComponentHTML Action slots m
-render st =
+render { prefix, mutedRole, modLogsChannel } =
   HH.div [ cssClass "card" ]
-    []
+    [ HH.h2_ [ HH.text "Settings" ]
+    , HH.div [ cssClass "settings-container" ]
+        [ HH.h4_ [ HH.text "Prefix" ]
+        , HH.input [ cssClass "input-field", HP.placeholder "Bot Prefix", HP.value prefix ]
+        , HH.h4_ [ HH.text "Muted Role" ]
+        , HH.input [ cssClass "input-field", HP.placeholder "Muted Role", HP.value mutedRole ]
+        , HH.h4_ [ HH.text "Mod-logs Channel" ]
+        , HH.input [ cssClass "input-field", HP.placeholder "Mod-logs Channel", HP.value modLogsChannel ]
+        , HH.p [ cssClass "top-margin gradient-btn" ]
+            [ HH.text "Save" ]
+        ]
+    ]

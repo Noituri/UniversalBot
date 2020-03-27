@@ -35,7 +35,10 @@ component
 component = H.mkComponent
   { initialState: identity
   , render
-  , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
+  , eval: H.mkEval $ H.defaultEval
+      { handleAction = handleAction
+      , receive = Just <<< HandleInput
+      }
   }
   where
     handleAction :: ∀ slots. Action -> H.HalogenM State Action slots Message m Unit

@@ -17,12 +17,16 @@ import Utter.Component.Container as Container
 import Utter.Component.ItemsList as ItemsList
 import Utter.Component.OptionsPanel as OptionsPanel
 import Utter.Component.ServerSelector as ServerSelector
+import Utter.Component.ServerSettings as ServerSettings
 import Utter.Component.Utils (ChildSlot, cssClass)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.User (User)
 import Utter.Env (UserEnv)
 
-type State = Maybe User
+type State =
+  { user:: Maybe User
+  , selectedOption :: Int
+  }
 
 data Action
   = Receive { | ( user :: Maybe User | ()) }
@@ -32,6 +36,7 @@ type ChildSlots =
   ( serverSelector :: ChildSlot Unit
   , optionsPanel :: OptionsPanel.Slot Unit
   , itemsList :: ChildSlot Unit
+  , serverSettings :: ChildSlot Unit
   )
 
 component
@@ -50,16 +55,20 @@ component = Wrapper.component $ H.mkComponent
       }
   }
   where
-    initialState { user } = user
+    initialState { user } =
+      { user
+      , selectedOption: 0
+      }
     handleAction :: Action -> H.HalogenM State Action ChildSlots o m Unit
     handleAction = case _ of
       Receive { user } ->
-        H.modify_ \_ -> user
+        H.modify_ \st -> st { user = user }
       HandleOptionMessage (OptionsPanel.SelectedOption option) ->
-        log $ "Selected " <> show option <> " option"
+        -- log ("Selected: " <> show option)
+        H.modify_ \st -> st { selectedOption = option }
     render :: State -> H.ComponentHTML Action ChildSlots m
-    render state =
-      Container.component state "Panel" $
+    render { user, selectedOption } =
+      Container.component user "Panel" $
         [ HH.slot (SProxy :: _ "serverSelector") unit ServerSelector.component
             { servers: [ { id: "1", icon: "", name: "Test1" }
                        , { id: "2", icon: "", name: "Test2" }
@@ -69,13 +78,20 @@ component = Wrapper.component $ H.mkComponent
         , HH.slot (SProxy :: _ "optionsPanel") unit OptionsPanel.component
             { title: Nothing
             , options: [ "fa-newspaper", "fa-wrench" ]
-            , selected: 0
+            , selected: selectedOption
             } (Just <<< HandleOptionMessage)
-        , HH.slot (SProxy :: _ "itemsList") unit ItemsList.component
-            { title: Just "Actions"
-            , entries:
-                [ { name: "Ban", description: "User xxx has been banned by yyy!", details: "Banned for breaking 'z' rule." }
-                , { name: "Ban", description: "User xyx has been banned by yxy!", details: "Banned for breaking 'w' rule." }
-                ]
-            } absurd
+        , case selectedOption of
+            0 -> HH.slot (SProxy :: _ "itemsList") unit ItemsList.component
+                  { title: Just "Actions"
+                  , entries:
+                      [ { name: "Ban", description: "User xxx has been banned by yyy!", details: "Banned for breaking 'z' rule." }
+                      , { name: "Ban", description: "User xyx has been banned by yxy!", details: "Banned for breaking 'w' rule." }
+                      ]
+                  } absurd
+            1 -> HH.slot (SProxy :: _ "serverSettings") unit ServerSettings.component
+                  { prefix: "!"
+                  , mutedRole: "12312312312312"
+                  , modLogsChannel: "11112311332"
+                  } absurd
+            _ -> HH.text ""
         ]
