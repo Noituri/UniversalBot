@@ -11924,7 +11924,7 @@ var PS = {};
                       if (v instanceof HandleOptionMessage) {
                           return Utter_Capability_Logger.log(Utter_Capability_Logger.loggerHalogenM(dictLogger))("Selected " + (Data_Show.show(Data_Show.showInt)(v.value0.value0) + " option"));
                       };
-                      throw new Error("Failed pattern match at Utter.Page.Panel (line 56, column 20 - line 60, column 54): " + [ v.constructor.name ]);
+                      throw new Error("Failed pattern match at Utter.Page.Panel (line 55, column 20 - line 59, column 54): " + [ v.constructor.name ]);
                   };
                   return Utter_Component_Wrapper.component(dictMonadAff)(dictMonadAsk)()(Halogen_Component.mkComponent({
                       initialState: initialState,
