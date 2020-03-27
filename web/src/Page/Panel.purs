@@ -94,4 +94,8 @@ component = Wrapper.component $ H.mkComponent
                   , modLogsChannel: "11112311332"
                   } absurd
             _ -> HH.text ""
+        , HH.div_
+            [ HH.p [ cssClass "gradient-btn red" ]
+                [ HH.text "Logout" ]
+            ]
         ]
