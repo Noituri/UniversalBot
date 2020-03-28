@@ -83,8 +83,8 @@ component = Wrapper.component $ H.mkComponent
             0 -> HH.slot (SProxy :: _ "itemsList") unit ItemsList.component
                   { title: Just "Actions"
                   , entries:
-                      [ { name: "Ban", description: "User xxx has been banned by yyy!", details: "Banned for breaking 'z' rule." }
-                      , { name: "Ban", description: "User xyx has been banned by yxy!", details: "Banned for breaking 'w' rule." }
+                      [ { name: "Ban", description: "User xxx has been banned by yyy!", details: Just "Banned for breaking 'z' rule." }
+                      , { name: "Ban", description: "User xyx has been banned by yxy!", details: Just "Banned for breaking 'w' rule." }
                       ]
                   } absurd
             1 -> HH.slot (SProxy :: _ "serverSettings") unit ServerSettings.component

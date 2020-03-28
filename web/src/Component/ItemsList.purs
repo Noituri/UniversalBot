@@ -26,7 +26,10 @@ component
 component = H.mkComponent
   { initialState
   , render
-  , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
+  , eval: H.mkEval $ H.defaultEval
+    { handleAction = handleAction
+    , receive = Just <<< HandleInput
+    }
   }
   where
     initialState { title, entries } =
@@ -61,9 +64,13 @@ render { title, entries, opened } =
             [ HH.h3_ [ HH.text name ]
             , HH.h5_ [ HH.text description ]
             ]
-        , whenElem (ix `elem` opened) \_ ->
-            HH.div [ cssClass "list-entry list-entry-details" ]
-              [ HH.div [ cssClass "list-text" ]
-                  [ HH.h5_ [ HH.text details ] ]
+        , maybeElem details \text ->
+            HH.div_
+              [ HH.h6_ [ HH.text "Click to see details" ]
+              , whenElem (ix `elem` opened) \_ ->
+                HH.div [ cssClass "list-entry list-entry-details" ]
+                  [ HH.div [ cssClass "list-text" ]
+                      [ HH.h5_ [ HH.text text ] ]
+                  ]
               ]
         ]

@@ -3,23 +3,26 @@ module Utter.Page.Commands where
 import Prelude
 
 import Control.Monad.Reader (class MonadAsk)
-import Data.Array ((!!))
+import Data.Array ((!!), filter)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties as HP
 import Utter.Capability.Logger (class Logger, log)
 import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Component.Container as Container
+import Utter.Component.ItemsList as ItemsList
 import Utter.Component.OptionsPanel as OptionsPanel
 import Utter.Component.Utils (ChildSlot, cssClass)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.Command (Command, CommandCategory)
+import Utter.Data.ListEntry (ListEntry)
+import Utter.Data.Route (Route(..))
 import Utter.Data.User (User)
 import Utter.Env (UserEnv)
-import Utter.Data.Route (Route(..))
 
 type Input = { category :: Int }
 
@@ -34,13 +37,14 @@ data Action
 
 type ChildSlots =
   ( optionsPanel :: OptionsPanel.Slot Unit
+  , itemsList :: ChildSlot Unit
   )
 
 commands :: Array Command
 commands =
-  [ { kind: 1, name: ".help", description: "Shows infromations about commands" }
-  , { kind: 1, name: ".prefix", description: "Changes prefix" }
-  , { kind: 2, name: ".ban", description: "Bans users from your server" }
+  [ { kind: 1, name: ".help", description: "Shows infromations about commands", details: Nothing }
+  , { kind: 1, name: ".prefix", description: "Changes prefix", details: Nothing }
+  , { kind: 2, name: ".ban", description: "Bans users from your server", details: Nothing }
   ]
 
 categories :: Array CommandCategory
@@ -77,7 +81,8 @@ component = Wrapper.component $ H.mkComponent
         H.modify_ \st -> st { user = user, selectedCategory = category }
       HandleOptionsMessage (OptionsPanel.SelectedOption option) -> do
         navigate $ Commands option
-
+    commandToListEntry :: Command -> ListEntry
+    commandToListEntry c = { name: c.name, description: c.description, details: c.details }
     render :: State -> H.ComponentHTML Action ChildSlots m
     render { user, selectedCategory } =
       Container.component user "Commands" $
@@ -86,4 +91,14 @@ component = Wrapper.component $ H.mkComponent
             , options: (\c -> c.icon) <$> categories
             , selected: selectedCategory
             } (Just <<< HandleOptionsMessage)
+        , HH.div [ cssClass "card" ]
+            [ HH.h2_ [ HH.text "Search" ]
+            , HH.input [ cssClass "input-field", HP.placeholder "Search" ]
+            ]
+        , HH.slot (SProxy :: _ "itemsList") unit ItemsList.component
+            { title: Nothing
+            , entries: if selectedCategory == 0
+                       then commandToListEntry <$> commands
+                       else  commandToListEntry <$> filter (\c -> c.kind == selectedCategory) commands
+            } absurd
         ]
