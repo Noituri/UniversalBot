@@ -22,6 +22,7 @@ import Utter.Env (UserEnv)
 import Utter.Page.Home as Home
 import Utter.Page.NotFound as NotFound
 import Utter.Page.Panel as Panel
+import Utter.Page.Commands as Commands
 
 type State =
   { route :: Maybe Route
@@ -38,6 +39,7 @@ data Action
 type ChildSlots =
   ( home :: ChildSlot Unit
   , panel :: ChildSlot Unit
+  , commands :: ChildSlot Unit
   , notFound :: ChildSlot Unit
   )
 
@@ -96,6 +98,8 @@ component = Wrapper.component $ H.mkComponent
         EditPanel guild ->
           HH.slot (SProxy :: _ "panel") unit Panel.component {} absurd
             # authorize user
+        Commands category ->
+          HH.slot (SProxy :: _ "commands") unit Commands.component { category } absurd
         NotFound ->
           HH.slot (SProxy :: _ "notFound") unit NotFound.component {} absurd
       Nothing ->

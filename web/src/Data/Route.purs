@@ -15,8 +15,8 @@ data Route
   | Panel
   | EditPanel Int
   | NotFound
+  | Commands Int
 --   | Redirect Int
---   | Commands String
 
 derive instance genericRoute :: Generic Route _
 derive instance eqRoute :: Eq Route
@@ -31,6 +31,7 @@ routeDuplex = root $ sum
   , "Panel": "panel" / noArgs
   , "EditPanel": "panel" / int segment
   , "NotFound": "not-found" / noArgs
+  , "Commands": "commands" / int segment
   }
 
 int :: RouteDuplex' String -> RouteDuplex' Int

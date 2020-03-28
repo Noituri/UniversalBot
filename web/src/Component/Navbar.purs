@@ -15,7 +15,7 @@ component user =
     [ logo "UtterBot"
     , HH.div [ cssClass "nav-items-container" ]
       [ item "Invite" $ getLink Home
-      , item "Commands" $ getLink Home
+      , item "Commands" $ getLink $ Commands 0
       , whenElem (isJust user) \_ ->
           item "Panel" $ getLink Panel
       , whenElem (isNothing user) \_ ->

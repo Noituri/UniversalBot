@@ -64,7 +64,6 @@ component = Wrapper.component $ H.mkComponent
       Receive { user } ->
         H.modify_ \st -> st { user = user }
       HandleOptionMessage (OptionsPanel.SelectedOption option) ->
-        -- log ("Selected: " <> show option)
         H.modify_ \st -> st { selectedOption = option }
     render :: State -> H.ComponentHTML Action ChildSlots m
     render { user, selectedOption } =
