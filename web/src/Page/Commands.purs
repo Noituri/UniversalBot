@@ -5,6 +5,7 @@ import Prelude
 import Control.Monad.Reader (class MonadAsk)
 import Data.Array ((!!), filter)
 import Data.Maybe (Maybe(..))
+import Data.String (Pattern(..), contains, null)
 import Data.Symbol (SProxy(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
@@ -23,17 +24,20 @@ import Utter.Data.ListEntry (ListEntry)
 import Utter.Data.Route (Route(..))
 import Utter.Data.User (User)
 import Utter.Env (UserEnv)
+import Web.Event.Event (target)
 
 type Input = { category :: Int }
 
 type State =
   { user :: Maybe User
   , selectedCategory :: Int
+  , search :: String
   }
 
 data Action
   = Receive { user :: Maybe User, category :: Int }
   | HandleOptionsMessage OptionsPanel.Message
+  | HandleSearch String
 
 type ChildSlots =
   ( optionsPanel :: OptionsPanel.Slot Unit
@@ -74,17 +78,22 @@ component = Wrapper.component $ H.mkComponent
     initialState { user, category } =
       { user
       , selectedCategory: category
+      , search: ""
       }
     handleAction :: Action -> H.HalogenM State Action ChildSlots o m Unit
     handleAction = case _ of
       Receive { user, category } -> do
         H.modify_ \st -> st { user = user, selectedCategory = category }
       HandleOptionsMessage (OptionsPanel.SelectedOption option) -> do
+        H.modify_ \st -> st { search = "" }
         navigate $ Commands option
+      HandleSearch v -> do
+        navigate $ Commands 0
+        H.modify_ \st -> st { search = v }
     commandToListEntry :: Command -> ListEntry
     commandToListEntry c = { name: c.name, description: c.description, details: c.details }
     render :: State -> H.ComponentHTML Action ChildSlots m
-    render { user, selectedCategory } =
+    render { user, selectedCategory, search } =
       Container.component user "Commands" $
         [ HH.slot (SProxy :: _ "optionsPanel") unit OptionsPanel.component
             { title: _.name <$> (categories !! selectedCategory)
@@ -93,12 +102,18 @@ component = Wrapper.component $ H.mkComponent
             } (Just <<< HandleOptionsMessage)
         , HH.div [ cssClass "card" ]
             [ HH.h2_ [ HH.text "Search" ]
-            , HH.input [ cssClass "input-field", HP.placeholder "Search" ]
+            , HH.input
+                [ cssClass "input-field"
+                , HP.placeholder "Search"
+                , HP.value search
+                , HE.onValueInput (Just <<< HandleSearch)
+                ]
             ]
         , HH.slot (SProxy :: _ "itemsList") unit ItemsList.component
             { title: Nothing
-            , entries: if selectedCategory == 0
-                       then commandToListEntry <$> commands
-                       else  commandToListEntry <$> filter (\c -> c.kind == selectedCategory) commands
+            , entries: case selectedCategory of
+                        0 | null search -> commandToListEntry <$> commands
+                        0 -> commandToListEntry <$> filter (\c -> contains (Pattern search) c.name) commands
+                        _ ->  commandToListEntry <$> filter (\c -> c.kind == selectedCategory) commands
             } absurd
         ]
