@@ -22,7 +22,6 @@ type LoginEvent struct {
 
 type LoginResponse struct {
 	Username string `json:"username"`
-	Avatar   string `json:"avatar"`
 	Token    string `json:"token"`
 }
 
@@ -83,7 +82,6 @@ func handle(ctx context.Context, event LoginEvent) (*LoginResponse, error) {
 
 	return &LoginResponse{
 		Username: user.Username,
-		Avatar:   user.Avatar,
 		Token:    finalToken,
 	}, nil
 }
@@ -92,6 +90,7 @@ func main() {
 	if common.IsDebug() {
 		http.HandleFunc("/login", func(writer http.ResponseWriter, request *http.Request) {
 			writer.Header().Set("Access-Control-Allow-Origin", "*")
+			writer.Header().Set("Access-Control-Allow-Headers", "*")
 			var event LoginEvent
 			body, _ := ioutil.ReadAll(request.Body)
 			defer request.Body.Close()

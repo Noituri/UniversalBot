@@ -12,7 +12,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Utter.Capability.Logger (class Logger, log)
+import Utter.Capability.Logger (class Logger)
 import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Component.Container as Container
 import Utter.Component.ItemsList as ItemsList
@@ -24,7 +24,6 @@ import Utter.Data.ListEntry (ListEntry)
 import Utter.Data.Route (Route(..))
 import Utter.Data.User (User)
 import Utter.Env (UserEnv)
-import Web.Event.Event (target)
 
 type Input = { category :: Int }
 

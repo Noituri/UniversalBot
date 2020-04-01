@@ -14,6 +14,7 @@ import Routing.Duplex as RD
 import Routing.Hash (getHash)
 import Utter.Capability.Logger (class Logger)
 import Utter.Capability.Navigate (class Navigate, navigate)
+import Utter.Capability.Api (class Api)
 import Utter.Component.Utils (ChildSlot)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.Route (Route(..), routeDuplex)
@@ -23,6 +24,7 @@ import Utter.Page.Home as Home
 import Utter.Page.NotFound as NotFound
 import Utter.Page.Panel as Panel
 import Utter.Page.Commands as Commands
+import Utter.Page.LoginRedirect as LoginRedirect
 
 type State =
   { route :: Maybe Route
@@ -41,6 +43,7 @@ type ChildSlots =
   , panel :: ChildSlot Unit
   , commands :: ChildSlot Unit
   , notFound :: ChildSlot Unit
+  , loginRedirect :: ChildSlot Unit
   )
 
 component
@@ -49,6 +52,7 @@ component
   => MonadAsk { userEnv :: UserEnv | r } m
   => Navigate m
   => Logger m
+  => Api m
   => H.Component HH.HTML Query {} Void m
 component = Wrapper.component $ H.mkComponent
   { initialState: \{ user } -> { route: Nothing, user }
@@ -100,6 +104,8 @@ component = Wrapper.component $ H.mkComponent
             # authorize user
         Commands category ->
           HH.slot (SProxy :: _ "commands") unit Commands.component { category } absurd
+        Redirect code ->
+          HH.slot (SProxy :: _ "loginRedirect") unit LoginRedirect.component { code } absurd
         NotFound ->
           HH.slot (SProxy :: _ "notFound") unit NotFound.component {} absurd
       Nothing ->

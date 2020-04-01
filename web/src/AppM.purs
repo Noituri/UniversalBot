@@ -14,6 +14,9 @@ import Routing.Hash (setHash)
 import Type.Equality (class TypeEquals, from)
 import Utter.Capability.Logger (class Logger)
 import Utter.Capability.Navigate (class Navigate)
+import Utter.Capability.Api (class Api)
+import Utter.Api.Request (exchangeCode)
+import Utter.Api.Utils (decodeUser)
 import Utter.Data.Route as Route
 import Utter.Env (Env)
 
@@ -38,3 +41,6 @@ instance navigateAppM :: Navigate AppM where
 
 instance loggerAppM :: Logger AppM where
   log msg = liftEffect $ Console.log msg
+
+instance apiAppM :: Api AppM where
+  signin code = decodeUser $ exchangeCode code

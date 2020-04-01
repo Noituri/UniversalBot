@@ -1,6 +1,6 @@
 module Utter.Data.User where
-  
+
 type User =
-    { username :: String
-    , token :: String
-    }
+  { username :: String
+  , token :: String
+  }
