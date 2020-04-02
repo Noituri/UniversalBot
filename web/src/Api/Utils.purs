@@ -18,20 +18,21 @@ import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (setItem)
 import Data.Argonaut.Core (Json)
 import Data.Argonaut.Decode.Struct.Tolerant as Tolerant
+import Utter.Data.Guild (Guild)
 
 writeUser :: User -> Effect Unit
 writeUser { token, username } = do
     setItem "token" token =<< localStorage =<< window
     setItem "username" username =<< localStorage =<< window
 
-decodeUser
+validateUser
   :: ∀ m r
    . Logger m
   => MonadAff m
   => MonadAsk { userEnv :: UserEnv | r } m
   => m (Either String User)
   -> m (Maybe User)
-decodeUser response = do
+validateUser response = do
   { userEnv } <- ask
   response >>= case _ of
     Left err -> log err *> pure Nothing
@@ -41,3 +42,15 @@ decodeUser response = do
         Ref.write (Just user) userEnv.user
       liftAff $ Bus.write (Just user) userEnv.userBus
       pure $ Just user
+
+validateGuilds
+  :: ∀ m r
+   . Logger m
+  => MonadAff m
+  => m (Either String (Array Guild))
+  -> m (Maybe (Array Guild))
+validateGuilds response = do
+  response >>= case _ of
+    Left err -> log err *> pure Nothing
+    Right guilds -> do
+      pure $ Just guilds

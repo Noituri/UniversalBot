@@ -57,10 +57,10 @@ exchangeCode code = do
 decodeExchangeCode :: Json -> Either String User
 decodeExchangeCode = Tolerant.decodeJson
 
-getGuilds :: forall m. Logger m => MonadAff m => String -> m (Either String User)
+getGuilds :: forall m. Logger m => MonadAff m => String -> m (Either String (Array Guild))
 getGuilds token = do
   res <- liftAff $ request $ defaultRequest { endpoint: Guilds, method: Post $ Just $ encodeJson { token } }
-  pure $ decodeExchangeCode =<< decodeAt "guilds" =<< bimap printError _.body res
+  pure $ decodeGuilds =<< decodeAt "guilds" =<< bimap printError _.body res
 
 decodeGuilds :: Json -> Either String (Array Guild)
 decodeGuilds = Tolerant.decodeJson
