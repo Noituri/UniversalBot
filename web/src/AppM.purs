@@ -15,7 +15,7 @@ import Type.Equality (class TypeEquals, from)
 import Utter.Capability.Logger (class Logger)
 import Utter.Capability.Navigate (class Navigate)
 import Utter.Capability.Api (class Api)
-import Utter.Api.Request (exchangeCode)
+import Utter.Api.Request (exchangeCode, getGuilds)
 import Utter.Api.Utils (decodeUser)
 import Utter.Data.Route as Route
 import Utter.Env (Env)
@@ -44,3 +44,4 @@ instance loggerAppM :: Logger AppM where
 
 instance apiAppM :: Api AppM where
   signin code = decodeUser $ exchangeCode code
+  getGuilds token = decodeGuild $ getGuilds token

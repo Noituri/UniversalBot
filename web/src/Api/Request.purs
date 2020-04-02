@@ -1,4 +1,4 @@
-module Utter.Api.Request (BaseURL(..), exchangeCode) where
+module Utter.Api.Request (BaseURL(..), exchangeCode, getGuilds) where
 
 import Prelude
 
@@ -8,6 +8,7 @@ import Affjax.RequestHeader (RequestHeader(..))
 import Affjax.ResponseFormat as RF
 import Data.Argonaut.Core (Json)
 import Data.Argonaut.Decode.Struct.Tolerant as Tolerant
+import Data.Argonaut.Decode.Struct.Tolerant ((.::))
 import Data.Argonaut.Encode (encodeJson)
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
@@ -19,6 +20,7 @@ import Routing.Duplex (print)
 import Utter.Api.Endpoint (Endpoint(..), endpointUrl)
 import Utter.Capability.Logger (class Logger, log)
 import Utter.Data.User (User)
+import Utter.Data.Guild (Guild)
 
 newtype BaseURL = BaseURL String
 
@@ -49,9 +51,19 @@ defaultRequest { endpoint, method } =
 
 exchangeCode :: forall m. Logger m => MonadAff m => String -> m (Either String User)
 exchangeCode code = do
-  log $ endpointUrl ExchangeCode
   res <- liftAff $ request $ defaultRequest { endpoint: ExchangeCode, method: Post $ Just $ encodeJson { code } }
   pure $ decodeExchangeCode =<< bimap printError _.body res
 
 decodeExchangeCode :: Json -> Either String User
 decodeExchangeCode = Tolerant.decodeJson
+
+getGuilds :: forall m. Logger m => MonadAff m => String -> m (Either String User)
+getGuilds token = do
+  res <- liftAff $ request $ defaultRequest { endpoint: Guilds, method: Post $ Just $ encodeJson { token } }
+  pure $ decodeExchangeCode =<< decodeAt "guilds" =<< bimap printError _.body res
+
+decodeGuilds :: Json -> Either String (Array Guild)
+decodeGuilds = Tolerant.decodeJson
+
+decodeAt :: ∀ a. Tolerant.DecodeJson a => String -> Json -> Either String a
+decodeAt key = (_ .:: key) <=< Tolerant.decodeJson

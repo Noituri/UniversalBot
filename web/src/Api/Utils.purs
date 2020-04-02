@@ -16,6 +16,8 @@ import Utter.Env (UserEnv)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (setItem)
+import Data.Argonaut.Core (Json)
+import Data.Argonaut.Decode.Struct.Tolerant as Tolerant
 
 writeUser :: User -> Effect Unit
 writeUser { token, username } = do
