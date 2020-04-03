@@ -1,4 +1,4 @@
-module Utter.Api.Request (BaseURL(..), exchangeCode, getGuilds) where
+module Utter.Api.Request (BaseURL(..), exchangeCodeReq, getGuildsReq, getGuildDetailsReq) where
 
 import Prelude
 
@@ -21,6 +21,8 @@ import Utter.Api.Endpoint (Endpoint(..), endpointUrl)
 import Utter.Capability.Logger (class Logger, log)
 import Utter.Data.User (User)
 import Utter.Data.Guild (Guild)
+import Utter.Data.GuildDetails (GuildDetails)
+import Utter.Data.Requests (ReqGuildDetails)
 
 newtype BaseURL = BaseURL String
 
@@ -49,21 +51,23 @@ defaultRequest { endpoint, method } =
     Get -> Tuple GET Nothing
     Post b -> Tuple POST b
 
-exchangeCode :: forall m. Logger m => MonadAff m => String -> m (Either String User)
-exchangeCode code = do
+exchangeCodeReq :: ∀ m. Logger m => MonadAff m => String -> m (Either String User)
+exchangeCodeReq code = do
   res <- liftAff $ request $ defaultRequest { endpoint: ExchangeCode, method: Post $ Just $ encodeJson { code } }
-  pure $ decodeExchangeCode =<< bimap printError _.body res
+  pure $ Tolerant.decodeJson =<< bimap printError _.body res
 
-decodeExchangeCode :: Json -> Either String User
-decodeExchangeCode = Tolerant.decodeJson
-
-getGuilds :: forall m. Logger m => MonadAff m => String -> m (Either String (Array Guild))
-getGuilds token = do
+getGuildsReq :: ∀ m. Logger m => MonadAff m => String -> m (Either String (Array Guild))
+getGuildsReq token = do
   res <- liftAff $ request $ defaultRequest { endpoint: Guilds, method: Post $ Just $ encodeJson { token } }
-  pure $ decodeGuilds =<< decodeAt "guilds" =<< bimap printError _.body res
+  pure $ Tolerant.decodeJson =<< decodeAt "guilds" =<< bimap printError _.body res
 
-decodeGuilds :: Json -> Either String (Array Guild)
-decodeGuilds = Tolerant.decodeJson
+getGuildDetailsReq :: ∀ m. Logger m => MonadAff m => ReqGuildDetails -> m (Either String GuildDetails)
+getGuildDetailsReq { token, guild_id, actions_from } = do
+  res <- liftAff $ request $ defaultRequest
+    { endpoint: Guilds
+    , method: Post $ Just $ encodeJson { token, guild_id, actions_from }
+    }
+  pure $ Tolerant.decodeJson =<< bimap printError _.body res
 
 decodeAt :: ∀ a. Tolerant.DecodeJson a => String -> Json -> Either String a
 decodeAt key = (_ .:: key) <=< Tolerant.decodeJson

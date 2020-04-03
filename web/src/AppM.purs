@@ -15,8 +15,8 @@ import Type.Equality (class TypeEquals, from)
 import Utter.Capability.Logger (class Logger)
 import Utter.Capability.Navigate (class Navigate)
 import Utter.Capability.Api (class Api)
-import Utter.Api.Request (exchangeCode, getGuilds)
-import Utter.Api.Utils (validateUser, validateGuilds)
+import Utter.Api.Request (exchangeCodeReq, getGuildsReq, getGuildDetailsReq)
+import Utter.Api.Utils (validateUser, validateRequest)
 import Utter.Data.Route as Route
 import Utter.Env (Env)
 
@@ -43,5 +43,6 @@ instance loggerAppM :: Logger AppM where
   log msg = liftEffect $ Console.log msg
 
 instance apiAppM :: Api AppM where
-  signin code = validateUser $ exchangeCode code
-  getGuilds token = validateGuilds $ getGuilds token
+  signin code = validateUser $ exchangeCodeReq code
+  getGuilds token = validateRequest $ getGuildsReq token
+  getGuildDetails fields = validateRequest $ getGuildDetailsReq fields

@@ -43,13 +43,13 @@ validateUser response = do
       liftAff $ Bus.write (Just user) userEnv.userBus
       pure $ Just user
 
-validateGuilds
-  :: ∀ m r
+validateRequest
+  :: ∀ m r a
    . Logger m
   => MonadAff m
-  => m (Either String (Array Guild))
-  -> m (Maybe (Array Guild))
-validateGuilds response = do
+  => m (Either String a)
+  -> m (Maybe a)
+validateRequest response = do
   response >>= case _ of
     Left err -> log err *> pure Nothing
     Right guilds -> do
