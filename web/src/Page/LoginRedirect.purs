@@ -52,7 +52,7 @@ component = Wrapper.component $ H.mkComponent
       { user
       , code
       }
-    handleAction :: forall slots. Action -> H.HalogenM State Action slots o m Unit
+    handleAction :: ∀ slots. Action -> H.HalogenM State Action slots o m Unit
     handleAction = case _ of
       Initialize -> do
         { code } <- H.get

@@ -13,10 +13,10 @@ import Utter.Capability.Logger (class Logger, log)
 import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Component.Utils (cssClass)
 import Utter.Data.Route (Route(..))
-import Utter.Data.Server (Server)
+import Utter.Data.Guild (Guild)
 
 
-type Input = { servers :: Array Server, selected :: Int }
+type Input = { servers :: Array Guild, selected :: Int }
 
 type State = Input
 
@@ -54,7 +54,7 @@ render { servers, selected } =
     getIcon :: String -> String -> String
     getIcon _ "" = "https://cdn.discordapp.com/embed/avatars/0.png"
     getIcon id hash = "https://cdn.discordapp.com/icons/" <> id <> "/" <> hash <> ".png"
-    entry :: ∀ i. Int -> Server -> HH.HTML i Action
+    entry :: ∀ i. Int -> Guild -> HH.HTML i Action
     entry ix { id, icon, name } =
       HH.div [ cssClass (if (ix == selected) then "selected" else "")
              , HE.onClick \_ -> Just $ SelectServer ix

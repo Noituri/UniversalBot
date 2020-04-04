@@ -5,3 +5,8 @@ type ReqGuildDetails =
   , guild_id :: String
   , actions_from :: Int
   }
+
+data Stasus
+  = Loading
+  | Error String
+  | Done
