@@ -2,7 +2,10 @@ module Utter.Api.Utils where
 
 import Prelude
 
-import Control.Monad.Reader (class MonadAsk, ask)
+import Control.Apply (lift2)
+import Control.Monad.Reader (class MonadAsk, ask, lift)
+import Data.Argonaut.Core (Json)
+import Data.Argonaut.Decode.Struct.Tolerant as Tolerant
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
@@ -11,19 +14,23 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Ref as Ref
 import Utter.Capability.Logger (class Logger, log)
+import Utter.Data.Guild (Guild)
 import Utter.Data.User (User)
 import Utter.Env (UserEnv)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (setItem)
-import Data.Argonaut.Core (Json)
-import Data.Argonaut.Decode.Struct.Tolerant as Tolerant
-import Utter.Data.Guild (Guild)
+import Web.Storage.Storage (getItem, setItem)
 
 writeUser :: User -> Effect Unit
 writeUser { token, username } = do
     setItem "token" token =<< localStorage =<< window
     setItem "username" username =<< localStorage =<< window
+
+readUser :: Effect (Maybe User)
+readUser = do
+  token <- getItem "token" =<< localStorage =<< window
+  username <- getItem "username" =<< localStorage =<< window
+  pure $ lift2 (\u t -> { username: u, token: t }) username token
 
 validateUser
   :: ∀ m r

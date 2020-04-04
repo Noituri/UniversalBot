@@ -2,17 +2,20 @@ module Utter.Main where
 
 import Prelude
 
+import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Aff.Bus as Bus
 import Effect.Ref as Ref
+import Halogen (liftEffect)
 import Halogen as H
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import Routing.Duplex (parse)
 import Routing.Hash (matchesWith)
 import Utter.Api.Request (BaseURL(..))
+import Utter.Api.Utils (readUser)
 import Utter.AppM (runAppM)
 import Utter.Component.Router as Router
 import Utter.Data.Route (routeDuplex)
@@ -21,8 +24,10 @@ import Utter.Env (Env, UserEnv)
 main :: Effect Unit
 main = HA.runHalogenAff do
   body <- HA.awaitBody
-  user <- H.liftEffect $ Ref.new Nothing -- $ Just { username: "Test", token: "TestToken" }
+  user <- H.liftEffect $ Ref.new Nothing
   userBus <- H.liftEffect Bus.make
+
+  liftEffect readUser >>= \u -> liftEffect $ Ref.write u user
 
   let
     environ :: Env
