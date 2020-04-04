@@ -2,7 +2,6 @@ module Utter.AppM where
 
 import Prelude
 
-import Control.Comonad.Env (ask)
 import Control.Monad.Reader (class MonadAsk, ReaderT, asks, runReaderT)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
@@ -15,7 +14,7 @@ import Type.Equality (class TypeEquals, from)
 import Utter.Capability.Logger (class Logger)
 import Utter.Capability.Navigate (class Navigate)
 import Utter.Capability.Api (class Api)
-import Utter.Api.Request (exchangeCodeReq, getGuildsReq, getGuildDetailsReq)
+import Utter.Api.Request (exchangeCodeReq, getGuildsReq, getGuildDetailsReq, modifyGuildReq)
 import Utter.Api.Utils (validateUser, validateRequest)
 import Utter.Data.Route as Route
 import Utter.Env (Env)
@@ -46,3 +45,4 @@ instance apiAppM :: Api AppM where
   signin code = validateUser $ exchangeCodeReq code
   getGuilds token = validateRequest $ getGuildsReq token
   getGuildDetails fields = validateRequest $ getGuildDetailsReq fields
+  modifyGuild fields = validateRequest $ modifyGuildReq fields

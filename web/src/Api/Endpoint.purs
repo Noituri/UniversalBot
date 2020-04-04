@@ -3,10 +3,10 @@ module Utter.Api.Endpoint where
 import Prelude
 
 data Endpoint
-  = ExchangeCode
-  | Guilds
-  | GuildDetails
-  | ModifyGuild
+  = ExchangeCodeEndpoint
+  | GuildsEndpoint
+  | GuildDetailsEndpoint
+  | ModifyGuildEndpoint
 
 rootAddress :: Int -> String
 rootAddress debugPort =
@@ -16,7 +16,7 @@ rootAddress debugPort =
 
 endpointUrl :: Endpoint -> String
 endpointUrl = case _ of
-  ExchangeCode -> (rootAddress 8080) <> "/login"
-  Guilds -> (rootAddress 8090) <> "/guilds"
-  GuildDetails -> (rootAddress 8100) <> "/guild-details"
-  ModifyGuild -> (rootAddress 8110) <> "/modify-guild"
+  ExchangeCodeEndpoint -> (rootAddress 8080) <> "/login"
+  GuildsEndpoint -> (rootAddress 8090) <> "/guilds"
+  GuildDetailsEndpoint -> (rootAddress 8100) <> "/guild-details"
+  ModifyGuildEndpoint -> (rootAddress 8110) <> "/modify-guild"

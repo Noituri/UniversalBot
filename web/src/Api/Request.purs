@@ -1,4 +1,10 @@
-module Utter.Api.Request (BaseURL(..), exchangeCodeReq, getGuildsReq, getGuildDetailsReq) where
+module Utter.Api.Request
+  ( BaseURL(..)
+  , exchangeCodeReq
+  , getGuildsReq
+  , getGuildDetailsReq
+  , modifyGuildReq
+) where
 
 import Prelude
 
@@ -7,8 +13,8 @@ import Affjax.RequestBody as RB
 import Affjax.RequestHeader (RequestHeader(..))
 import Affjax.ResponseFormat as RF
 import Data.Argonaut.Core (Json)
-import Data.Argonaut.Decode.Struct.Tolerant as Tolerant
 import Data.Argonaut.Decode.Struct.Tolerant ((.::))
+import Data.Argonaut.Decode.Struct.Tolerant as Tolerant
 import Data.Argonaut.Encode (encodeJson)
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
@@ -19,10 +25,10 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Routing.Duplex (print)
 import Utter.Api.Endpoint (Endpoint(..), endpointUrl)
 import Utter.Capability.Logger (class Logger, log)
-import Utter.Data.User (User)
 import Utter.Data.Guild (Guild)
 import Utter.Data.GuildDetails (GuildDetails)
 import Utter.Data.Requests (ReqGuildDetails)
+import Utter.Data.User (User)
 
 newtype BaseURL = BaseURL String
 
@@ -53,19 +59,27 @@ defaultRequest { endpoint, method } =
 
 exchangeCodeReq :: ∀ m. Logger m => MonadAff m => String -> m (Either String User)
 exchangeCodeReq code = do
-  res <- liftAff $ request $ defaultRequest { endpoint: ExchangeCode, method: Post $ Just $ encodeJson { code } }
+  res <- liftAff $ request $ defaultRequest { endpoint: ExchangeCodeEndpoint, method: Post $ Just $ encodeJson { code } }
   pure $ Tolerant.decodeJson =<< bimap printError _.body res
 
 getGuildsReq :: ∀ m. Logger m => MonadAff m => String -> m (Either String (Array Guild))
 getGuildsReq token = do
-  res <- liftAff $ request $ defaultRequest { endpoint: Guilds, method: Post $ Just $ encodeJson { token } }
+  res <- liftAff $ request $ defaultRequest { endpoint: GuildsEndpoint, method: Post $ Just $ encodeJson { token } }
   pure $ Tolerant.decodeJson =<< decodeAt "guilds" =<< bimap printError _.body res
 
 getGuildDetailsReq :: ∀ m. Logger m => MonadAff m => ReqGuildDetails -> m (Either String GuildDetails)
-getGuildDetailsReq { token, guild_id, actions_from } = do
+getGuildDetailsReq req = do
   res <- liftAff $ request $ defaultRequest
-    { endpoint: Guilds
-    , method: Post $ Just $ encodeJson { token, guild_id, actions_from }
+    { endpoint: GuildsEndpoint
+    , method: Post $ Just $ encodeJson req
+    }
+  pure $ Tolerant.decodeJson =<< bimap printError _.body res
+
+modifyGuildReq :: ∀ m. Logger m => MonadAff m => GuildDetails -> m (Either String {})
+modifyGuildReq req = do
+  res <- liftAff $ request $ defaultRequest
+    { endpoint: ModifyGuildEndpoint
+    , method: Post $ Just $ encodeJson req
     }
   pure $ Tolerant.decodeJson =<< bimap printError _.body res
 
