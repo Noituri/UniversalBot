@@ -3,6 +3,7 @@ module Utter.Page.Panel (component) where
 import Prelude
 
 import Control.Monad.Reader (class MonadAsk, lift)
+import Data.Array ((!!))
 import Data.Maybe (Maybe(..), isJust, isNothing)
 import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
@@ -19,13 +20,15 @@ import Utter.Component.ItemsList as ItemsList
 import Utter.Component.OptionsPanel as OptionsPanel
 import Utter.Component.ServerSelector as ServerSelector
 import Utter.Component.ServerSettings as ServerSettings
-import Utter.Component.Utils (ChildSlot, cssClass)
+import Utter.Component.Utils (ChildSlot, cssClass, maybeElem, whenElem)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.Guild (Guild)
 import Utter.Data.Requests (Stasus(..))
 import Utter.Data.Route (Route(..))
 import Utter.Data.User (User)
 import Utter.Env (UserEnv)
+
+type Input = { selectedGuild :: Int }
 
 type PageStasus =
   { guilds :: Stasus
@@ -36,16 +39,18 @@ type State =
   , selectedOption :: Int
   , guilds :: Array Guild
   , stasus :: PageStasus
+  , selectedGuild :: Int
   }
 
 data Action
   = Initialize
-  | Receive { | ( user :: Maybe User | ()) }
+  | Receive { user :: Maybe User, selectedGuild :: Int }
   | TryAgain
   | HandleOptionMessage OptionsPanel.Message
+  | HandleServerMessage ServerSelector.Message
 
 type ChildSlots =
-  ( serverSelector :: ChildSlot Unit
+  ( serverSelector :: ServerSelector.Slot Unit
   , optionsPanel :: OptionsPanel.Slot Unit
   , itemsList :: ChildSlot Unit
   , serverSettings :: ChildSlot Unit
@@ -58,7 +63,7 @@ component
   => Navigate m
   => Logger m
   => Api m
-  => H.Component HH.HTML q {} o m
+  => H.Component HH.HTML q Input o m
 component = Wrapper.component $ H.mkComponent
   { initialState
   , render
@@ -69,11 +74,12 @@ component = Wrapper.component $ H.mkComponent
       }
   }
   where
-    initialState { user } =
+    initialState { user, selectedGuild } =
       { user
       , selectedOption: 0
       , guilds: mempty
       , stasus: { guilds: Loading }
+      , selectedGuild
       }
     handleAction :: Action -> H.HalogenM State Action ChildSlots o m Unit
     handleAction = case _ of
@@ -85,32 +91,39 @@ component = Wrapper.component $ H.mkComponent
             getGuilds token >>= case _ of
               Nothing -> H.modify_ \st -> st { stasus { guilds = Error "Could not retrieve your servers!" } }
               Just guilds -> H.modify_ \st -> st { guilds = guilds, stasus { guilds = Done } }
-      Receive { user } -> do
-        H.modify_ \st -> st { user = user }
+      Receive { user, selectedGuild } -> do
+        H.modify_ \st -> st { user = user, selectedGuild = selectedGuild }
         handleAction Initialize
       TryAgain -> do
         H.modify_ \st -> st { stasus { guilds = Loading } }
         handleAction Initialize
       HandleOptionMessage (OptionsPanel.SelectedOption option) ->
         H.modify_ \st -> st { selectedOption = option }
+      HandleServerMessage (ServerSelector.SelectedServer server) -> do
+        H.modify_ \st -> st { selectedGuild = server }
+        navigate $ EditPanel server
     render :: State -> H.ComponentHTML Action ChildSlots m
-    render { user, selectedOption, guilds, stasus } =
+    render { user, selectedOption, selectedGuild, guilds, stasus } =
       Container.component user "Panel" $ page
       where
+        logoutBtn =
+          HH.div_
+            [ HH.p [ cssClass "gradient-btn red" ]
+                [ HH.text "Logout" ]
+            ]
         page = case stasus.guilds of
-          Loading -> [ HH.h2_ [ HH.text "Loading..." ] ]
+          Loading -> [ HH.h2_ [ HH.text "Loading..." ]
+                     , logoutBtn
+                     ]
           Error err ->
             [ HH.h2_ [ HH.text err ]
             , HH.p [ cssClass "gradient-btn", HE.onClick \_ -> Just TryAgain ]
                 [ HH.text "Try again!" ]
+            , logoutBtn
             ]
           Done -> guildsLoaded
-        guildsLoaded = 
-          [ HH.slot (SProxy :: _ "serverSelector") unit ServerSelector.component
-              { servers: guilds
-              , selected: 0
-              } absurd
-          , HH.slot (SProxy :: _ "optionsPanel") unit OptionsPanel.component
+        guildPanel =
+          [ HH.slot (SProxy :: _ "optionsPanel") unit OptionsPanel.component
               { title: Nothing
               , options: [ "fa-newspaper", "fa-wrench" ]
               , selected: selectedOption
@@ -129,8 +142,18 @@ component = Wrapper.component $ H.mkComponent
                     , modLogsChannel: "11112311332"
                     } absurd
               _ -> HH.text ""
-          , HH.div_
-              [ HH.p [ cssClass "gradient-btn red" ]
-                  [ HH.text "Logout" ]
-              ]
+          ]
+        guildsLoaded = 
+          [ HH.slot (SProxy :: _ "serverSelector") unit ServerSelector.component
+              { servers: guilds
+              , selected: selectedGuild
+              } (Just <<< HandleServerMessage)
+          , maybeElem (guilds !! selectedGuild) \g ->
+              if g.access then
+                HH.div [ cssClass "guild-panel-container" ] guildPanel
+              else
+                HH.h2_ [ HH.text "You don't have access to this server." ]
+          , whenElem (isNothing $ guilds !! selectedGuild) \_ ->
+              HH.h2_ [ HH.text "Bot does not exist." ]
+          , logoutBtn
           ]

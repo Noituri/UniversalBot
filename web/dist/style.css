@@ -23,6 +23,11 @@ body {
     justify-content: center;
 }
 
+.guild-panel-container {
+    display: inline-flex;
+    flex-direction: column;
+}
+
 .heading {
     font-size: 72px;
     margin: 40px 0 0 0;
@@ -104,6 +109,10 @@ nav {
     display: inline-block;
     margin: 0 10px;
     cursor: pointer;
+}
+
+.noaccess {
+    opacity: .6;
 }
 
 .horizontal-view > .selected {

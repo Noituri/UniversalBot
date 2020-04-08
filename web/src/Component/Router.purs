@@ -97,10 +97,10 @@ component = Wrapper.component $ H.mkComponent
         Home ->
           HH.slot (SProxy :: _ "home") unit Home.component {} absurd
         Panel ->
-          HH.slot (SProxy :: _ "panel") unit Panel.component {} absurd
+          HH.slot (SProxy :: _ "panel") unit Panel.component { selectedGuild: 0 } absurd
             # authorize user
         EditPanel guild ->
-          HH.slot (SProxy :: _ "panel") unit Panel.component {} absurd
+          HH.slot (SProxy :: _ "panel") unit Panel.component { selectedGuild: guild } absurd
             # authorize user
         Commands category ->
           HH.slot (SProxy :: _ "commands") unit Commands.component { category } absurd
