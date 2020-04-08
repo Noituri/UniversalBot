@@ -1,6 +1,6 @@
 module Utter.Data.Action where
   
-type Action =
+type GuildAction =
   { action_type :: Int
   , issuer :: String
   , target :: String
