@@ -142,7 +142,7 @@ component = Wrapper.component $ H.mkComponent
             , logoutBtn
             ]
           Done -> guildsLoaded
-        guildPanel =
+        guildPanel { prefix, muted_role, mod_logs_channel, actions } =
           [ HH.slot (SProxy :: _ "optionsPanel") unit OptionsPanel.component
               { title: Nothing
               , options: [ "fa-newspaper", "fa-wrench" ]
@@ -151,16 +151,12 @@ component = Wrapper.component $ H.mkComponent
           , case selectedOption of
               0 -> HH.slot (SProxy :: _ "itemsList") unit ItemsList.component
                     { title: Just "Actions"
-                    , entries: case st.guildDetails of
-                        Just g ->
-                          actionsToItemsEntry g.actions
-                        Nothing ->
-                          []
+                    , entries: actionsToItemsEntry actions
                     } absurd
               1 -> HH.slot (SProxy :: _ "serverSettings") unit ServerSettings.component
-                    { prefix: "!"
-                    , mutedRole: "12312312312312"
-                    , modLogsChannel: "11112311332"
+                    { prefix: prefix
+                    , mutedRole: muted_role
+                    , modLogsChannel: mod_logs_channel
                     } absurd
               _ -> HH.text ""
           ]
@@ -171,11 +167,15 @@ component = Wrapper.component $ H.mkComponent
               } (Just <<< HandleServerMessage)
           , maybeElem (guilds !! selectedGuild) \g ->
               if g.access then
-                HH.div [ cssClass "guild-panel-container" ] guildPanel
+                case st.guildDetails of
+                  Just guild ->
+                    HH.div [ cssClass "guild-panel-container" ] $ guildPanel guild
+                  Nothing ->
+                    HH.h2_ [ HH.text "Could not retrieve server details." ]
               else
                 HH.h2_ [ HH.text "You don't have access to this server." ]
           , whenElem (isNothing $ guilds !! selectedGuild) \_ ->
-              HH.h2_ [ HH.text "Bot does not exist." ]
+              HH.h2_ [ HH.text "Server does not exist." ]
           , logoutBtn
           ]
 
