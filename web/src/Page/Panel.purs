@@ -12,7 +12,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Utter.Capability.Api (class Api, getGuildDetails, getGuilds)
+import Utter.Capability.Api (class Api, getGuildDetails, getGuilds, modifyGuild)
 import Utter.Capability.Logger (class Logger, log)
 import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Component.Container as Container
@@ -35,6 +35,7 @@ type Input = { selectedGuild :: Int }
 
 type PageStasus =
   { guilds :: Stasus
+  , saveSettings :: Stasus
   }
 
 type State =
@@ -53,12 +54,13 @@ data Action
   | GetDetails String
   | HandleOptionMessage OptionsPanel.Message
   | HandleServerMessage ServerSelector.Message
+  | HandleSettings ServerSettings.Message
 
 type ChildSlots =
   ( serverSelector :: ServerSelector.Slot Unit
   , optionsPanel :: OptionsPanel.Slot Unit
   , itemsList :: ChildSlot Unit
-  , serverSettings :: ChildSlot Unit
+  , serverSettings :: ServerSettings.Slot Unit
   )
 
 component
@@ -83,7 +85,7 @@ component = Wrapper.component $ H.mkComponent
       { user
       , selectedOption: 0
       , guilds: mempty
-      , stasus: { guilds: Loading }
+      , stasus: { guilds: Loading, saveSettings: Done }
       , selectedGuild
       , guildDetails: Nothing
       }
@@ -122,6 +124,21 @@ component = Wrapper.component $ H.mkComponent
       HandleServerMessage (ServerSelector.SelectedServer server) -> do
         H.modify_ \st -> st { selectedGuild = server }
         navigate $ EditPanel server
+      HandleSettings (ServerSettings.SaveSettings s) -> do
+        { guildDetails } <- H.get
+        case guildDetails of
+          Just details ->
+            modifyGuild details
+              { prefix = s.prefix
+              , muted_role = s.mutedRole
+              , mod_logs_channel = s.modLogsChannel
+              } >>= case _ of
+                  Just _ ->
+                    H.modify_ \st -> st { stasus { saveSettings = Done } }
+                  Nothing ->
+                    H.modify_ \st -> st { stasus { saveSettings = Error "Could not save settings." } }
+          Nothing ->
+            H.modify_ \st -> st { stasus { saveSettings = Error "No guild details. Please refresh the site." } }
     render :: State -> H.ComponentHTML Action ChildSlots m
     render st@{ user, selectedOption, selectedGuild, guilds, stasus } =
       Container.component user "Panel" $ page
@@ -157,7 +174,7 @@ component = Wrapper.component $ H.mkComponent
                     { prefix: prefix
                     , mutedRole: muted_role
                     , modLogsChannel: mod_logs_channel
-                    } absurd
+                    } (Just <<< HandleSettings)
               _ -> HH.text ""
           ]
         guildsLoaded = 
