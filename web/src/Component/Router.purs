@@ -4,27 +4,27 @@ import Prelude
 
 import Control.Monad.Reader (class MonadAsk)
 import Data.Either (hush)
-import Data.String (null)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.String (null)
 import Data.Symbol (SProxy(..))
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
 import Routing.Duplex as RD
 import Routing.Hash (getHash)
-import Utter.Capability.Logger (class Logger)
-import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Capability.Api (class Api)
+import Utter.Capability.Logger (class Logger, log)
+import Utter.Capability.Navigate (class Navigate, navigate)
 import Utter.Component.Utils (ChildSlot)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.Route (Route(..), routeDuplex)
 import Utter.Data.User (User)
 import Utter.Env (UserEnv)
+import Utter.Page.Commands as Commands
 import Utter.Page.Home as Home
+import Utter.Page.LoginRedirect as LoginRedirect
 import Utter.Page.NotFound as NotFound
 import Utter.Page.Panel as Panel
-import Utter.Page.Commands as Commands
-import Utter.Page.LoginRedirect as LoginRedirect
 
 type State =
   { route :: Maybe Route

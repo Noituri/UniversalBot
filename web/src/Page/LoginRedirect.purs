@@ -4,6 +4,7 @@ import Prelude
 
 import Control.Monad.Reader (class MonadAsk)
 import Data.Maybe (Maybe(..), isJust, isNothing)
+import Data.String (Pattern(..), stripPrefix, stripSuffix)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
@@ -17,6 +18,9 @@ import Utter.Component.Wrapper as Wrapper
 import Utter.Data.Route (Route(..))
 import Utter.Data.User (User)
 import Utter.Env (UserEnv)
+import Web.HTML (window)
+import Web.HTML.Location (href)
+import Web.HTML.Window (location)
 
 type Input = { code :: String }
 
@@ -55,10 +59,14 @@ component = Wrapper.component $ H.mkComponent
     handleAction :: ∀ slots. Action -> H.HalogenM State Action slots o m Unit
     handleAction = case _ of
       Initialize -> do
-        { code } <- H.get
-        signin code >>= case _ of
-          Nothing -> log "Could not signin!"
-          Just user -> log "Signed in!"
+        url <- (H.liftEffect $ href =<< location =<< window)
+        case getCode url of
+          Nothing ->
+            log "Invalid code"
+          Just code ->
+            signin code >>= case _ of
+              Nothing -> log "Could not signin!"
+              Just user -> log "Signed in!"
       Receive { user, code } -> do
         H.modify_ \st -> st { user = user, code = code }
       GoHome -> do
@@ -76,3 +84,7 @@ component = Wrapper.component $ H.mkComponent
                   [ HH.text "Home" ]
             ]
         ]
+    getCode :: String -> Maybe String
+    getCode url = do
+      partOne <- stripPrefix (Pattern "http://localhost:8080/?code=") url
+      stripSuffix (Pattern "#/redirect/") partOne
