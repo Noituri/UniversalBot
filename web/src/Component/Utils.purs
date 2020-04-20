@@ -38,3 +38,20 @@ maybeElem _ _ = text ""
 isMaybeTrue :: Maybe Boolean -> Boolean
 isMaybeTrue Nothing = false
 isMaybeTrue (Just b) = b
+
+actionTypeToString :: Int -> String
+actionTypeToString action_type =
+  case action_type of 
+    1 -> "Ban"
+    2 -> "Unban"
+    3 -> "Kick"
+    4 -> "Mute"
+    5 -> "Unmute"
+    6 -> "Warn"
+    7 -> "Warn Reduced"
+    8 -> "Channel Lock"
+    9 -> "Channel Unlock"
+    10 -> "New Ticket"
+    11 -> "Solved Ticket"
+    12 -> "Reopened Ticket"
+    _ -> "Unknown action"

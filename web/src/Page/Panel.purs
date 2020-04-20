@@ -21,7 +21,7 @@ import Utter.Component.ItemsList as ItemsList
 import Utter.Component.OptionsPanel as OptionsPanel
 import Utter.Component.ServerSelector as ServerSelector
 import Utter.Component.ServerSettings as ServerSettings
-import Utter.Component.Utils (ChildSlot, cssClass, maybeElem, whenElem)
+import Utter.Component.Utils (ChildSlot, cssClass, maybeElem, whenElem, actionTypeToString)
 import Utter.Component.Wrapper as Wrapper
 import Utter.Data.Action (GuildAction)
 import Utter.Data.Guild (Guild)
@@ -180,7 +180,7 @@ component = Wrapper.component $ H.mkComponent
           , case selectedOption of
               0 -> HH.slot (SProxy :: _ "itemsList") unit ItemsList.component
                     { title: Just "Actions"
-                    , entries: actionsToItemsEntry actions
+                    , entries: actionsToItemsEntry actions -- TODO: check if empty
                     } absurd
               1 -> HH.slot (SProxy :: _ "serverSettings") unit ServerSettings.component
                     { prefix: prefix
@@ -209,4 +209,11 @@ component = Wrapper.component $ H.mkComponent
           ]
 
 actionsToItemsEntry :: Array GuildAction -> Array ListEntry
-actionsToItemsEntry actions = (\a -> { name: "GET TYPE!!!", description: a.message, details: Just "CREATE DETAILS!!!" }) <$> actions
+actionsToItemsEntry actions = (\a ->
+  { name: actionTypeToString a.action_type
+  , description: a.message
+  , details: Just $
+      "Issuer ID: " <> a.issuer <> "\n" <>
+      "Target ID: " <> a.target <> "\n" <>
+      "Creation Date " <> a.creation_date <> "\n"
+  }) <$> actions
