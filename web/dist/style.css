@@ -1,0 +1,219 @@
+html {
+    background-color: rgb(24, 26, 37);
+}
+
+body {
+    margin: 0;
+}
+
+* {
+    font-family: 'Baloo 2', cursive;
+    color: white;
+}
+
+.container {
+    display: flex;
+    margin: 0 auto;
+    text-align: center;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1500px;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+}
+
+.guild-panel-container {
+    display: inline-flex;
+    flex-direction: column;
+}
+
+.heading {
+    font-size: 72px;
+    margin: 40px 0 0 0;
+    font-weight: bold;
+}
+
+.gradient-btn {
+    display: inline-flex;
+    cursor: pointer;
+    background: linear-gradient(45deg, #2d266b, #a59bff 80%);
+    border-radius: 15px;
+    font-size: 24px;
+    padding: 6px 15px;
+    justify-content: center;
+    width: fit-content;
+    user-select: none;
+}
+
+.medium-width {
+    margin-right: auto;
+    margin-left: auto;
+    max-width: 200px;
+}
+
+.red {
+    background: linear-gradient(45deg, #8e0404, #cf4848 80%);
+}
+
+.top-margin {
+    margin-top: 30px;
+}
+
+nav {
+    display: flex;
+    margin: 5px 10px 0 10px;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+}
+
+.nav-items-container {
+    display: flex;
+}
+
+.nav-item {
+    cursor: pointer;
+    text-decoration: none;
+    padding: 5px;
+}
+
+.nav-item:link .nav-item:visited {
+    color: #fff;
+}
+
+.nav-item:hover {
+    color: #a59bff;
+}
+
+.nav-logo {
+    font-weight: bold;
+    padding: 0;
+}
+
+.features {
+
+}
+
+.card {
+    border-radius: 10px;
+    background-color: rgb(41, 46, 82);
+    padding: 5px;
+    flex: 1 0 40%;
+    margin: 10px 5px;
+    width: 100%;
+    max-width: 300px;
+    height: 150px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.horizontal-view {
+    overflow: auto;
+    white-space: nowrap;
+    padding: 10px;
+}
+
+.horizontal-view > * {
+    display: inline-block;
+    margin: 0 10px;
+    cursor: pointer;
+}
+
+.noaccess {
+    opacity: .6;
+}
+
+.horizontal-view > .selected {
+    background-color: #363178;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.horizontal-view > * > p {
+    margin: 10px 0;
+}
+
+.horizontal-view, .small {
+    padding: 5px;
+}
+
+.circle {
+    border-radius: 100px;
+    width: 80px;
+    height: 80px;
+}
+
+.panel-option {
+    background-color: "#2e2a66";
+    border-radius: 10px;
+    width: 30px;
+    height: 30px;
+    padding: 10px;
+}
+
+.panel-option > * {
+    font-size: 20px;
+}
+
+.option-el {
+    margin-top: 5px;
+}
+
+.list-entry {
+    background-color: #2e2a66;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+    width: inherit;
+    cursor: pointer;
+}
+
+.list-text > * {
+    text-align: left;
+    margin: 0;
+}
+
+.list-entry-details {
+    background-color: #2a265b;
+    margin-top: 15px;
+    white-space: pre-wrap;
+}
+
+.settings-container > input {
+    margin-top: 10px;
+}
+
+.settings-container > h4 {
+    margin: 10px 0 0 0;
+}
+
+.input-field {
+    border-radius: 10px;
+    outline: none;
+    border: none;
+    background-color: #2e2a66;
+    width: 90%;
+    text-align: center;
+    font-size: 16px;
+    padding: 10px 5px;
+    color: #fff;
+}
+
+@media only screen and (min-width: 750px) {
+    .features {
+        display: inline-flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        max-width: 700px;
+        justify-content: space-around;
+    }
+
+    .features > .card {
+        margin: 5px 5px;
+    }
+
+    .card {
+        max-width: 500px;
+    }
+}
