@@ -91,6 +91,10 @@ func main() {
 		http.HandleFunc("/login", func(writer http.ResponseWriter, request *http.Request) {
 			writer.Header().Set("Access-Control-Allow-Origin", "*")
 			writer.Header().Set("Access-Control-Allow-Headers", "*")
+			if request.Method != "POST" {
+				return
+			}
+			println("REQUEST")
 			var event LoginEvent
 			body, _ := ioutil.ReadAll(request.Body)
 			defer request.Body.Close()

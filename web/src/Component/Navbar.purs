@@ -19,7 +19,7 @@ component user =
       , whenElem (isJust user) \_ ->
           item "Panel" $ getLink Panel
       , whenElem (isNothing user) \_ ->
-          item "Login" "https://discordapp.com/api/oauth2/authorize?client_id=535183435539677195&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F%23%2Fredirect%2F&response_type=code&scope=identify%20email%20guilds"
+          item "Login" "https://discordapp.com/api/oauth2/authorize?client_id=535183435539677195&redirect_uri=http%3A%2F%2Flocalhost%3A8081%2F%23%2Fredirect%2F&response_type=code&scope=identify%20email%20guilds"
       ]
     ]
     where

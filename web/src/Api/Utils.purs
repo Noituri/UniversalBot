@@ -19,7 +19,7 @@ import Utter.Data.User (User)
 import Utter.Env (UserEnv)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (getItem, setItem)
+import Web.Storage.Storage (getItem, setItem, removeItem)
 
 writeUser :: User -> Effect Unit
 writeUser { token, username } = do
@@ -31,6 +31,11 @@ readUser = do
   token <- getItem "token" =<< localStorage =<< window
   username <- getItem "username" =<< localStorage =<< window
   pure $ lift2 (\u t -> { username: u, token: t }) username token
+
+logoutUser :: Effect Unit
+logoutUser = do
+  removeItem "token" =<< localStorage =<< window
+  removeItem "username" =<< localStorage =<< window
 
 validateUser
   :: ∀ m r

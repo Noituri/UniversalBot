@@ -12,6 +12,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Utter.Api.Utils (logoutUser)
 import Utter.Capability.Api (class Api, getGuildDetails, getGuilds, modifyGuild)
 import Utter.Capability.Logger (class Logger, log)
 import Utter.Capability.Navigate (class Navigate, navigate)
@@ -55,6 +56,7 @@ data Action
   | HandleOptionMessage OptionsPanel.Message
   | HandleServerMessage ServerSelector.Message
   | HandleSettings ServerSettings.Message
+  | Logout
 
 type ChildSlots =
   ( serverSelector :: ServerSelector.Slot Unit
@@ -89,6 +91,7 @@ component = Wrapper.component $ H.mkComponent
       , selectedGuild
       , guildDetails: Nothing
       }
+
     handleAction :: Action -> H.HalogenM State Action ChildSlots o m Unit
     handleAction = case _ of
       Initialize -> do
@@ -98,7 +101,7 @@ component = Wrapper.component $ H.mkComponent
           Just { token } ->
             getGuilds token >>= case _ of
               Nothing ->
-                H.modify_ \st -> st { stasus { guilds = Error "Could not retrieve your servers!" } }
+                H.modify_ \st -> st { stasus { guilds = Error "Could not retrieve your servers! Make sure that UtterBot is in at least one of your servers." } }
               Just guilds -> do
                 H.modify_ \st -> st { guilds = guilds, stasus { guilds = Done } }
                 handleAction $ GetDetails token
@@ -127,25 +130,34 @@ component = Wrapper.component $ H.mkComponent
       HandleSettings (ServerSettings.SaveSettings s) -> do
         { guildDetails } <- H.get
         case guildDetails of
-          Just details ->
-            modifyGuild details
-              { prefix = s.prefix
-              , muted_role = s.mutedRole
-              , mod_logs_channel = s.modLogsChannel
-              } >>= case _ of
-                  Just _ ->
-                    H.modify_ \st -> st { stasus { saveSettings = Done } }
-                  Nothing ->
-                    H.modify_ \st -> st { stasus { saveSettings = Error "Could not save settings." } }
+          Just details -> do
+            { user } <- H.get
+            case user of
+              Just { token } ->
+                modifyGuild token details
+                  { prefix = s.prefix
+                  , muted_role = s.mutedRole
+                  , mod_logs_channel = s.modLogsChannel
+                  } >>= case _ of
+                      Just _ ->
+                        H.modify_ \st -> st { stasus { saveSettings = Done } }
+                      Nothing ->
+                        H.modify_ \st -> st { stasus { saveSettings = Error "Could not save settings." } }
+              Nothing ->
+                H.modify_ \st -> st { stasus { saveSettings = Error "User not authorized." } }
           Nothing ->
             H.modify_ \st -> st { stasus { saveSettings = Error "No guild details. Please refresh the site." } }
+      Logout -> do
+        H.liftEffect logoutUser
+        navigate Home
+
     render :: State -> H.ComponentHTML Action ChildSlots m
     render st@{ user, selectedOption, selectedGuild, guilds, stasus } =
       Container.component user "Panel" $ page
       where
         logoutBtn =
           HH.div_
-            [ HH.p [ cssClass "gradient-btn red" ]
+            [ HH.p [ cssClass "gradient-btn red", HE.onClick \_ -> Just Logout ]
                 [ HH.text "Logout" ]
             ]
         page = case stasus.guilds of
@@ -154,7 +166,7 @@ component = Wrapper.component $ H.mkComponent
                      ]
           Error err ->
             [ HH.h2_ [ HH.text err ]
-            , HH.p [ cssClass "gradient-btn", HE.onClick \_ -> Just TryAgain ]
+            , HH.p [ cssClass "gradient-btn medium-width", HE.onClick \_ -> Just TryAgain ]
                 [ HH.text "Try again!" ]
             , logoutBtn
             ]
@@ -188,7 +200,7 @@ component = Wrapper.component $ H.mkComponent
                   Just guild ->
                     HH.div [ cssClass "guild-panel-container" ] $ guildPanel guild
                   Nothing ->
-                    HH.h2_ [ HH.text "Could not retrieve server details." ]
+                    HH.h2_ [ HH.text "Could not retrieve server details." ] -- TODO: CHECK IF IT"S LOADING!!!!
               else
                 HH.h2_ [ HH.text "You don't have access to this server." ]
           , whenElem (isNothing $ guilds !! selectedGuild) \_ ->

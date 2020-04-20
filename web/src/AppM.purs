@@ -45,4 +45,4 @@ instance apiAppM :: Api AppM where
   signin code = validateUser $ exchangeCodeReq code
   getGuilds token = validateRequest $ getGuildsReq token
   getGuildDetails fields = validateRequest $ getGuildDetailsReq fields
-  modifyGuild fields = validateRequest $ modifyGuildReq fields
+  modifyGuild token fields = validateRequest $ modifyGuildReq token fields

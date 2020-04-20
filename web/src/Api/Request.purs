@@ -65,21 +65,28 @@ exchangeCodeReq code = do
 getGuildsReq :: ∀ m. Logger m => MonadAff m => String -> m (Either String (Array Guild))
 getGuildsReq token = do
   res <- liftAff $ request $ defaultRequest { endpoint: GuildsEndpoint, method: Post $ Just $ encodeJson { token } }
-  pure $ Tolerant.decodeJson =<< decodeAt "guilds" =<< bimap printError _.body res
+  pure $ Tolerant.decodeJson =<< bimap printError _.body res
 
 getGuildDetailsReq :: ∀ m. Logger m => MonadAff m => ReqGuildDetails -> m (Either String GuildDetails)
 getGuildDetailsReq req = do
   res <- liftAff $ request $ defaultRequest
-    { endpoint: GuildsEndpoint
+    { endpoint: GuildDetailsEndpoint
     , method: Post $ Just $ encodeJson req
     }
   pure $ Tolerant.decodeJson =<< bimap printError _.body res
 
-modifyGuildReq :: ∀ m. Logger m => MonadAff m => GuildDetails -> m (Either String {})
-modifyGuildReq req = do
+modifyGuildReq :: ∀ m. Logger m => MonadAff m => String -> GuildDetails -> m (Either String {})
+modifyGuildReq token req = do
   res <- liftAff $ request $ defaultRequest
     { endpoint: ModifyGuildEndpoint
-    , method: Post $ Just $ encodeJson req
+    , method: Post $ Just $ encodeJson
+      { token
+      , guild_id: req.guild_id
+      , actions: req.actions
+      , prefix: req.prefix
+      , muted_role: req.muted_role
+      , mod_logs_channel: req.mod_logs_channel
+      }
     }
   pure $ Tolerant.decodeJson =<< bimap printError _.body res
 

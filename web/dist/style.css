@@ -46,6 +46,12 @@ body {
     user-select: none;
 }
 
+.medium-width {
+    margin-right: auto;
+    margin-left: auto;
+    max-width: 200px;
+}
+
 .red {
     background: linear-gradient(45deg, #8e0404, #cf4848 80%);
 }
@@ -59,6 +65,7 @@ nav {
     margin: 5px 10px 0 10px;
     justify-content: space-between;
     align-items: center;
+    width: 90%;
 }
 
 .nav-items-container {
@@ -97,6 +104,8 @@ nav {
     width: 100%;
     max-width: 300px;
     height: 150px;
+    margin-right: auto;
+    margin-left: auto;
 }
 
 .horizontal-view {
@@ -198,6 +207,10 @@ nav {
         flex-wrap: wrap;
         max-width: 700px;
         justify-content: space-around;
+    }
+
+    .features > .card {
+        margin: 5px 5px;
     }
 
     .card {

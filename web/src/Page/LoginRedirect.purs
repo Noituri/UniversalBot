@@ -86,5 +86,5 @@ component = Wrapper.component $ H.mkComponent
         ]
     getCode :: String -> Maybe String
     getCode url = do
-      partOne <- stripPrefix (Pattern "http://localhost:8080/?code=") url
+      partOne <- stripPrefix (Pattern "http://localhost:8081/?code=") url
       stripSuffix (Pattern "#/redirect/") partOne
