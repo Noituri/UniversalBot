@@ -63,7 +63,7 @@ impl SetupCommand {
         let _ = msg.channel_id.send_message(ctx.http.clone(), |m| {
             m.embed(|e| {
                 e.title("Setup - Done!");
-                e.description("Tickets has been created!");
+                e.description("Tickets has been setup!");
                 e.color(EMBED_REGULAR_COLOR);
                 e
             });
